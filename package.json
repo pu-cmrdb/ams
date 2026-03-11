@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "auth:generate": "bunx auth generate --config src/server/auth/config.ts --output src/server/database/schema/auth.ts --yes",
     "build": "next build",
     "check": "next lint && tsc --noEmit",
     "dev": "next dev --turbo --port 3001",
