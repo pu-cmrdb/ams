@@ -17,18 +17,18 @@ const geist = Geist({
   variable: '--font-geist-sans',
 });
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html
       className={`
         ${geist.variable}
       `}
-      lang="en"
+      lang="zh-Hant"
     >
       <body>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <TRPCReactProvider>
+          {children}
+        </TRPCReactProvider>
       </body>
     </html>
   );

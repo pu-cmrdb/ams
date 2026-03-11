@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/libsql';
 
 import { env } from '@/env';
 
-import * as schema from './schema';
+import { relations } from './relations';
 
 import type { Client } from '@libsql/client';
 
@@ -18,4 +18,4 @@ const globalForDb = globalThis as unknown as {
 export const client = globalForDb.client ?? createClient({ url: env.DATABASE_URL });
 if (env.NODE_ENV !== 'production') globalForDb.client = client;
 
-export const db = drizzle(client, { schema });
+export const db = drizzle({ client, relations });

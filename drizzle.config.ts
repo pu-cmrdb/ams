@@ -1,12 +1,12 @@
-import { type Config } from "drizzle-kit";
+import { env } from './src/env';
 
-import { env } from "@/env";
+import type { Config } from 'drizzle-kit';
 
 export default {
-  schema: "./src/server/db/schema.ts",
-  dialect: "sqlite",
   dbCredentials: {
     url: env.DATABASE_URL,
   },
-  tablesFilter: ["ams_*"],
+  dialect: 'sqlite',
+  schema: './src/server/db/schema.ts',
+  tablesFilter: ['ams_*'],
 } satisfies Config;

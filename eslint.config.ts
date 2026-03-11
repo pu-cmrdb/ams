@@ -6,6 +6,7 @@ import nextTs from 'eslint-config-next/typescript';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import perfectionist from 'eslint-plugin-perfectionist';
 import prettyImport from '@kamiya4047/eslint-plugin-pretty-import';
+import shadcn from 'eslint-plugin-shadcn';
 import stylistic from '@stylistic/eslint-plugin';
 import tailwindcss from 'eslint-plugin-better-tailwindcss';
 import typescript from 'typescript-eslint';
@@ -28,6 +29,7 @@ export default defineConfig(
       parser: typescript.parser,
       parserOptions: {
         projectService: true,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     name: 'parser',
@@ -42,6 +44,7 @@ export default defineConfig(
   }),
   prettyImport.configs.warn,
   perfectionist.configs['recommended-alphabetical'],
+  shadcn.configs['base-all'],
   {
     plugins: {
       drizzle,
