@@ -1,6 +1,11 @@
+import { dirname } from 'path';
+import { mkdirSync } from 'fs';
+
 import { env } from './src/env';
 
 import type { Config } from 'drizzle-kit';
+
+mkdirSync(dirname(env.DATABASE_URL.replace('file:', '')), { recursive: true });
 
 export default {
   dbCredentials: {

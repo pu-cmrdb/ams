@@ -6,6 +6,9 @@ const config: NextConfig = {
   images: {
     unoptimized: true,
   },
+  typescript: {
+    tsconfigPath: './tsconfig.app.json',
+  },
 };
 
 export default config;

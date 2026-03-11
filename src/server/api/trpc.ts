@@ -13,7 +13,7 @@ import { ArkErrors } from 'arktype';
 import superjson from 'superjson';
 
 import { auth } from '@/server/auth';
-import { db } from '@/server/db';
+import { db } from '@/server/database';
 
 /**
  * 1. CONTEXT

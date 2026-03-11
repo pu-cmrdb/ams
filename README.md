@@ -36,7 +36,7 @@ cp .env.example .env
 | `BETTER_AUTH_IAM_URL` | 行雲 IAM 服務網址（例：`http://localhost:3000`） |
 | `BETTER_AUTH_IAM_CLIENT_ID` | IAM OAuth2 Client ID |
 | `BETTER_AUTH_IAM_CLIENT_SECRET` | IAM OAuth2 Client Secret |
-| `DATABASE_URL` | 資料庫連線位址（例：`file:./db.sqlite`） |
+| `DATABASE_URL` | 資料庫位址，預設為 `file:./data/db.sqlite` |
 
 ### 3. 初始化資料庫
 
@@ -58,6 +58,45 @@ bun run drizzle:studio   # 開啟 Drizzle Studio
 ```bash
 bun run build   # 正式環境建置
 bun run start   # 啟動正式伺服器
+```
+
+## 正式環境部署（Docker）
+
+### 首次部署
+
+```bash
+git clone https://github.com/pu-cmrdb/ams.git && cd ams
+
+# 設定環境變數
+cp .env.example .env
+# 填入所有值（DATABASE_URL 預設已正確，無需修改）
+
+# 在主機上執行資料庫遷移
+bun install
+bunx drizzle-kit migrate
+
+# 啟動容器
+docker compose up -d --build
+```
+
+### 後續更新
+
+```bash
+git pull
+
+# 若有 schema 異動，先執行遷移
+bun install
+bunx drizzle-kit migrate
+
+docker compose up -d --build
+```
+
+### 常用指令
+
+```bash
+docker compose logs -f ams   # 查看 logs
+docker compose restart ams   # 重啟（不重新建置）
+docker compose down          # 停止
 ```
 
 ## 授權
