@@ -1,0 +1,25 @@
+{
+  "build": {
+    "context": "..",
+    "dockerfile": "Dockerfile",
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "yoavbls.pretty-ts-errors",
+        "oven.bun-vscode",
+        "docker.docker",
+        "usernamehw.errorlens",
+        "arktypeio.arkdark",
+        "johnpapa.vscode-peacock",
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+      },
+    },
+  },
+  "forwardPorts": [3000],
+  "remoteUser": "root",
+  "postCreateCommand": "docker version && docker ps",
+}
