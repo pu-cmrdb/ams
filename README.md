@@ -1,29 +1,69 @@
-# Create T3 App
+# AMS
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+行雲者研發基地資產盤點系統（AMS）。處理設備與資產的登記、盤點與管理。
 
-## What's next? How do I make an app with this?
+## 技術棧
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- 框架：[Next.js](https://nextjs.org/) 16（App Router）
+- 語言：TypeScript 5
+- 認證：[Better Auth](https://www.better-auth.com/)（透過行雲 IAM OAuth2 登入）
+- API：[tRPC](https://trpc.io/) v11 + TanStack Query
+- 資料庫：SQLite（[libsql](https://github.com/tursodatabase/libsql)）+ [Drizzle ORM](https://orm.drizzle.team/)
+- UI：Tailwind CSS v4、Radix UI、shadcn/ui
+- 執行環境：[Bun](https://bun.sh/)
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## 環境設定
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+### 1. 安裝相依套件
 
-## Learn More
+```bash
+bun install
+```
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+### 2. 設定環境變數
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+複製 `.env.example` 並填入對應的值：
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+```bash
+cp .env.example .env
+```
 
-## How do I deploy this?
+| 變數 | 說明 |
+| --- | --- |
+| `APP_DEV_URL` | 本機開發網址（例：`http://localhost:3001`） |
+| `APP_PROD_URL` | 正式環境網址 |
+| `BETTER_AUTH_SECRET` | 加密金鑰（隨機字串，至少 32 字元） |
+| `BETTER_AUTH_IAM_URL` | 行雲 IAM 服務網址（例：`http://localhost:3000`） |
+| `BETTER_AUTH_IAM_CLIENT_ID` | IAM OAuth2 Client ID |
+| `BETTER_AUTH_IAM_CLIENT_SECRET` | IAM OAuth2 Client Secret |
+| `DATABASE_URL` | 資料庫連線位址（例：`file:./db.sqlite`） |
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+### 3. 初始化資料庫
+
+```bash
+bun run drizzle:generate
+bun run drizzle:migrate
+```
+
+## 開發
+
+```bash
+bun run dev              # 啟動開發伺服器（Turbopack，port 3001）
+bun run check            # ESLint + TypeScript 型別檢查
+bun run drizzle:studio   # 開啟 Drizzle Studio
+```
+
+## 建置
+
+```bash
+bun run build   # 正式環境建置
+bun run start   # 啟動正式伺服器
+```
+
+## 授權
+
+本專案為行雲者研發基地團隊內部私有專案，未經授權不得對外散布或使用。
+
+## 貢獻
+
+詳見 [CONTRIBUTING.md](./CONTRIBUTING.md)。
