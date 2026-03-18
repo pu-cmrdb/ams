@@ -22,7 +22,7 @@ export const assets = sqliteTable('assets', {
   name:        text('name').notNull(),
   categoryId:  text('category_id').notNull().references(() => categories.id, cascadeActions),
   description: text('description').notNull(),
-  createdById: text('created_by_id').notNull().references(() => users.id, cascadeActions),
+  createdById: text('created_by_id').notNull(),
   createdAt,
   updatedAt,
 });
@@ -31,15 +31,9 @@ export const categories = sqliteTable('categories', {
   id:          text('id').primaryKey(),
   name:        text('name').notNull().unique(),
   color:       integer('color').notNull(),
-  createdById: text('created_by_id').notNull().references(() => users.id, cascadeActions),
+  createdById: text('created_by_id').notNull(),
   createdAt,
   updatedAt,
-});
-
-export const users = sqliteTable('users', {
-  id:        text('id').primaryKey().unique(),
-  name:      text('name').notNull(),
-  imageHash: text('image_hash').notNull(),
 });
 
 export const inventoryPlans = sqliteTable('inventory_plans', {

@@ -8,10 +8,6 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.assets.categoryId,
       to: r.categories.id,
     }),
-    createdBy: r.one.users({
-      from: r.assets.createdById,
-      to: r.users.id,
-    }),
   },
   categories: {
     assets: r.many.assets(),
