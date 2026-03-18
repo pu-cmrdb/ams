@@ -65,11 +65,19 @@ export const inventoryRouter = createTRPCRouter({
       limit: 'number.integer >= 1 = 20',
       /** 跳過筆數，預設 0 */
       offset: 'number.integer >= 0 = 0',
+      /** 排序欄位，預設 createdAt */
+      sort: '"name" | "status" | "startAt" | "dueAt" | "completedAt" | "createdAt" | "updatedAt" = "createdAt"',
+      /** 排序方向，預設 desc */
+      sortDirection: '"asc" | "desc" = "desc"',
     }))
     .query(async ({ ctx, input }) => {
       return ctx.db.query.inventoryPlans.findMany({
         limit: input.limit,
         offset: input.offset,
+        orderBy: (table, { asc, desc }) => {
+          const dir = input.sortDirection === 'asc' ? asc : desc;
+          return [dir(table[input.sort]), asc(table.id)];
+        },
       });
     }),
 });
