@@ -44,25 +44,30 @@ export const users = sqliteTable('users', {
 
 export const inventoryPlans = sqliteTable('inventory_plans', {
   /** 盤點計畫唯一識別碼 */
-  id:            text('id').primaryKey(),
+  id:          text('id').primaryKey(),
   /** 盤點計畫名稱 */
-  name:          text('name').notNull(),
+  name:        text('name').notNull(),
   /** 盤點計畫敘述 */
-  description:   text('description').notNull(),
+  description: text('description').notNull(),
   /** 發起人的使用者 ID */
-  createdById:   text('created_by_id').notNull(),
-  /** 盤點人員 ID 陣列 */
-  assignedToIds: text('assigned_to_ids', { mode: 'json' }).$type<string[]>().notNull(),
+  createdById: text('created_by_id').notNull(),
   /** 盤點開始時間 */
-  startAt:       integer('start_at', { mode: 'timestamp' }).notNull(),
+  startAt:     integer('start_at', { mode: 'timestamp' }).notNull(),
   /** 盤點截止時間 */
-  dueAt:         integer('due_at', { mode: 'timestamp' }).notNull(),
+  dueAt:       integer('due_at', { mode: 'timestamp' }).notNull(),
   /** 盤點完成時間，未完成時為 null */
-  completedAt:   integer('completed_at', { mode: 'timestamp' }),
+  completedAt: integer('completed_at', { mode: 'timestamp' }),
   /** 盤點範圍描述 */
-  scope:         text('scope').notNull(),
+  scope:       text('scope').notNull(),
   /** 盤點狀態，預設為 pending */
-  status:        text('status', { enum: ['pending', 'completed', 'cacelled'] }).notNull().default('pending'),
+  status:      text('status', { enum: ['pending', 'completed', 'cacelled'] }).notNull().default('pending'),
   createdAt,
   updatedAt,
+});
+
+export const inventoryPlanAssignees = sqliteTable('inventory_plan_assignees', {
+  /** 盤點計畫 ID */
+  planId: text('plan_id').notNull().references(() => inventoryPlans.id, cascadeActions),
+  /** 盤點人員使用者 ID */
+  userId: text('user_id').notNull(),
 });

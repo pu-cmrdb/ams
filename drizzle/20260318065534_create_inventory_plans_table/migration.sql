@@ -1,9 +1,14 @@
+CREATE TABLE `inventory_plan_assignees` (
+	`plan_id` text NOT NULL,
+	`user_id` text NOT NULL,
+	CONSTRAINT `fk_inventory_plan_assignees_plan_id_inventory_plans_id_fk` FOREIGN KEY (`plan_id`) REFERENCES `inventory_plans`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
+);
+--> statement-breakpoint
 CREATE TABLE `inventory_plans` (
 	`id` text PRIMARY KEY,
 	`name` text NOT NULL,
 	`description` text NOT NULL,
 	`created_by_id` text NOT NULL,
-	`assigned_to_ids` text NOT NULL,
 	`start_at` integer NOT NULL,
 	`due_at` integer NOT NULL,
 	`completed_at` integer,

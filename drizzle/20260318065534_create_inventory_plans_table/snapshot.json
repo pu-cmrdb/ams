@@ -1,7 +1,7 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "e1046bf9-9892-4612-b7ec-b3d7ff3ab4af",
+  "id": "4670ec60-67b3-453d-9bff-b8de056a3f38",
   "prevIds": [
     "ad37a8d3-6135-4b46-b12f-7aaffdb279ab"
   ],
@@ -12,6 +12,10 @@
     },
     {
       "name": "categories",
+      "entityType": "tables"
+    },
+    {
+      "name": "inventory_plan_assignees",
       "entityType": "tables"
     },
     {
@@ -154,6 +158,26 @@
     },
     {
       "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "plan_id",
+      "entityType": "columns",
+      "table": "inventory_plan_assignees"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "table": "inventory_plan_assignees"
+    },
+    {
+      "type": "text",
       "notNull": false,
       "autoincrement": false,
       "default": null,
@@ -189,16 +213,6 @@
       "default": null,
       "generated": null,
       "name": "created_by_id",
-      "entityType": "columns",
-      "table": "inventory_plans"
-    },
-    {
-      "type": "text",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "assigned_to_ids",
       "entityType": "columns",
       "table": "inventory_plans"
     },
@@ -346,6 +360,21 @@
       "name": "fk_categories_created_by_id_users_id_fk",
       "entityType": "fks",
       "table": "categories"
+    },
+    {
+      "columns": [
+        "plan_id"
+      ],
+      "tableTo": "inventory_plans",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "name": "fk_inventory_plan_assignees_plan_id_inventory_plans_id_fk",
+      "entityType": "fks",
+      "table": "inventory_plan_assignees"
     },
     {
       "columns": [

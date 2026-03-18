@@ -16,4 +16,13 @@ export const relations = defineRelations(schema, (r) => ({
   categories: {
     assets: r.many.assets(),
   },
+  inventoryPlans: {
+    assignees: r.many.inventoryPlanAssignees(),
+  },
+  inventoryPlanAssignees: {
+    plan: r.one.inventoryPlans({
+      from: r.inventoryPlanAssignees.planId,
+      to: r.inventoryPlans.id,
+    }),
+  },
 }));
