@@ -21,9 +21,9 @@ export const inventoryRouter = createTRPCRouter({
       const id = nanoid();
 
       const value = {
+        ...input,
         id,
         status: 'pending',
-        ...input,
       };
 
       const [result] = await ctx.db
