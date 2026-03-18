@@ -1,7 +1,7 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "b8405a66-bdc4-4494-bea6-ea5411c75c59",
+  "id": "e1046bf9-9892-4612-b7ec-b3d7ff3ab4af",
   "prevIds": [
     "ad37a8d3-6135-4b46-b12f-7aaffdb279ab"
   ],
@@ -16,10 +16,6 @@
     },
     {
       "name": "inventory_plans",
-      "entityType": "tables"
-    },
-    {
-      "name": "tasks",
       "entityType": "tables"
     },
     {
@@ -232,7 +228,7 @@
       "autoincrement": false,
       "default": null,
       "generated": null,
-      "name": "end_at",
+      "name": "completed_at",
       "entityType": "columns",
       "table": "inventory_plans"
     },
@@ -275,96 +271,6 @@
       "name": "updated_at",
       "entityType": "columns",
       "table": "inventory_plans"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "id",
-      "entityType": "columns",
-      "table": "tasks"
-    },
-    {
-      "type": "text",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "name",
-      "entityType": "columns",
-      "table": "tasks"
-    },
-    {
-      "type": "text",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "description",
-      "entityType": "columns",
-      "table": "tasks"
-    },
-    {
-      "type": "text",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "created_by_id",
-      "entityType": "columns",
-      "table": "tasks"
-    },
-    {
-      "type": "text",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "assigned_to_id",
-      "entityType": "columns",
-      "table": "tasks"
-    },
-    {
-      "type": "integer",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "due_at",
-      "entityType": "columns",
-      "table": "tasks"
-    },
-    {
-      "type": "integer",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "completed_at",
-      "entityType": "columns",
-      "table": "tasks"
-    },
-    {
-      "type": "integer",
-      "notNull": true,
-      "autoincrement": false,
-      "default": "(unixepoch())",
-      "generated": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "table": "tasks"
-    },
-    {
-      "type": "integer",
-      "notNull": true,
-      "autoincrement": false,
-      "default": "(unixepoch())",
-      "generated": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "table": "tasks"
     },
     {
       "type": "text",
@@ -440,36 +346,6 @@
       "name": "fk_categories_created_by_id_users_id_fk",
       "entityType": "fks",
       "table": "categories"
-    },
-    {
-      "columns": [
-        "created_by_id"
-      ],
-      "tableTo": "users",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "nameExplicit": false,
-      "name": "fk_tasks_created_by_id_users_id_fk",
-      "entityType": "fks",
-      "table": "tasks"
-    },
-    {
-      "columns": [
-        "assigned_to_id"
-      ],
-      "tableTo": "users",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "nameExplicit": false,
-      "name": "fk_tasks_assigned_to_id_users_id_fk",
-      "entityType": "fks",
-      "table": "tasks"
     },
     {
       "columns": [

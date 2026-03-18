@@ -6,8 +6,8 @@ CREATE TABLE `assets` (
 	`created_by_id` text NOT NULL,
 	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
 	`updated_at` integer DEFAULT (unixepoch()) NOT NULL,
-	CONSTRAINT `fk_assets_category_id_categories_id_fk` FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`),
-	CONSTRAINT `fk_assets_created_by_id_users_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `users`(`id`)
+	CONSTRAINT `fk_assets_category_id_categories_id_fk` FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT `fk_assets_created_by_id_users_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 --> statement-breakpoint
 CREATE TABLE `categories` (
@@ -17,20 +17,7 @@ CREATE TABLE `categories` (
 	`created_by_id` text NOT NULL,
 	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
 	`updated_at` integer DEFAULT (unixepoch()) NOT NULL,
-	CONSTRAINT `fk_categories_created_by_id_users_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `users`(`id`)
-);
---> statement-breakpoint
-CREATE TABLE `tasks` (
-	`id` text,
-	`name` text NOT NULL,
-	`description` text NOT NULL,
-	`created_by_id` text NOT NULL,
-	`assigned_to_id` text NOT NULL,
-	`due_at` integer NOT NULL,
-	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
-	`updated_at` integer DEFAULT (unixepoch()) NOT NULL,
-	CONSTRAINT `fk_tasks_created_by_id_users_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `users`(`id`),
-	CONSTRAINT `fk_tasks_assigned_to_id_users_id_fk` FOREIGN KEY (`assigned_to_id`) REFERENCES `users`(`id`)
+	CONSTRAINT `fk_categories_created_by_id_users_id_fk` FOREIGN KEY (`created_by_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 --> statement-breakpoint
 CREATE TABLE `users` (

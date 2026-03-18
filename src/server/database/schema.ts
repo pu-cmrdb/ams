@@ -36,18 +36,6 @@ export const categories = sqliteTable('categories', {
   updatedAt,
 });
 
-export const tasks = sqliteTable('tasks', {
-  id:           text('id'),
-  name:         text('name').notNull(),
-  description:  text('description').notNull(),
-  createdById:  text('created_by_id').notNull().references(() => users.id, cascadeActions),
-  assignedToId: text('assigned_to_id').notNull().references(() => users.id, cascadeActions),
-  dueAt:        integer('due_at', { mode: 'timestamp' }).notNull(),
-  completedAt:  integer('completed_at', { mode: 'timestamp' }),
-  createdAt,
-  updatedAt,
-});
-
 export const users = sqliteTable('users', {
   id:        text('id').primaryKey().unique(),
   name:      text('name').notNull(),
@@ -70,11 +58,11 @@ export const inventoryPlans = sqliteTable('inventory_plans', {
   /** 盤點截止時間 */
   dueAt:         integer('due_at', { mode: 'timestamp' }).notNull(),
   /** 盤點完成時間，未完成時為 null */
-  completedAt:   integer('end_at', { mode: 'timestamp' }),
+  completedAt:   integer('completed_at', { mode: 'timestamp' }),
   /** 盤點範圍描述 */
   scope:         text('scope').notNull(),
   /** 盤點狀態，預設為 pending */
-  status:        text('status').notNull().default('pending'),
+  status:        text('status', { enum: ['pending', 'completed', 'cacelled'] }).notNull().default('pending'),
   createdAt,
   updatedAt,
 });
