@@ -5,8 +5,8 @@ import * as schema from './schema';
 export const relations = defineRelations(schema, (r) => ({
   assets: {
     category: r.one.categories({
-      from: r.assets.category,
-      to: r.categories.name,
+      from: r.assets.categoryId,
+      to: r.categories.id,
     }),
     createdBy: r.one.users({
       from: r.assets.createdById,
@@ -15,5 +15,14 @@ export const relations = defineRelations(schema, (r) => ({
   },
   categories: {
     assets: r.many.assets(),
+  },
+  inventoryPlans: {
+    assignees: r.many.inventoryPlanAssignees(),
+  },
+  inventoryPlanAssignees: {
+    plan: r.one.inventoryPlans({
+      from: r.inventoryPlanAssignees.planId,
+      to: r.inventoryPlans.id,
+    }),
   },
 }));

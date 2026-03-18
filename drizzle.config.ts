@@ -12,6 +12,6 @@ export default {
     url: env.DATABASE_URL,
   },
   dialect: 'sqlite',
-  schema: './src/server/db/schema.ts',
+  schema: './src/server/database/schema.ts',
   tablesFilter: ['ams_*'],
 } satisfies Config;
