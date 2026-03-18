@@ -54,7 +54,7 @@ export const inventoryPlans = sqliteTable('inventory_plans', {
   /** 盤點範圍描述 */
   scope:       text('scope').notNull(),
   /** 盤點狀態，預設為 pending */
-  status:      text('status', { enum: ['pending', 'completed', 'cacelled'] }).notNull().default('pending'),
+  status:      text('status', { enum: ['pending', 'completed', 'cancelled'] }).notNull().default('pending'),
   createdAt,
   updatedAt,
 });
