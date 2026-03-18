@@ -20,7 +20,7 @@ const createdAt = integer('created_at', { mode: 'timestamp' })
 export const assets = sqliteTable('assets', {
   id:          text('id').primaryKey(),
   name:        text('name').notNull(),
-  category:    text('category').notNull().references(() => categories.name, cascadeActions),
+  categoryId:  text('category_id').notNull().references(() => categories.id, cascadeActions),
   description: text('description').notNull(),
   createdById: text('created_by_id').notNull().references(() => users.id, cascadeActions),
   createdAt,
@@ -28,7 +28,8 @@ export const assets = sqliteTable('assets', {
 });
 
 export const categories = sqliteTable('categories', {
-  name:        text('name').primaryKey().unique(),
+  id:          text('id').primaryKey(),
+  name:        text('name').notNull().unique(),
   color:       integer('color').notNull(),
   createdById: text('created_by_id').notNull().references(() => users.id, cascadeActions),
   createdAt,

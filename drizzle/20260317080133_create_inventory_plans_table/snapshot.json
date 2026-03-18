@@ -52,7 +52,7 @@
       "autoincrement": false,
       "default": null,
       "generated": null,
-      "name": "category",
+      "name": "category_id",
       "entityType": "columns",
       "table": "assets"
     },
@@ -99,6 +99,16 @@
     {
       "type": "text",
       "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "categories"
+    },
+    {
+      "type": "text",
+      "notNull": true,
       "autoincrement": false,
       "default": null,
       "generated": null,
@@ -388,16 +398,16 @@
     },
     {
       "columns": [
-        "category"
+        "category_id"
       ],
       "tableTo": "categories",
       "columnsTo": [
-        "name"
+        "id"
       ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
-      "name": "fk_assets_category_categories_name_fk",
+      "name": "fk_assets_category_id_categories_id_fk",
       "entityType": "fks",
       "table": "assets"
     },
@@ -472,7 +482,7 @@
     },
     {
       "columns": [
-        "name"
+        "id"
       ],
       "nameExplicit": false,
       "name": "categories_pk",
