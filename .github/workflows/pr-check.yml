@@ -29,6 +29,8 @@ jobs:
 
       - name: Pre generate Next.js types
         run: bun run typegen
+        env:
+          SKIP_ENV_VALIDATION: true
 
       - name: Lint
         run: bun run lint
