@@ -8,7 +8,7 @@
     "check": "bun run lint && tsc --noEmit",
     "dev": "next dev --turbo --port 3001",
     "lint": "eslint src",
-    "lint:fix": "eslint --fix",
+    "lint:fix": "eslint --fix src",
     "preview": "next build && next start",
     "start": "next start",
     "typecheck": "tsc --noEmit",
