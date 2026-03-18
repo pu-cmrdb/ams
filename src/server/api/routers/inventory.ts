@@ -8,7 +8,7 @@ import { InventoryPlans } from '@/server/database/type';
 import { schema } from '@/server/database';
 
 const CreateInventoryInput = InventoryPlans.insert
-  .omit('id')
+  .omit('id', 'createdById')
   .narrow((data, ctx) => data.assignedToIds.length > 0 || ctx.mustBe('not empty'));
 
 export const inventoryRouter = createTRPCRouter({
@@ -22,6 +22,7 @@ export const inventoryRouter = createTRPCRouter({
 
       const value = {
         ...input,
+        createdById: ctx.session.user.id,
         id,
         status: 'pending',
       };
