@@ -11,6 +11,7 @@
     "lint:fix": "eslint --fix src",
     "preview": "next build && next start",
     "start": "next start",
+    "typegen": "next typegen",
     "typecheck": "tsc --noEmit",
     "drizzle:generate": "drizzle-kit generate",
     "drizzle:migrate": "drizzle-kit migrate",

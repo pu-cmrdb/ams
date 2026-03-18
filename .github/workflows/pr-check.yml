@@ -1,6 +1,8 @@
 name: PR Check
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -25,11 +27,18 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Pre generate Next.js types
+        run: bun run typegen
+
       - name: Lint
         run: bun run lint
+        env:
+          BETTER_AUTH_SECRET: dummy-secret-for-ci-at-least-32-chars
 
       - name: Typecheck
         run: bun run typecheck
+        env:
+          BETTER_AUTH_SECRET: dummy-secret-for-ci-at-least-32-chars
 
   build:
     name: Build
