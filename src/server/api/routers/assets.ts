@@ -1,0 +1,286 @@
+import { TRPCError } from '@trpc/server';
+import { eq } from 'drizzle-orm';
+import { nanoid } from 'nanoid';
+import { type } from 'arktype';
+
+import assert from 'assert';
+
+import { BORROW_ROLE, OWNERSHIP_TYPE, SORT_KEYS, ownerShipTypeSchema, sortDirectionSchema, sortKeySchema } from '@/lib/utils';
+import { AssetAuthorizedLenders, Assets } from '@/server/database/type';
+import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
+import { schema } from '@/server/database';
+
+const CreateAssetsInput = Assets.insert
+  .omit('id', 'createdById', 'updatedById')
+  .and({
+    /** 當 borrowRule 為 restricted 時必填 */
+    'userIds?': 'string[]',
+  });
+const UpdateAssetsInput = Assets.update
+  .omit('createdById', 'updatedById').and({
+    /** 要有財產 ID 才可更新 */
+    'id': 'string',
+    /** 當 borrowRule 為 restricted 時必填 */
+    'userIds?': 'string[]',
+  });
+
+const SelectAssetsInput = type({
+  /** 財產群組 */
+  'categoryId?': 'string',
+  /** 關鍵字 */
+  'keyword?': 'string',
+  /** 每頁筆數，預設 20 */
+  'limit': 'number.integer >= 1 = 20',
+  /** 跳過筆數，預設 0 */
+  'offset': 'number.integer >= 0 = 0',
+  /**  歸屬單位 */
+  'ownershipType?': ownerShipTypeSchema,
+  /** 排序 */
+  'sort?': sortKeySchema,
+  /** 排序方向 */
+  'sortDirection': sortDirectionSchema,
+});
+
+const assetsByIdInput = type({
+  id: 'string > 0',
+});
+
+const setAuthorizedLendersInput = type({
+  // 空陣列代表清除所有授權人
+  assetId: 'string > 0',
+  userIds: 'string[]',
+});
+
+type AssetAuthorizedLendersINFER = typeof AssetAuthorizedLenders.insert.infer;
+
+export const assetsRouter = createTRPCRouter({
+  /** 新增財產（含 `borrow_rule` 與授權人設定） */
+  create: protectedProcedure
+    .input(CreateAssetsInput)
+    .mutation(async ({ ctx, input }) => {
+      if (input.ownershipType === OWNERSHIP_TYPE.SCHOOL && !input.schoolAssetNumber) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `schoolAssetNumber is required when ownershipType is school ! >_<`,
+        });
+      }
+      if (input.borrowRule === BORROW_ROLE.RESTRICTED
+        && (!input.userIds || input.userIds.length === 0)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'authorizedLenderIds is required when borrowRule is restricted ! >_<',
+        });
+      }
+      return await ctx.db.transaction(async (tx) => {
+        const { userIds, ...assetValues } = input;
+
+        const uniqueUserIds = userIds ? [...new Set(userIds)] : [];
+
+        const id = nanoid();
+        const [result] = await tx.insert(schema.assets).values({
+          ...assetValues,
+          createdById: ctx.session.user.id,
+          id: id,
+          updatedById: ctx.session.user.id,
+        }).returning(schema.assets._.columns);
+        assert(result !== undefined, 'result should never be undefined >_<');
+        let assetAuthorizedLendersResult: AssetAuthorizedLendersINFER[] = [];
+        if (input.borrowRule === BORROW_ROLE.RESTRICTED && uniqueUserIds.length !== 0) {
+          assetAuthorizedLendersResult = await tx.insert(schema.assetAuthorizedLenders)
+            .values(
+              uniqueUserIds.map((userId) => ({
+                assetId: id,
+                userId,
+              })))
+            .returning(schema.assetAuthorizedLenders._.columns); ;
+        }
+        return { ...result, authorizedLenders: assetAuthorizedLendersResult };
+      });
+    }),
+  /** 刪除財產 */
+  delete: protectedProcedure
+    .input(assetsByIdInput).mutation(async ({ ctx, input }) => {
+      await ctx.db.delete(schema.assetAuthorizedLenders).where(eq(schema.assetAuthorizedLenders.assetId, input.id));
+      await ctx.db.delete(schema.assets).where(eq(schema.assets.id, input.id));
+      return { success: true };
+    }),
+  /** 取得單一財產詳情（含授權出借人列表） */
+  get: protectedProcedure
+    .input(assetsByIdInput).query(async ({ ctx, input }) => {
+      const result = await ctx.db.query.assets
+        .findFirst({
+          where: { id: input.id },
+          with: {
+            authorizedLenders: true,
+            category: true,
+          },
+        });
+      if (!result) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `assets with id ${input.id} does not exists ! >_<`,
+        });
+      }
+      return { ...result };
+    }),
+  /** 取得財產列表（支援關鍵字搜尋、類別篩選、歸屬單位篩選、分頁） */
+  list: protectedProcedure
+    .input(SelectAssetsInput)
+    .query(async ({ ctx, input }) => {
+      const keyword = input.keyword?.trim();
+
+      const andConditions = [];
+
+      if (keyword) {
+        andConditions.push({
+          OR: [
+            { name: { like: `%${keyword}%` } },
+            { schoolAssetNumber: { like: `%${keyword}%` } },
+            { custodian: { like: `%${keyword}%` } },
+            { description: { like: `%${keyword}%` } },
+            { location: { like: `%${keyword}%` } },
+          ],
+        });
+      }
+
+      if (input.categoryId) {
+        andConditions.push({
+          categoryId: { eq: input.categoryId },
+        });
+      }
+
+      if (input.ownershipType) {
+        andConditions.push({
+          ownershipType: { eq: input.ownershipType },
+        });
+      }
+
+      const result = await ctx.db.query.assets.findMany({
+        limit: input.limit,
+        offset: input.offset,
+        orderBy: (table, { asc, desc }) => {
+          const dir = input.sortDirection === 'asc' ? asc : desc;
+          return [dir(table[input.sort ?? SORT_KEYS.UPDATEDAT]), asc(table.id)];
+        },
+        where: andConditions.length > 0 ? { AND: andConditions } : undefined,
+        with: { authorizedLenders: true, category: true },
+      });
+      return result.map(({ authorizedLenders, category, ...rest }) => {
+        if (!category) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: `assets with id ${rest.id}'s categoryId should not be null ! >_<`,
+          });
+        }
+        return {
+          ...rest,
+          authorizedLenders: authorizedLenders,
+          categoryName: category.name,
+        };
+      });
+    }),
+  /** 設定財產授權出借人（覆蓋式更新） */
+  setAuthorizedLenders: protectedProcedure
+    .input(setAuthorizedLendersInput)
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.transaction(async (tx) => {
+        await tx.delete(schema.assetAuthorizedLenders).where(eq(schema.assetAuthorizedLenders.assetId, input.assetId));
+        let result: AssetAuthorizedLendersINFER[] = [];
+        if (input.userIds.length > 0) {
+          result = await tx.insert(schema.assetAuthorizedLenders)
+            .values(
+              input.userIds.map((userId) => ({
+                assetId: input.assetId,
+                userId,
+              })))
+            .returning(schema.assetAuthorizedLenders._.columns);
+        }
+        return { result };
+      });
+    }),
+  /** 更新財產資料 */
+  update: protectedProcedure
+    .input(UpdateAssetsInput)
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.transaction(async (tx) => {
+        const { id, userIds, ...data } = input;
+        const existing = await tx.query.assets.findFirst({
+          where: {
+            AND: [{
+              id: {
+                eq: id,
+              },
+            }],
+          },
+          with: {
+            authorizedLenders: true,
+          },
+        });
+        if (!existing) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: `Asset with id ${id} does not exist`,
+          });
+        }
+        // userIds 若有傳，代表要覆蓋更新；若沒傳，保留現有名單
+        const normalizedUserIds = userIds !== undefined ? [...new Set(userIds)] : undefined;
+        const nextOwnershipType = data.ownershipType ?? existing.ownershipType;
+        const nextSchoolAssetNumber = data.schoolAssetNumber ?? existing.schoolAssetNumber;
+        const nextBorrowRule = data.borrowRule ?? existing.borrowRule;
+
+        const nextAuthorizedUserIds = normalizedUserIds
+          ?? existing.authorizedLenders.map((item) => item.userId);
+
+        if (nextOwnershipType === OWNERSHIP_TYPE.SCHOOL && !nextSchoolAssetNumber) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'schoolAssetNumber is required when ownershipType is school',
+          });
+        }
+        if (nextBorrowRule === BORROW_ROLE.RESTRICTED && nextAuthorizedUserIds.length === 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'userIds is required when borrowRule is restricted',
+          });
+        }
+
+        const [result] = await tx.update(schema.assets)
+          .set({
+            ...data,
+            updatedById: ctx.session.user.id,
+          })
+          .where(eq(schema.assets.id, id))
+          .returning(schema.assets._.columns);
+
+        assert(result !== undefined, 'result should never be undefined');
+
+        let authorizedLenders: AssetAuthorizedLendersINFER[] = existing.authorizedLenders;
+
+        // 規則：
+        // 1) 如果最終 borrowRule 不是 restricted，清空所有授權人
+        // 2) 如果最終 borrowRule 是 restricted 且有傳 userIds，覆蓋式更新
+        // 3) 如果最終 borrowRule 是 restricted 但沒傳 userIds，保留原本授權人
+        if (nextBorrowRule !== BORROW_ROLE.RESTRICTED) {
+          await tx.delete(schema.assetAuthorizedLenders)
+            .where(eq(schema.assetAuthorizedLenders.assetId, id));
+          authorizedLenders = [];
+        }
+        else if (normalizedUserIds !== undefined) {
+          await tx.delete(schema.assetAuthorizedLenders)
+            .where(eq(schema.assetAuthorizedLenders.assetId, id));
+          authorizedLenders = await tx.insert(schema.assetAuthorizedLenders)
+            .values(
+              normalizedUserIds.map((userId) => ({
+                assetId: id,
+                userId,
+              })),
+            )
+            .returning(schema.assetAuthorizedLenders._.columns);
+        }
+        return {
+          ...result,
+          authorizedLenders,
+        };
+      });
+    }),
+});

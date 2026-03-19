@@ -12,3 +12,21 @@ export const InventoryPlanAssignees = {
   insert: createInsertSchema(schema.inventoryPlanAssignees),
   select: createSelectSchema(schema.inventoryPlanAssignees),
 };
+
+export const Assets = {
+  insert: createInsertSchema(schema.assets).omit('createdAt', 'updatedAt'),
+  select: createSelectSchema(schema.assets),
+  update: createUpdateSchema(schema.assets).omit('createdAt', 'updatedAt'),
+};
+
+export const Categories = {
+  insert: createInsertSchema(schema.categories).omit('createdAt', 'updatedAt'),
+  select: createSelectSchema(schema.categories),
+  update: createUpdateSchema(schema.categories).omit('createdAt', 'updatedAt'),
+};
+
+export const AssetAuthorizedLenders = {
+  insert: createInsertSchema(schema.assetAuthorizedLenders),
+  select: createSelectSchema(schema.assetAuthorizedLenders),
+  update: createUpdateSchema(schema.assetAuthorizedLenders),
+};

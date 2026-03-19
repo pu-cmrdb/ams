@@ -10,29 +10,12 @@
   },
   "eslint.format.enable": true,
   "editor.formatOnSave": true,
-  "editor.rulers": [120],
+  "editor.rulers": [
+    120
+  ],
   "editor.indentSize": 2,
   "files.eol": "\n",
   "files.autoSave": "onFocusChange",
   "typescript.tsdk": "node_modules/typescript/lib",
   "peacock.color": "slategray",
-  "workbench.colorCustomizations": {
-    "activityBar.activeBackground": "#8d99a6",
-    "activityBar.background": "#8d99a6",
-    "activityBar.foreground": "#15202b",
-    "activityBar.inactiveForeground": "#15202b99",
-    "activityBarBadge.background": "#efcfde",
-    "activityBarBadge.foreground": "#15202b",
-    "commandCenter.border": "#e7e7e799",
-    "sash.hoverBorder": "#8d99a6",
-    "statusBar.background": "#708090",
-    "statusBar.foreground": "#e7e7e7",
-    "statusBarItem.hoverBackground": "#8d99a6",
-    "statusBarItem.remoteBackground": "#708090",
-    "statusBarItem.remoteForeground": "#e7e7e7",
-    "titleBar.activeBackground": "#708090",
-    "titleBar.activeForeground": "#e7e7e7",
-    "titleBar.inactiveBackground": "#70809099",
-    "titleBar.inactiveForeground": "#e7e7e799"
-  },
 }
