@@ -5,7 +5,14 @@ import { type } from 'arktype';
 
 import assert from 'assert';
 
-import { BORROW_ROLE, OWNERSHIP_TYPE, SORT_KEYS, ownerShipTypeSchema, sortDirectionSchema, sortKeySchema } from '@/lib/utils';
+import {
+  ASSETS_SORT_KEYS,
+  AssetsSortKeySchema,
+  BORROW_ROLE,
+  OWNERSHIP_TYPE,
+  OwnerShipTypeSchema,
+  SortDirectionSchema,
+} from '@/lib/enums';
 import { AssetAuthorizedLenders, Assets } from '@/server/database/type';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { schema } from '@/server/database';
@@ -23,7 +30,6 @@ const UpdateAssetsInput = Assets.update
     /** 當 borrowRule 為 restricted 時必填 */
     'userIds?': 'string[]',
   });
-
 const SelectAssetsInput = type({
   /** 財產群組 */
   'categoryId?': 'string',
@@ -34,17 +40,15 @@ const SelectAssetsInput = type({
   /** 跳過筆數，預設 0 */
   'offset': 'number.integer >= 0 = 0',
   /**  歸屬單位 */
-  'ownershipType?': ownerShipTypeSchema,
+  'ownershipType?': OwnerShipTypeSchema,
   /** 排序 */
-  'sort?': sortKeySchema,
+  'sort?': AssetsSortKeySchema,
   /** 排序方向 */
-  'sortDirection': sortDirectionSchema,
+  'sortDirection?': SortDirectionSchema,
 });
-
 const assetsByIdInput = type({
   id: 'string > 0',
 });
-
 const setAuthorizedLendersInput = type({
   // 空陣列代表清除所有授權人
   assetId: 'string > 0',
@@ -83,7 +87,7 @@ export const assetsRouter = createTRPCRouter({
           id: id,
           updatedById: ctx.session.user.id,
         }).returning(schema.assets._.columns);
-        assert(result !== undefined, 'result should never be undefined >_<');
+        assert(result !== undefined, 'result should never be undefined ! >_<');
         let assetAuthorizedLendersResult: AssetAuthorizedLendersINFER[] = [];
         if (input.borrowRule === BORROW_ROLE.RESTRICTED && uniqueUserIds.length !== 0) {
           assetAuthorizedLendersResult = await tx.insert(schema.assetAuthorizedLenders)
@@ -160,7 +164,7 @@ export const assetsRouter = createTRPCRouter({
         offset: input.offset,
         orderBy: (table, { asc, desc }) => {
           const dir = input.sortDirection === 'asc' ? asc : desc;
-          return [dir(table[input.sort ?? SORT_KEYS.UPDATEDAT]), asc(table.id)];
+          return [dir(table[input.sort ?? ASSETS_SORT_KEYS.UPDATEDAT]), asc(table.id)];
         },
         where: andConditions.length > 0 ? { AND: andConditions } : undefined,
         with: { authorizedLenders: true, category: true },
@@ -219,7 +223,7 @@ export const assetsRouter = createTRPCRouter({
         if (!existing) {
           throw new TRPCError({
             code: 'NOT_FOUND',
-            message: `Asset with id ${id} does not exist`,
+            message: `Asset with id ${id} does not exist ! >_<`,
           });
         }
         // userIds 若有傳，代表要覆蓋更新；若沒傳，保留現有名單
@@ -234,13 +238,13 @@ export const assetsRouter = createTRPCRouter({
         if (nextOwnershipType === OWNERSHIP_TYPE.SCHOOL && !nextSchoolAssetNumber) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: 'schoolAssetNumber is required when ownershipType is school',
+            message: 'schoolAssetNumber is required when ownershipType is school ! >_<',
           });
         }
         if (nextBorrowRule === BORROW_ROLE.RESTRICTED && nextAuthorizedUserIds.length === 0) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
-            message: 'userIds is required when borrowRule is restricted',
+            message: 'userIds is required when borrowRule is restricted ! >_<',
           });
         }
 
@@ -252,7 +256,7 @@ export const assetsRouter = createTRPCRouter({
           .where(eq(schema.assets.id, id))
           .returning(schema.assets._.columns);
 
-        assert(result !== undefined, 'result should never be undefined');
+        assert(result !== undefined, 'result should never be undefined ! >_<');
 
         let authorizedLenders: AssetAuthorizedLendersINFER[] = existing.authorizedLenders;
 

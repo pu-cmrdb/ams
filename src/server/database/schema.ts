@@ -4,7 +4,14 @@
 import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
-import { BORROW_ROLE, BORROW_ROLE_ENUM, OWNERSHIP_TYPE_ENUM, RECORD_STATUS_ENUM, STATUS_ENUM, STATUS_VALUES } from '@/lib/utils';
+import {
+  BORROW_ROLE,
+  BORROW_ROLE_ENUM,
+  OWNERSHIP_TYPE_ENUM,
+  RECORD_STATUS_ENUM,
+  STATUS_ENUM,
+  STATUS_VALUES,
+} from '@/lib/enums';
 
 const cascadeActions = {
   onDelete: 'cascade',
