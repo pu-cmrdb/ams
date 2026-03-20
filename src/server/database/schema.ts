@@ -52,7 +52,7 @@ export const assets = sqliteTable('assets', {
   createdById:       text('created_by_id').notNull(),
   /** 最後更新此財產資料的人的 ID */
   updatedById:       text('updated_by_id').notNull(),
-  /** 狀態 */
+  /** 狀態  borrowed（借來的）lost（遺失）normal（正常）repairing（修理）scrapped（報廢）  */
   status:            text('status', { enum: ASSETS_STATUS_ENUM }).notNull().default(ASSETS_STATUS.NORMAL),
   /** 地點描述 */
   location:          text('location').notNull(),

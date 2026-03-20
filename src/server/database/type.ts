@@ -30,3 +30,9 @@ export const AssetAuthorizedLenders = {
   select: createSelectSchema(schema.assetAuthorizedLenders),
   update: createUpdateSchema(schema.assetAuthorizedLenders),
 };
+
+export const BorrowRecords = {
+  insert: createInsertSchema(schema.borrowRecords).omit('createdAt', 'updatedAt'),
+  select: createSelectSchema(schema.borrowRecords),
+  update: createUpdateSchema(schema.borrowRecords).omit('createdAt', 'updatedAt'),
+};

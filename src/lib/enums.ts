@@ -57,7 +57,7 @@ export const OWNERSHIP_TYPE_ENUM = valuesToTuple(OWNERSHIP_TYPE);
 /** 財產排序設定 */
 export const ASSETS_SORT_KEYS = {
   /** 根據群組 */
-  CATEGORYId: 'categoryId',
+  CATEGORYID: 'categoryId',
   /** 根據建立時間 */
   CREATEDAT: 'createdAt',
   /** 根據名稱 */

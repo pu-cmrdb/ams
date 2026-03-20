@@ -1,5 +1,5 @@
+import { count, eq } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { type } from 'arktype';
 
@@ -33,79 +33,84 @@ const UpdateCategoryInput = Categories.update
 const CategoryByIdInput = type({
   id: 'string > 0',
 });
-
-/**
- * 判斷是否為 categories.name 的 unique constraint 錯誤
- */
-function isCategoryNameUniqueConstraintError(error: unknown): boolean {
-  const parts: string[] = [];
-  if (error instanceof Error) {
-    parts.push(error.message);
-  }
-  if (error && typeof error === 'object' && 'cause' in error && error.cause instanceof Error) {
-    parts.push(error.cause.message);
-  }
-  if (error && typeof error === 'object' && 'code' in error && typeof error.code === 'string') {
-    parts.push(error.code);
-  }
-  const message = parts.join(' ').toLowerCase();
-  return (
-    message.includes('sqlite_constraint_unique')
-    || message.includes('unique constraint failed: categories.name')
-    || (message.includes('unique constraint failed') && message.includes('categories.name'))
-  );
-}
+const CategoryDeleteInput = CategoryByIdInput.and({
+  deleteAssets: 'boolean = false',
+});
 
 export const categoryRouter = createTRPCRouter({
   /** 新增財產類別 */
   create: protectedProcedure
     .input(CreateCategoryInput)
     .mutation(async ({ ctx, input }) => {
-      try {
-        const [result] = await ctx.db.insert(schema.categories)
-          .values({
-            id: nanoid(),
-            ...input,
-          }).returning(schema.categories._.columns);
-        assert(result !== undefined, 'result should never be undefined ! >_<');
-        return { ...result };
+      const existing = await ctx.db.query.categories.findFirst({
+        columns: { id: true },
+        where: { name: { eq: input.name } },
+      });
+
+      if (existing) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `Category name "${input.name}" already exists ! >_<`,
+        });
       }
-      catch (error) {
-        if (isCategoryNameUniqueConstraintError(error)) {
-          throw new TRPCError({
-            cause: error,
-            code: 'CONFLICT',
-            message: `Category name "${input.name}" already exists ! >_<`,
-          });
-        }
-        throw error;
-      }
+
+      const [result] = await ctx.db
+        .insert(schema.categories)
+        .values({
+          id: nanoid(),
+          ...input,
+          name: input.name,
+        })
+        .returning(schema.categories._.columns);
+
+      assert(result !== undefined, 'result should never be undefined ! >_<');
+      return { ...result };
     }),
   /** 刪除財產類別 */
   delete: protectedProcedure
-    .input(CategoryByIdInput).mutation(async ({ ctx, input }) => {
+    .input(CategoryDeleteInput)
+    .mutation(async ({ ctx, input }) => {
+      const assets = await ctx.db
+        .select({ value: count() })
+        .from(schema.assets)
+        .where(eq(schema.assets.categoryId, input.id));
+      const assetCount = assets[0]?.value ?? 0;
+
+      if (assetCount > 0 && !input.deleteAssets) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Cannot delete category ${input.id} because it still contains ${assetCount} asset(s) ! >_<
+          Set deleteAssets=true to confirm cascading deletion.`,
+        });
+      }
       const result = await ctx.db
         .delete(schema.categories)
         .where(eq(schema.categories.id, input.id))
         .returning({ id: schema.categories.id });
+
       if (result.length === 0) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: `Category with id ${input.id} does not exist ! >_<`,
         });
       }
-      return { success: true };
+      return {
+        deletedAssetCount: assetCount,
+        deletedCategoryId: result[0]?.id,
+        success: true,
+      };
     }),
   /** 取得所有財產類別 */
   list: protectedProcedure
     .input(SelectCategoryInput)
     .query(async ({ ctx, input }) => {
       const keyword = input.keyword?.trim();
+      const escapedKeyword = keyword?.replace(/[%_\\]/g, '\\$&');
       const andConditions = [];
       if (keyword) {
         andConditions.push({
           OR: [
-            { name: { like: `%${keyword}%` } },
+            { name: { like: `%${escapedKeyword}%` } },
           ],
         });
       }
@@ -124,33 +129,56 @@ export const categoryRouter = createTRPCRouter({
   update: protectedProcedure
     .input(UpdateCategoryInput)
     .mutation(async ({ ctx, input }) => {
-      try {
-        const { id, ...data } = input;
-        const [result] = await ctx.db.update(schema.categories)
-          .set({
-            ...data,
-          })
-          .where(eq(schema.categories.id, id))
-          .returning(schema.categories._.columns);
-        if (!result) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: `Category with id ${id} does not exist ! >_<`,
-          });
-        }
-        return {
-          ...result,
-        };
+      const { id } = input;
+
+      const current = await ctx.db.query.categories
+        .findFirst({
+          columns: { id: true, name: true },
+          where: { id: { eq: id } },
+        });
+
+      if (!current) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Category with id ${id} does not exist ! >_<`,
+        });
       }
-      catch (error) {
-        if (isCategoryNameUniqueConstraintError(error)) {
+
+      // 只有在名稱真的變更時，才需要查重
+      if (current.name !== input.name) {
+        const duplicate = await ctx.db.query.categories.findFirst({
+          columns: { id: true },
+          where: {
+            AND: [
+              {
+                name: {
+                  eq: input.name,
+                },
+              }, {
+                id: {
+                  ne: id,
+                },
+              },
+            ],
+          },
+        });
+        if (duplicate) {
           throw new TRPCError({
-            cause: error,
             code: 'CONFLICT',
             message: `Category name "${input.name}" already exists ! >_<`,
           });
         }
-        throw error;
       }
+      const [result] = await ctx.db
+        .update(schema.categories)
+        .set({
+          name: input.name,
+        })
+        .where(eq(schema.categories.id, id))
+        .returning(schema.categories._.columns);
+      assert(result !== undefined, 'result should never be undefined ! >_<');
+      return {
+        ...result,
+      };
     }),
 });

@@ -96,7 +96,7 @@ export const assetsRouter = createTRPCRouter({
                 assetId: id,
                 userId,
               })))
-            .returning(schema.assetAuthorizedLenders._.columns); ;
+            .returning(schema.assetAuthorizedLenders._.columns);
         }
         return { ...result, authorizedLenders: assetAuthorizedLendersResult };
       });
@@ -104,9 +104,11 @@ export const assetsRouter = createTRPCRouter({
   /** 刪除財產 */
   delete: protectedProcedure
     .input(assetsByIdInput).mutation(async ({ ctx, input }) => {
-      await ctx.db.delete(schema.assetAuthorizedLenders).where(eq(schema.assetAuthorizedLenders.assetId, input.id));
-      await ctx.db.delete(schema.assets).where(eq(schema.assets.id, input.id));
-      return { success: true };
+      return await ctx.db.transaction(async (tx) => {
+        await tx.delete(schema.assetAuthorizedLenders).where(eq(schema.assetAuthorizedLenders.assetId, input.id));
+        await tx.delete(schema.assets).where(eq(schema.assets.id, input.id));
+        return { success: true };
+      });
     }),
   /** 取得單一財產詳情（含授權出借人列表） */
   get: protectedProcedure
@@ -132,17 +134,18 @@ export const assetsRouter = createTRPCRouter({
     .input(SelectAssetsInput)
     .query(async ({ ctx, input }) => {
       const keyword = input.keyword?.trim();
+      const escapedKeyword = keyword?.replace(/[%_\\]/g, '\\$&');
 
       const andConditions = [];
 
       if (keyword) {
         andConditions.push({
           OR: [
-            { name: { like: `%${keyword}%` } },
-            { schoolAssetNumber: { like: `%${keyword}%` } },
-            { custodian: { like: `%${keyword}%` } },
-            { description: { like: `%${keyword}%` } },
-            { location: { like: `%${keyword}%` } },
+            { name: { like: `%${escapedKeyword}%` } },
+            { schoolAssetNumber: { like: `%${escapedKeyword}%` } },
+            { custodian: { like: `%${escapedKeyword}%` } },
+            { description: { like: `%${escapedKeyword}%` } },
+            { location: { like: `%${escapedKeyword}%` } },
           ],
         });
       }
@@ -172,7 +175,7 @@ export const assetsRouter = createTRPCRouter({
       return result.map(({ authorizedLenders, category, ...rest }) => {
         if (!category) {
           throw new TRPCError({
-            code: 'NOT_FOUND',
+            code: 'INTERNAL_SERVER_ERROR',
             message: `assets with id ${rest.id}'s categoryId should not be null ! >_<`,
           });
         }
@@ -209,13 +212,7 @@ export const assetsRouter = createTRPCRouter({
       return ctx.db.transaction(async (tx) => {
         const { id, userIds, ...data } = input;
         const existing = await tx.query.assets.findFirst({
-          where: {
-            AND: [{
-              id: {
-                eq: id,
-              },
-            }],
-          },
+          where: { id: { eq: id } },
           with: {
             authorizedLenders: true,
           },
