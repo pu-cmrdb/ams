@@ -5,12 +5,12 @@ import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { sql } from 'drizzle-orm';
 
 import {
+  ASSETS_STATUS,
+  ASSETS_STATUS_ENUM,
   BORROW_ROLE,
   BORROW_ROLE_ENUM,
   OWNERSHIP_TYPE_ENUM,
   RECORD_STATUS_ENUM,
-  STATUS_ENUM,
-  STATUS_VALUES,
 } from '@/lib/enums';
 
 const cascadeActions = {
@@ -53,7 +53,7 @@ export const assets = sqliteTable('assets', {
   /** 最後更新此財產資料的人的 ID */
   updatedById:       text('updated_by_id').notNull(),
   /** 狀態 */
-  status:            text('status', { enum: STATUS_ENUM }).notNull().default(STATUS_VALUES.NORMAL),
+  status:            text('status', { enum: ASSETS_STATUS_ENUM }).notNull().default(ASSETS_STATUS.NORMAL),
   /** 地點描述 */
   location:          text('location').notNull(),
   /** 購置日期 */

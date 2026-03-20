@@ -3,7 +3,7 @@ import { type } from 'arktype';
 import { valuesToTuple } from '@/lib/utils';
 
 /** 狀態設定 */
-export const STATUS_VALUES = {
+export const ASSETS_STATUS = {
   /** 借來的 */
   BORROWED: 'borrowed',
   /** 遺失 */
@@ -15,9 +15,9 @@ export const STATUS_VALUES = {
   /** 報廢 */
   SCRAPPED: 'scrapped',
 } as const;
-export type Status = typeof STATUS_VALUES[keyof typeof STATUS_VALUES];
-export const StatusSchema = type.valueOf(STATUS_VALUES);
-export const STATUS_ENUM = valuesToTuple(STATUS_VALUES);
+export type AssetsStatus = typeof ASSETS_STATUS[keyof typeof ASSETS_STATUS];
+export const AssetsStatusSchema = type.valueOf(ASSETS_STATUS);
+export const ASSETS_STATUS_ENUM = valuesToTuple(ASSETS_STATUS);
 
 /** 出借權限 */
 export const BORROW_ROLE = {
