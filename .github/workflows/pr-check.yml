@@ -63,3 +63,9 @@ jobs:
         env:
           SKIP_ENV_VALIDATION: true
           BETTER_AUTH_SECRET: dummy-secret-for-ci-at-least-32-chars
+          APP_DEV_URL: https://example.com
+          APP_PROD_URL: https://example.com
+          BETTER_AUTH_IAM_CLIENT_ID: dummy-client-id
+          BETTER_AUTH_IAM_CLIENT_SECRET: dummy-client-secret
+          BETTER_AUTH_IAM_URL: https://example.com
+          DATABASE_URL: file:./db.sqlite
