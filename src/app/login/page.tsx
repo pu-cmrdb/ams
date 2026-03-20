@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
 import { PlaneTakeoffIcon } from 'lucide-react';
+import { useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { authClient } from '@/server/auth/client';
+import { useMountEffect } from '@/hooks/use-mount-effect';
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
@@ -17,9 +18,9 @@ export default function LoginPage() {
       providerId: 'identity',
     }), [callbackUrl]);
 
-  useEffect(() => {
+  useMountEffect(() => {
     initiateOAuth();
-  }, [initiateOAuth]);
+  });
 
   return (
     <div className="grid h-dvh w-dvw place-items-center">
