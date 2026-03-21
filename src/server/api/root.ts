@@ -1,5 +1,6 @@
 import { createCallerFactory, createTRPCRouter } from '@/server/api/trpc';
 import { assetsRouter } from '@/server/api/routers/assets';
+import { borrowRouter } from '@/server/api/routers/borrow';
 import { categoryRouter } from '@/server/api/routers/category';
 import { inventoryRouter } from '@/server/api/routers/inventory';
 
@@ -10,6 +11,7 @@ import { inventoryRouter } from '@/server/api/routers/inventory';
  */
 export const appRouter = createTRPCRouter({
   asset: assetsRouter,
+  borrow: borrowRouter,
   category: categoryRouter,
   inventory: inventoryRouter,
 });

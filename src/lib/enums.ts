@@ -75,6 +75,20 @@ export const SortDirection = defineEnum({
   /** 升序 => 小 → 大 / A → Z / 舊 → 新 */
   Asc: 'asc',
   /** 降序 => 大 → 小 / Z → A / 新 → 舊 */
-  Desc: 'desc',
+  DESC: 'desc',
 } as const);
 export type SortDirection = typeof SortDirection.$schema.infer;
+
+/** 借閱記錄排序設定 */
+export const BORROW_RECORDS_SORT_KEYS = {
+  /** 根據借用時間 */
+  BORROW_DATE: 'borrowDate',
+  /** 根據建立時間 */
+  CREATED_AT: 'createdAt',
+  /** 根據預計歸還時間 */
+  EXPECTED_RETURN_DATE: 'expectedReturnDate',
+  /** 根據更新時間 */
+  UPDATED_AT: 'updatedAt',
+} as const;
+export type BorrowRecordsSortKeyType = typeof BORROW_RECORDS_SORT_KEYS[keyof typeof BORROW_RECORDS_SORT_KEYS];
+export const BorrowRecordsSortKeySchema = type.valueOf(BORROW_RECORDS_SORT_KEYS);
