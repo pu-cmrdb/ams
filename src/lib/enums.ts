@@ -92,3 +92,17 @@ export const SORT_DIRECTION = {
 
 export type SortDirectionType = typeof SORT_DIRECTION[keyof typeof SORT_DIRECTION];
 export const SortDirectionSchema = type.valueOf(SORT_DIRECTION);
+
+/** 借閱記錄排序設定 */
+export const BORROW_RECORDS_SORT_KEYS = {
+  /** 根據借用時間 */
+  BORROW_DATE: 'borrowDate',
+  /** 根據建立時間 */
+  CREATED_AT: 'createdAt',
+  /** 根據預計歸還時間 */
+  EXPECTED_RETURN_DATE: 'expectedReturnDate',
+  /** 根據更新時間 */
+  UPDATED_AT: 'updatedAt',
+} as const;
+export type BorrowRecordsSortKeyType = typeof BORROW_RECORDS_SORT_KEYS[keyof typeof BORROW_RECORDS_SORT_KEYS];
+export const BorrowRecordsSortKeySchema = type.valueOf(BORROW_RECORDS_SORT_KEYS);
