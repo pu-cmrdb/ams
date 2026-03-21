@@ -15,12 +15,12 @@ export const ASSETS_STATUS = {
   /** 報廢 */
   SCRAPPED: 'scrapped',
 } as const;
-export type AssetsStatus = typeof ASSETS_STATUS[keyof typeof ASSETS_STATUS];
+export type AssetsStatusType = typeof ASSETS_STATUS[keyof typeof ASSETS_STATUS];
 export const AssetsStatusSchema = type.valueOf(ASSETS_STATUS);
 export const ASSETS_STATUS_ENUM = valuesToTuple(ASSETS_STATUS);
 
 /** 出借權限 */
-export const BORROW_ROLE = {
+export const BORROW_RULE = {
   /** 不可借 */
   NONE: 'none',
   /** 所有人可借 */
@@ -28,9 +28,9 @@ export const BORROW_ROLE = {
   /** 限授權人開單 */
   RESTRICTED: 'restricted',
 } as const;
-export type BorrowRole = typeof BORROW_ROLE[keyof typeof BORROW_ROLE];
-export const BorrowRoleSchema = type.valueOf(BORROW_ROLE);
-export const BORROW_ROLE_ENUM = valuesToTuple(BORROW_ROLE);
+export type BorrowRoleType = typeof BORROW_RULE[keyof typeof BORROW_RULE];
+export const BorrowRoleSchema = type.valueOf(BORROW_RULE);
+export const BORROW_RULE_ENUM = valuesToTuple(BORROW_RULE);
 
 /** 單據狀態 */
 export const RECORD_STATUS = {
@@ -39,7 +39,7 @@ export const RECORD_STATUS = {
   /** 已歸還 */
   RETURNED: 'returned',
 } as const;
-export type RecordStatus = typeof RECORD_STATUS[keyof typeof RECORD_STATUS];
+export type RecordStatusType = typeof RECORD_STATUS[keyof typeof RECORD_STATUS];
 export const RecordStatusSchema = type.valueOf(RECORD_STATUS);
 export const RECORD_STATUS_ENUM = valuesToTuple(RECORD_STATUS);
 
@@ -50,36 +50,36 @@ export const OWNERSHIP_TYPE = {
   /** 學校 */
   SCHOOL: 'school',
 } as const;
-export type OwnerShip = typeof OWNERSHIP_TYPE[keyof typeof OWNERSHIP_TYPE];
+export type OwnerShipType = typeof OWNERSHIP_TYPE[keyof typeof OWNERSHIP_TYPE];
 export const OwnerShipTypeSchema = type.valueOf(OWNERSHIP_TYPE);
 export const OWNERSHIP_TYPE_ENUM = valuesToTuple(OWNERSHIP_TYPE);
 
 /** 財產排序設定 */
 export const ASSETS_SORT_KEYS = {
   /** 根據群組 */
-  CATEGORYID: 'categoryId',
+  CATEGORY_ID: 'categoryId',
   /** 根據建立時間 */
-  CREATEDAT: 'createdAt',
+  CREATED_AT: 'createdAt',
   /** 根據名稱 */
   NAME: 'name',
   /** 根據狀態 */
   STATUS: 'status',
-  /** 根據建立時間 */
-  UPDATEDAT: 'updatedAt',
+  /** 根據更新時間 */
+  UPDATED_AT: 'updatedAt',
 } as const;
-export type AssetsSortKey = typeof ASSETS_SORT_KEYS[keyof typeof ASSETS_SORT_KEYS];
+export type AssetsSortKeyType = typeof ASSETS_SORT_KEYS[keyof typeof ASSETS_SORT_KEYS];
 export const AssetsSortKeySchema = type.valueOf(ASSETS_SORT_KEYS);
 
 /** 財產類別排序設定 */
 export const CATEGORY_SORT_KEYS = {
   /** 根據建立時間 */
-  CREATEDAT: 'createdAt',
+  CREATED_AT: 'createdAt',
   /** 根據名稱 */
   NAME: 'name',
-  /** 根據建立時間 */
-  UPDATEDAT: 'updatedAt',
+  /** 根據更新時間 */
+  UPDATED_AT: 'updatedAt',
 } as const;
-export type CategorySortKey = typeof CATEGORY_SORT_KEYS[keyof typeof CATEGORY_SORT_KEYS];
+export type CategorySortKeyType = typeof CATEGORY_SORT_KEYS[keyof typeof CATEGORY_SORT_KEYS];
 export const CategorySortKeySchema = type.valueOf(CATEGORY_SORT_KEYS);
 
 /** 排序方向 */
@@ -90,5 +90,5 @@ export const SORT_DIRECTION = {
   DESC: 'desc',
 } as const;
 
-export type SortDirection = typeof SORT_DIRECTION[keyof typeof SORT_DIRECTION];
+export type SortDirectionType = typeof SORT_DIRECTION[keyof typeof SORT_DIRECTION];
 export const SortDirectionSchema = type.valueOf(SORT_DIRECTION);

@@ -7,8 +7,8 @@ import { sql } from 'drizzle-orm';
 import {
   ASSETS_STATUS,
   ASSETS_STATUS_ENUM,
-  BORROW_ROLE,
-  BORROW_ROLE_ENUM,
+  BORROW_RULE,
+  BORROW_RULE_ENUM,
   OWNERSHIP_TYPE_ENUM,
   RECORD_STATUS_ENUM,
 } from '@/lib/enums';
@@ -59,7 +59,7 @@ export const assets = sqliteTable('assets', {
   /** 購置日期 */
   purchaseDate:      integer('purchase_date', { mode: 'timestamp' }),
   /** 借用權限：public（所有人可借）、restricted（限授權人開單）、none（不可借） */
-  borrowRule:        text('borrow_rule', { enum: BORROW_ROLE_ENUM }).notNull().default(BORROW_ROLE.PUBLIC),
+  borrowRule:        text('borrow_rule', { enum: BORROW_RULE_ENUM }).notNull().default(BORROW_RULE.PUBLIC),
   createdAt,
   updatedAt,
 });

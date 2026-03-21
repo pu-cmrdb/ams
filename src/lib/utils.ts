@@ -1,7 +1,10 @@
 import { clsx } from 'clsx';
+import { sql } from 'drizzle-orm';
 import { twMerge } from 'tailwind-merge';
 
+import type { AnyColumn } from 'drizzle-orm';
 import type { ClassValue } from 'clsx';
+import type { SQL } from 'drizzle-orm';
 
 /**
  * 合併多個 class 名稱並解決 Tailwind CSS 衝突
@@ -50,4 +53,63 @@ export function valuesToTuple<T extends Record<string, string>>(
   }
 
   return values as [T[keyof T], ...T[keyof T][]];
+}
+
+const LIKE_ESCAPE_CHAR = '\\' as const;
+
+type ColumnKeyOf<TTable extends object> = {
+  [K in Extract<keyof TTable, string>]: TTable[K] extends AnyColumn ? K : never;
+}[Extract<keyof TTable, string>];
+
+/**
+ * 建立包含關鍵字的 `LIKE` SQL 條件，並附加 `ESCAPE` 子句
+ *
+ * 此函式適用於 Drizzle relational queries 的 `RAW: (table) => ...` callback，
+ * 可避免直接把 `table.xxx` 當成 `any` 傳入 helper 時觸發型別與 lint 問題
+ *
+ * @typeParam TTable - Drizzle relational query callback 中的資料表型別
+ * @param table - `RAW` callback 提供的資料表物件
+ * @param columnKey - 欄位名稱，例如 `'name'`、`'location'`
+ * @param keyword - 使用者輸入的搜尋關鍵字
+ * @returns 對應的 SQL `LIKE ... ESCAPE ...` 條件片段
+ *
+ * @example
+ * containsLike(table, 'name', '100%');
+ * // => table.name LIKE '%100\%%' ESCAPE '\'
+ */
+export function containsLike<TTable extends object>(
+  table: TTable,
+  columnKey: ColumnKeyOf<TTable>,
+  keyword: string,
+): SQL {
+  const pattern = `%${escapeLikePattern(keyword)}%`;
+  const column = table[columnKey];
+  return sql`${column} LIKE ${pattern} ESCAPE ${LIKE_ESCAPE_CHAR}`;
+}
+
+/**
+ * 轉義 SQL `LIKE` pattern 中具有特殊意義的字元，使其以字面值比對
+ *
+ * 會處理以下字元：
+ * - `%`：任意長度萬用字元
+ * - `_`：單一字元萬用字元
+ * - `\`：escape 字元本身
+ *
+ * @param value - 要轉義的原始字串。
+ * @returns 可安全用於 SQL `LIKE` pattern 的字串
+ *
+ * @example
+ * escapeLikePattern('100%');
+ * // => '100\\%'
+ *
+ * @example
+ * escapeLikePattern('A_01');
+ * // => 'A\\_01'
+ *
+ * @example
+ * escapeLikePattern('C:\\temp');
+ * // => 'C:\\\\temp'
+ */
+export function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, '\\$&');
 }

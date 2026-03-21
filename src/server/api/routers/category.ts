@@ -8,7 +8,10 @@ import assert from 'assert';
 import { CATEGORY_SORT_KEYS, CategorySortKeySchema, SortDirectionSchema } from '@/lib/enums';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { Categories } from '@/server/database/type';
+import { containsLike } from '@/lib/utils';
 import { schema } from '@/server/database';
+
+type CategoriesTable = typeof schema.categories;
 
 const CreateCategoryInput = Categories.insert.omit('id');
 const SelectCategoryInput = type({
@@ -33,12 +36,20 @@ const UpdateCategoryInput = Categories.update
 const CategoryByIdInput = type({
   id: 'string > 0',
 });
-const CategoryDeleteInput = CategoryByIdInput.and({
-  deleteAssets: 'boolean = false',
-});
+const CategoryDeleteInput = CategoryByIdInput
+  .and({
+  /**
+   * 注意！！
+   * 將 deleteAssets 設為 true 可能會導致該類別（及其關聯行）中的所有資產也被刪除。
+   * 因此不建議這樣做。
+   */
+    deleteAssets: 'boolean = false',
+  });
 
 export const categoryRouter = createTRPCRouter({
-  /** 新增財產類別 */
+  /**
+   * 新增財產類別
+   */
   create: protectedProcedure
     .input(CreateCategoryInput)
     .mutation(async ({ ctx, input }) => {
@@ -59,14 +70,15 @@ export const categoryRouter = createTRPCRouter({
         .values({
           id: nanoid(),
           ...input,
-          name: input.name,
         })
         .returning(schema.categories._.columns);
 
       assert(result !== undefined, 'result should never be undefined ! >_<');
-      return { ...result };
+      return { result };
     }),
-  /** 刪除財產類別 */
+  /**
+   * 刪除財產類別
+   */
   delete: protectedProcedure
     .input(CategoryDeleteInput)
     .mutation(async ({ ctx, input }) => {
@@ -79,8 +91,12 @@ export const categoryRouter = createTRPCRouter({
       if (assetCount > 0 && !input.deleteAssets) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: `Cannot delete category ${input.id} because it still contains ${assetCount} asset(s) ! >_<
-          Set deleteAssets=true to confirm cascading deletion.`,
+          message: `
+Unable to delete category ${input.id} because it still contains ${assetCount} assets! >_<
+Set deleteAssets=true to confirm cascading deletion.
+Note! Setting deleteAssets to true may cause all assets in that category (and its dependent rows) to be deleted as well.
+Therefore, it is not recommended.
+`,
         });
       }
       const result = await ctx.db
@@ -100,20 +116,13 @@ export const categoryRouter = createTRPCRouter({
         success: true,
       };
     }),
-  /** 取得所有財產類別 */
+  /**
+   * 取得所有財產類別
+   * */
   list: protectedProcedure
     .input(SelectCategoryInput)
     .query(async ({ ctx, input }) => {
       const keyword = input.keyword?.trim();
-      const escapedKeyword = keyword?.replace(/[%_\\]/g, '\\$&');
-      const andConditions = [];
-      if (keyword) {
-        andConditions.push({
-          OR: [
-            { name: { like: `%${escapedKeyword}%` } },
-          ],
-        });
-      }
       const result = await ctx.db.query.categories.findMany({
         limit: input.limit,
         offset: input.offset,
@@ -121,11 +130,21 @@ export const categoryRouter = createTRPCRouter({
           const dir = input.sortDirection === 'asc' ? asc : desc;
           return [dir(table[input.sort ?? CATEGORY_SORT_KEYS.NAME]), asc(table.id)];
         },
-        where: andConditions.length > 0 ? { AND: andConditions } : undefined,
+        where: {
+          AND: [
+            keyword
+              ? {
+                  RAW: (table: CategoriesTable) => containsLike(table, 'name', keyword),
+                }
+              : undefined,
+          ].filter((v): v is NonNullable<typeof v> => v != null),
+        },
       });
       return result;
     }),
-  /** 更新財產類別名稱 */
+  /**
+   * 更新財產類別名稱
+   */
   update: protectedProcedure
     .input(UpdateCategoryInput)
     .mutation(async ({ ctx, input }) => {
@@ -162,6 +181,7 @@ export const categoryRouter = createTRPCRouter({
             ],
           },
         });
+
         if (duplicate) {
           throw new TRPCError({
             code: 'CONFLICT',
@@ -169,6 +189,7 @@ export const categoryRouter = createTRPCRouter({
           });
         }
       }
+
       const [result] = await ctx.db
         .update(schema.categories)
         .set({
@@ -177,6 +198,7 @@ export const categoryRouter = createTRPCRouter({
         .where(eq(schema.categories.id, id))
         .returning(schema.categories._.columns);
       assert(result !== undefined, 'result should never be undefined ! >_<');
+
       return {
         ...result,
       };

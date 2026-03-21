@@ -10,9 +10,7 @@
   },
   "eslint.format.enable": true,
   "editor.formatOnSave": true,
-  "editor.rulers": [
-    120
-  ],
+  "editor.rulers": [120],
   "editor.indentSize": 2,
   "files.eol": "\n",
   "files.autoSave": "onFocusChange",
