@@ -33,7 +33,7 @@ export const assets = sqliteTable('assets', {
   /** 財產名稱 */
   name:              text('name').notNull(),
   /** 歸屬單位：school（學校列管）或 cmrdb（社團自購） */
-  ownershipType:     text('ownership_type', { enum: OwnershipType.$enum }).notNull(),
+  ownershipType:     text('ownership_type', { enum: OwnershipType.$values }).notNull(),
   /** 學校產編：ownershipType 為 school 時必填 */
   schoolAssetNumber: text('school_asset_number'),
   /** 數量 */
@@ -51,13 +51,13 @@ export const assets = sqliteTable('assets', {
   /** 最後更新此財產資料的人的 ID */
   updatedById:       text('updated_by_id').notNull(),
   /** 狀態  borrowed（借來的）lost（遺失）normal（正常）repairing（修理）scrapped（報廢）  */
-  status:            text('status', { enum: AssetStatus.$enum }).notNull().default(AssetStatus.Normal),
+  status:            text('status', { enum: AssetStatus.$values }).notNull().default(AssetStatus.Normal),
   /** 地點描述 */
   location:          text('location').notNull(),
   /** 購置日期 */
   purchaseDate:      integer('purchase_date', { mode: 'timestamp' }),
   /** 借用權限：public（所有人可借）、restricted（限授權人開單）、none（不可借） */
-  borrowRule:        text('borrow_rule', { enum: BorrowRule.$enum }).notNull().default(BorrowRule.Public),
+  borrowRule:        text('borrow_rule', { enum: BorrowRule.$values }).notNull().default(BorrowRule.Public),
   createdAt,
   updatedAt,
 });
@@ -95,7 +95,7 @@ export const borrowRecords = sqliteTable('borrow_records', {
   /** 實際借用人/拿走東西的人 */
   borrowerId:         text('borrower_id').notNull(),
   /** 單據狀態 */
-  recordStatus:       text('record_status', { enum: RecordStatus.$enum }).notNull(),
+  recordStatus:       text('record_status', { enum: RecordStatus.$values }).notNull(),
   /** 借出時間 */
   borrowDate:         integer('borrow_date', { mode: 'timestamp' }).notNull(),
   /** 預計歸還時間 */

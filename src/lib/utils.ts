@@ -9,26 +9,18 @@ import type { SQL } from 'drizzle-orm';
 
 type EnumLike<T extends EnumLikeInput> = {
   /**
-   * 至少包含一個元素的 tuple。
-   *
-   * 適合用在需要 `[T, ...T[]]` 型別的場景，
-   * 例如 SQLite 的 enum 定義 API。
-   */
-  readonly $enum: NonEmptyTuple<Values<T>>;
-
-  /**
    * ArkType schema，可用來做 runtime validation，
    * 並透過 `typeof EnumName.$schema.infer` 取得對應 union type。
    */
   readonly $schema: ReturnType<typeof type.valueOf<T>>;
 
   /**
-   * 此 enum-like 物件的所有值陣列。
+   * 至少包含一個元素的 tuple。
    *
-   * 例如：
-   * `['active', 'returned']`
+   * 適合用在需要 `[T, ...T[]]` 型別的場景，
+   * 例如 SQLite 的 enum 定義 API。
    */
-  readonly $values: readonly Values<T>[];
+  readonly $values: NonEmptyTuple<Values<T>>;
 
 } & Readonly<T>;
 
@@ -57,14 +49,13 @@ export function cn(...inputs: ClassValue[]) {
  * 定義一個具備：
  * - 列舉值存取（如 `Status.ACTIVE`）
  * - ArkType schema（`$schema`）
- * - 所有值陣列（`$values`）
  * - SQLite Enum 定義
  *
  * 的 enum-like 常數物件。
  *
  * @template T - 由字串 key 對應 primitive value（string / number / symbol）的定義物件
  * @param definition - enum-like 定義物件，建議搭配 `as const` 使用以保留 literal type
- * @returns 一個經過 `Object.freeze()` 的唯讀物件，包含原始定義、`$enum`、`$schema` 與 `$values`
+ * @returns 一個經過 `Object.freeze()` 的唯讀物件，包含原始定義、`$schema` 與 `$values`
  *
  * @example
  * ```ts
@@ -76,21 +67,18 @@ export function cn(...inputs: ClassValue[]) {
  * type Status = typeof STATUS.$schema.infer; // 'active' | 'inactive'
  *
  * STATUS.ACTIVE; // 'active'
- * STATUS.$values; // ['active', 'inactive']
  *
  * // SQLite Enum 定義
- * status: text('status', { enum: AssetStatus.$enum }).notNull().default(AssetStatus.Normal),
+ * status: text('status', { enum: AssetStatus.$values }).notNull().default(AssetStatus.Normal),
  *
  * ```
  */
 export function defineEnum<const T extends EnumLikeInput>(definition: T): EnumLike<T> {
-  const $enum = valuesToTuple(definition);
-  const $values = Object.values(definition) as Values<T>[];
+  const $values = valuesToTuple(definition);
   const $schema = type.valueOf(definition);
 
   return Object.freeze({
     ...definition,
-    $enum,
     $schema,
     $values,
   }) as EnumLike<T>;
