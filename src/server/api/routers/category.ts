@@ -36,15 +36,7 @@ const UpdateCategoryInput = Categories.update
 const CategoryByIdInput = type({
   id: 'string > 0',
 });
-const CategoryDeleteInput = CategoryByIdInput
-  .and({
-  /**
-   * 注意！！
-   * 將 deleteAssets 設為 true 可能會導致該類別（及其關聯行）中的所有資產也被刪除。
-   * 因此不建議這樣做。
-   */
-    deleteAssets: 'boolean = false',
-  });
+const CategoryDeleteInput = CategoryByIdInput;
 
 export const categoryRouter = createTRPCRouter({
   /**
@@ -87,18 +79,6 @@ export const categoryRouter = createTRPCRouter({
         .from(schema.assets)
         .where(eq(schema.assets.categoryId, input.id));
       const assetCount = assets[0]?.value ?? 0;
-
-      if (assetCount > 0 && !input.deleteAssets) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: `
-Unable to delete category ${input.id} because it still contains ${assetCount} assets! >_<
-Set deleteAssets=true to confirm cascading deletion.
-Note! Setting deleteAssets to true may cause all assets in that category (and its dependent rows) to be deleted as well.
-Therefore, it is not recommended.
-`,
-        });
-      }
       const result = await ctx.db
         .delete(schema.categories)
         .where(eq(schema.categories.id, input.id))
