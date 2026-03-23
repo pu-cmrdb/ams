@@ -5,7 +5,7 @@ import { type } from 'arktype';
 
 import assert from 'assert';
 
-import { CATEGORY_SORT_KEYS, CategorySortKeySchema, SortDirectionSchema } from '@/lib/enums';
+import { CategorySortKey, SortDirection } from '@/lib/enums';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { Categories } from '@/server/database/type';
 import { containsLike } from '@/lib/utils';
@@ -22,9 +22,9 @@ const SelectCategoryInput = type({
   /** 跳過筆數，預設 0 */
   'offset': 'number.integer >= 0 = 0',
   /** 排序 */
-  'sort?': CategorySortKeySchema,
+  'sort?': CategorySortKey.$schema,
   /** 排序方向 */
-  'sortDirection?': SortDirectionSchema,
+  'sortDirection?': SortDirection.$schema,
 });
 const UpdateCategoryInput = Categories.update
   .and({
@@ -128,7 +128,7 @@ Therefore, it is not recommended.
         offset: input.offset,
         orderBy: (table, { asc, desc }) => {
           const dir = input.sortDirection === 'asc' ? asc : desc;
-          return [dir(table[input.sort ?? CATEGORY_SORT_KEYS.NAME]), asc(table.id)];
+          return [dir(table[input.sort ?? CategorySortKey.Name]), asc(table.id)];
         },
         where: {
           AND: [
