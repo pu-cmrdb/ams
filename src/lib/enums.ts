@@ -1,7 +1,5 @@
 import { defineEnum } from '@/lib/utils';
 
-import type { Expand, GitPullRequestCreate } from 'lucide-react';
-
 /** 財產排序設定 */
 export const AssetsSortKey = defineEnum({
   /** 根據群組 */
@@ -75,9 +73,9 @@ export type RecordStatus = typeof RecordStatus.$schema.infer;
 /** 排序方向 */
 export const SortDirection = defineEnum({
   /** 升序 => 小 → 大 / A → Z / 舊 → 新 */
-  Asc: 'asc',
+  Ascending: 'asc',
   /** 降序 => 大 → 小 / Z → A / 新 → 舊 */
-  DESC: 'desc',
+  Descending: 'desc',
 } as const);
 export type SortDirection = typeof SortDirection.$schema.infer;
 
