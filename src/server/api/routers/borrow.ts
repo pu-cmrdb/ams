@@ -5,14 +5,7 @@ import { type } from 'arktype';
 
 import assert from 'assert';
 
-import {
-  ASSETS_STATUS,
-  BORROW_RECORDS_SORT_KEYS,
-  BorrowRecordsSortKeySchema,
-  RECORD_STATUS,
-  RecordStatusSchema,
-  SortDirectionSchema,
-} from '@/lib/enums';
+import { AssetStatus, BorrowRecordSortKey, RecordStatus, SortDirection } from '@/lib/enums';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { BorrowRecords } from '@/server/database/type';
 import { schema } from '@/server/database';
@@ -40,11 +33,11 @@ const SelectBorrowRecordsInput = type({
   /** 跳過筆數 */
   'offset': 'number.integer >= 0 = 0',
   /** 單據狀態 */
-  'recordStatus?': RecordStatusSchema,
+  'recordStatus?': RecordStatus.$schema,
   /** 排序 */
-  'sort?': BorrowRecordsSortKeySchema,
+  'sort?': BorrowRecordSortKey.$schema,
   /** 排序方向 */
-  'sortDirection?': SortDirectionSchema,
+  'sortDirection?': SortDirection.$schema,
 });
 
 const GetBorrowRecordInput = type({
@@ -58,7 +51,7 @@ export const borrowRouter = createTRPCRouter({
       const andConditions = [];
       andConditions.push({
         assetId: { eq: input.assetId },
-        status: { eq: ASSETS_STATUS.NORMAL },
+        status: { eq: AssetStatus.Normal },
       });
       const asset = await ctx.db.query.assets.findFirst({
         where: { AND: andConditions },
@@ -71,14 +64,17 @@ export const borrowRouter = createTRPCRouter({
                 },
               }],
             },
-          } },
+          },
+        },
       });
+
       if (!asset) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: `Asset with id ${input.assetId} does not exist or has an invalid status ! >_<`,
         });
       }
+
       let creatorId = ctx.session.user.id;
       if (asset.authorizedLenders[0] && !input.creatorId) {
         throw new TRPCError({
@@ -89,12 +85,13 @@ export const borrowRouter = createTRPCRouter({
       if (asset.authorizedLenders[0]?.userId && asset.authorizedLenders[0].userId === input.creatorId) {
         creatorId = asset.authorizedLenders[0].userId;
       }
+
       const [result] = await ctx.db.transaction(async (tx) => {
         const [record] = await tx.insert(schema.borrowRecords)
           .values({
             creatorId: creatorId,
             id: nanoid(),
-            recordStatus: RECORD_STATUS.ACTIVE,
+            recordStatus: RecordStatus.Active,
             ...input,
           }).returning(schema.borrowRecords._.columns);
 
@@ -102,7 +99,7 @@ export const borrowRouter = createTRPCRouter({
 
         await tx.update(schema.assets)
           .set({
-            status: ASSETS_STATUS.BORROWED,
+            status: AssetStatus.Borrowed,
             updatedById: ctx.session.user.id,
           })
           .where(eq(schema.assets.id, input.assetId));
@@ -163,7 +160,7 @@ export const borrowRouter = createTRPCRouter({
         offset: input.offset,
         orderBy: (table, { asc, desc }) => {
           const dir = input.sortDirection === 'asc' ? asc : desc;
-          const sortKey = input.sort ?? BORROW_RECORDS_SORT_KEYS.CREATED_AT;
+          const sortKey = input.sort ?? BorrowRecordSortKey.CreatedAt;
           return [dir(table[sortKey]), asc(table.id)];
         },
         where: andConditions.length > 0 ? { AND: andConditions } : undefined,
@@ -215,7 +212,7 @@ export const borrowRouter = createTRPCRouter({
         const [updatedRecord] = await tx.update(schema.borrowRecords)
           .set({
             actualReturnDate: new Date(),
-            recordStatus: RECORD_STATUS.RETURNED,
+            recordStatus: RecordStatus.Returned,
             ...(input.notes !== undefined && { notes: input.notes }),
           })
           .where(eq(schema.borrowRecords.id, input.borrowRecordId))
@@ -225,7 +222,7 @@ export const borrowRouter = createTRPCRouter({
 
         await tx.update(schema.assets)
           .set({
-            status: ASSETS_STATUS.NORMAL,
+            status: AssetStatus.Normal,
             updatedById: ctx.session.user.id,
           })
           .where(eq(schema.assets.id, record.assetId));

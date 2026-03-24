@@ -1,5 +1,7 @@
 import { defineEnum } from '@/lib/utils';
 
+import type { Expand, GitPullRequestCreate } from 'lucide-react';
+
 /** 財產排序設定 */
 export const AssetsSortKey = defineEnum({
   /** 根據群組 */
@@ -80,15 +82,14 @@ export const SortDirection = defineEnum({
 export type SortDirection = typeof SortDirection.$schema.infer;
 
 /** 借閱記錄排序設定 */
-export const BORROW_RECORDS_SORT_KEYS = {
+export const BorrowRecordSortKey = defineEnum({
   /** 根據借用時間 */
-  BORROW_DATE: 'borrowDate',
+  BorrowDate: 'borrowDate',
   /** 根據建立時間 */
-  CREATED_AT: 'createdAt',
+  CreatedAt: 'createdAt',
   /** 根據預計歸還時間 */
-  EXPECTED_RETURN_DATE: 'expectedReturnDate',
+  ExpectedReturnDate: 'expectedReturnDate',
   /** 根據更新時間 */
-  UPDATED_AT: 'updatedAt',
-} as const;
-export type BorrowRecordsSortKeyType = typeof BORROW_RECORDS_SORT_KEYS[keyof typeof BORROW_RECORDS_SORT_KEYS];
-export const BorrowRecordsSortKeySchema = type.valueOf(BORROW_RECORDS_SORT_KEYS);
+  UpdatedAt: 'updatedAt',
+} as const);
+export type BorrowRecordSortKey = typeof BorrowRecordSortKey.$schema.infer;
