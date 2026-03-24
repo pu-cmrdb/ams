@@ -5,15 +5,7 @@ import { type } from 'arktype';
 
 import assert from 'assert';
 
-import {
-  ASSETS_SORT_KEYS,
-  ASSETS_STATUS,
-  AssetsSortKeySchema,
-  BORROW_RULE,
-  OWNERSHIP_TYPE,
-  OwnerShipTypeSchema,
-  SortDirectionSchema,
-} from '@/lib/enums';
+import { AssetStatus, AssetsSortKey, BorrowRule, OwnershipType, SortDirection } from '@/lib/enums';
 import { AssetAuthorizedLenders, Assets } from '@/server/database/type';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { containsLike } from '@/lib/utils';
@@ -45,11 +37,11 @@ const SelectAssetsInput = type({
   /** 跳過筆數，預設 0 */
   'offset': 'number.integer >= 0 = 0',
   /**  歸屬單位 */
-  'ownershipType?': OwnerShipTypeSchema,
+  'ownershipType?': OwnershipType.$schema,
   /** 排序 */
-  'sort?': AssetsSortKeySchema,
+  'sort?': AssetsSortKey.$schema,
   /** 排序方向 */
-  'sortDirection?': SortDirectionSchema,
+  'sortDirection?': SortDirection.$schema,
 });
 const assetsByIdInput = type({
   id: 'string > 0',
@@ -69,13 +61,13 @@ export const assetsRouter = createTRPCRouter({
   create: protectedProcedure
     .input(CreateAssetsInput)
     .mutation(async ({ ctx, input }) => {
-      if (input.ownershipType === OWNERSHIP_TYPE.SCHOOL && !input.schoolAssetNumber) {
+      if (input.ownershipType === OwnershipType.School && !input.schoolAssetNumber) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: `schoolAssetNumber is required when ownershipType is school ! >_<`,
         });
       }
-      if (input.borrowRule === BORROW_RULE.RESTRICTED
+      if (input.borrowRule === BorrowRule.Restricted
         && (!input.userIds || input.userIds.length === 0)) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
@@ -96,7 +88,7 @@ export const assetsRouter = createTRPCRouter({
         }).returning(schema.assets._.columns);
         assert(result !== undefined, 'result should never be undefined ! >_<');
 
-        if (input.borrowRule !== BORROW_RULE.RESTRICTED || uniqueUserIds.length === 0) {
+        if (input.borrowRule !== BorrowRule.Restricted || uniqueUserIds.length === 0) {
           return { ...result, authorizedLenders: [] };
         }
 
@@ -158,7 +150,7 @@ export const assetsRouter = createTRPCRouter({
         offset: input.offset,
         orderBy: (table, { asc, desc }) => {
           const dir = input.sortDirection === 'asc' ? asc : desc;
-          return [dir(table[input.sort ?? ASSETS_SORT_KEYS.UPDATED_AT]), asc(table.id)];
+          return [dir(table[input.sort ?? AssetsSortKey.UpdatedAt]), asc(table.id)];
         },
 
         where: {
@@ -224,7 +216,7 @@ export const assetsRouter = createTRPCRouter({
             message: `Asset with id ${input.assetId} does not exist ! >_<`,
           });
         }
-        if (check.borrowRule !== BORROW_RULE.RESTRICTED) {
+        if (check.borrowRule !== BorrowRule.Restricted) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
             message: `Asset ${input.assetId} must have borrowRule="restricted" before setting authorized lenders ! >_<`,
@@ -243,7 +235,7 @@ export const assetsRouter = createTRPCRouter({
           return { result };
         }
         else {
-          if (check.status === ASSETS_STATUS.BORROWED) {
+          if (check.status === AssetStatus.Borrowed) {
             throw new TRPCError({
               code: 'BAD_REQUEST',
               message: `The asset with ID ${input.assetId} cannot be in the "borrowed" status ! >_<`,
@@ -283,13 +275,13 @@ export const assetsRouter = createTRPCRouter({
         const nextAuthorizedUserIds = normalizedUserIds
           ?? existing.authorizedLenders.map((item) => item.userId);
 
-        if (nextOwnershipType === OWNERSHIP_TYPE.SCHOOL && !nextSchoolAssetNumber) {
+        if (nextOwnershipType === OwnershipType.School && !nextSchoolAssetNumber) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
             message: 'schoolAssetNumber is required when ownershipType is school ! >_<',
           });
         }
-        if (nextBorrowRule === BORROW_RULE.RESTRICTED && nextAuthorizedUserIds.length === 0) {
+        if (nextBorrowRule === BorrowRule.Restricted && nextAuthorizedUserIds.length === 0) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
             message: 'userIds is required when borrowRule is restricted ! >_<',
@@ -312,7 +304,7 @@ export const assetsRouter = createTRPCRouter({
         // 1) 如果最終 borrowRule 不是 restricted，清空所有授權人
         // 2) 如果最終 borrowRule 是 restricted 且有傳 userIds，覆蓋式更新
         // 3) 如果最終 borrowRule 是 restricted 但沒傳 userIds，保留原本授權人
-        if (nextBorrowRule !== BORROW_RULE.RESTRICTED) {
+        if (nextBorrowRule !== BorrowRule.Restricted) {
           await tx.delete(schema.assetAuthorizedLenders)
             .where(eq(schema.assetAuthorizedLenders.assetId, id));
           authorizedLenders = [];

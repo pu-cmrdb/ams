@@ -5,7 +5,7 @@ import { type } from 'arktype';
 
 import assert from 'assert';
 
-import { CATEGORY_SORT_KEYS, CategorySortKeySchema, SortDirectionSchema } from '@/lib/enums';
+import { CategorySortKey, SortDirection } from '@/lib/enums';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { Categories } from '@/server/database/type';
 import { containsLike } from '@/lib/utils';
@@ -22,9 +22,9 @@ const SelectCategoryInput = type({
   /** 跳過筆數，預設 0 */
   'offset': 'number.integer >= 0 = 0',
   /** 排序 */
-  'sort?': CategorySortKeySchema,
+  'sort?': CategorySortKey.$schema,
   /** 排序方向 */
-  'sortDirection?': SortDirectionSchema,
+  'sortDirection?': SortDirection.$schema,
 });
 const UpdateCategoryInput = Categories.update
   .and({
@@ -36,15 +36,7 @@ const UpdateCategoryInput = Categories.update
 const CategoryByIdInput = type({
   id: 'string > 0',
 });
-const CategoryDeleteInput = CategoryByIdInput
-  .and({
-  /**
-   * 注意！！
-   * 將 deleteAssets 設為 true 可能會導致該類別（及其關聯行）中的所有資產也被刪除。
-   * 因此不建議這樣做。
-   */
-    deleteAssets: 'boolean = false',
-  });
+const CategoryDeleteInput = CategoryByIdInput;
 
 export const categoryRouter = createTRPCRouter({
   /**
@@ -87,18 +79,6 @@ export const categoryRouter = createTRPCRouter({
         .from(schema.assets)
         .where(eq(schema.assets.categoryId, input.id));
       const assetCount = assets[0]?.value ?? 0;
-
-      if (assetCount > 0 && !input.deleteAssets) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: `
-Unable to delete category ${input.id} because it still contains ${assetCount} assets! >_<
-Set deleteAssets=true to confirm cascading deletion.
-Note! Setting deleteAssets to true may cause all assets in that category (and its dependent rows) to be deleted as well.
-Therefore, it is not recommended.
-`,
-        });
-      }
       const result = await ctx.db
         .delete(schema.categories)
         .where(eq(schema.categories.id, input.id))
@@ -128,7 +108,7 @@ Therefore, it is not recommended.
         offset: input.offset,
         orderBy: (table, { asc, desc }) => {
           const dir = input.sortDirection === 'asc' ? asc : desc;
-          return [dir(table[input.sort ?? CATEGORY_SORT_KEYS.NAME]), asc(table.id)];
+          return [dir(table[input.sort ?? CategorySortKey.Name]), asc(table.id)];
         },
         where: {
           AND: [
