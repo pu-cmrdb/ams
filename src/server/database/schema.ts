@@ -4,12 +4,7 @@
 import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
-import {
-  AssetStatus,
-  BorrowRule,
-  OwnershipType,
-  RecordStatus,
-} from '@/lib/enums';
+import { AssetStatus, BorrowRule, OwnershipType, RecordStatus } from '@/lib/enums';
 
 const cascadeActions = {
   onDelete: 'cascade',
@@ -84,18 +79,20 @@ export const assetAuthorizedLenders = sqliteTable('asset_authorized_lenders', {
   }),
 ]);
 
-/** 財產借用紀錄表 */
+/** 財產借用單 */
 export const borrowRecords = sqliteTable('borrow_records', {
   /** 借用紀錄主鍵 ID */
   id:                 text('id').primaryKey(),
   /** 借用的財產 */
   assetId:            text('asset_id').notNull().references(() => assets.id, cascadeActions),
-  /** 開單人：只有此人有權限點擊「歸還」或修改此單據 */
+  /** 開單人 */
   creatorId:          text('creator_id').notNull(),
   /** 實際借用人/拿走東西的人 */
   borrowerId:         text('borrower_id').notNull(),
   /** 單據狀態 */
   recordStatus:       text('record_status', { enum: RecordStatus.$values }).notNull(),
+  /** 數量 */
+  quantity:           integer('quantity').notNull(),
   /** 借出時間 */
   borrowDate:         integer('borrow_date', { mode: 'timestamp' }).notNull(),
   /** 預計歸還時間 */
