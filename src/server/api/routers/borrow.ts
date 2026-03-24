@@ -25,9 +25,11 @@ const SelectBorrowRecordsInput = BorrowRecords.select.partial()
     sortDirection: SortDirection.$schema.default(SortDirection.Descending),
   });
 
-const UpdateBorrowRecordsInput = BorrowRecords.update.and({
-  id: 'string > 0',
-});
+const UpdateBorrowRecordsInput = BorrowRecords.update
+  .omit('assetId', 'borrowerId')
+  .and({
+    id: 'string > 0',
+  });
 
 const GetBorrowRecordInput = type({
   id: 'string > 0',
@@ -63,11 +65,20 @@ export const borrowRouter = createTRPCRouter({
         });
       }
 
-      if (asset.borrowRule === BorrowRule.Restricted
-        && !asset.authorizedLenders.some(({ userId }) => userId === ctx.session.user.id)) {
+      if (asset.borrowRule === BorrowRule.None
+        || (asset.borrowRule === BorrowRule.Restricted
+          && !asset.authorizedLenders.some(({ userId }) => userId === ctx.session.user.id))) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: `你沒有權限建立這個財產的出借單`,
+        });
+      }
+
+      // TODO(kamiya4047,DavidWu94): 財產紀錄 junction table 數量計算
+      if (input.quantity > asset.quantity) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `出借數量不能超過庫存數量`,
         });
       }
 
