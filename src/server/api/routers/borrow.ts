@@ -59,7 +59,7 @@ export const borrowRouter = createTRPCRouter({
       if (!asset) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: `找不到 ID 為 ${input.assetId} 的財產 >_<`,
+          message: `找不到 ID 為 ${input.assetId} 的財產`,
         });
       }
 
@@ -67,7 +67,7 @@ export const borrowRouter = createTRPCRouter({
         && !asset.authorizedLenders.some(({ userId }) => userId === ctx.session.user.id)) {
         throw new TRPCError({
           code: 'FORBIDDEN',
-          message: `你沒有權限建立這個財產的出借單 >_<`,
+          message: `你沒有權限建立這個財產的出借單`,
         });
       }
 
@@ -85,7 +85,7 @@ export const borrowRouter = createTRPCRouter({
           .values(value)
           .returning(schema.borrowRecords._.columns);
 
-        assert(inserted !== undefined, 'record should never be undefined >_<');
+        assert(inserted !== undefined, 'record should never be undefined');
 
         // TODO(kamiya4047,DavidWu94): 討論處理借出後財產狀態更新
 
@@ -111,7 +111,7 @@ export const borrowRouter = createTRPCRouter({
       if (!record) {
         throw new TRPCError({
           code: 'NOT_FOUND',
-          message: `找不到 ID 為 ${input.id} 的借用單 >_<`,
+          message: `找不到 ID 為 ${input.id} 的借用單`,
         });
       }
 
@@ -170,14 +170,14 @@ export const borrowRouter = createTRPCRouter({
       if (!record?.asset) {
         throw new TRPCError({
           code: 'NOT_FOUND',
-          message: `找不到 ID 為 ${id} 的借用單 >_<`,
+          message: `找不到 ID 為 ${id} 的借用單`,
         });
       }
 
       if (ctx.session.user.id !== record.creatorId) {
         throw new TRPCError({
           code: 'FORBIDDEN',
-          message: '你沒有權限更新這個出借單 >_<',
+          message: '你沒有權限更新這個出借單',
         });
       }
 
@@ -187,7 +187,7 @@ export const borrowRouter = createTRPCRouter({
           .where(eq(schema.borrowRecords.id, id))
           .returning(schema.borrowRecords._.columns);
 
-        assert(updatedRecord !== undefined, 'updatedRecord should never be undefined ! >_<');
+        assert(updatedRecord !== undefined, 'updatedRecord should never be undefined');
 
         // TODO(kamiya4047,DavidWu94): 討論處理歸還後財產狀態更新
 

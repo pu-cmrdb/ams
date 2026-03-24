@@ -53,7 +53,7 @@ export const categoryRouter = createTRPCRouter({
       if (existing) {
         throw new TRPCError({
           code: 'CONFLICT',
-          message: `Category name "${input.name}" already exists ! >_<`,
+          message: `Category name "${input.name}" already exists`,
         });
       }
 
@@ -65,7 +65,7 @@ export const categoryRouter = createTRPCRouter({
         })
         .returning(schema.categories._.columns);
 
-      assert(result !== undefined, 'result should never be undefined ! >_<');
+      assert(result !== undefined, 'result should never be undefined');
       return { result };
     }),
   /**
@@ -87,7 +87,7 @@ export const categoryRouter = createTRPCRouter({
       if (result.length === 0) {
         throw new TRPCError({
           code: 'NOT_FOUND',
-          message: `Category with id ${input.id} does not exist ! >_<`,
+          message: `Category with id ${input.id} does not exist`,
         });
       }
       return {
@@ -139,7 +139,7 @@ export const categoryRouter = createTRPCRouter({
       if (!current) {
         throw new TRPCError({
           code: 'NOT_FOUND',
-          message: `Category with id ${id} does not exist ! >_<`,
+          message: `Category with id ${id} does not exist`,
         });
       }
 
@@ -165,7 +165,7 @@ export const categoryRouter = createTRPCRouter({
         if (duplicate) {
           throw new TRPCError({
             code: 'CONFLICT',
-            message: `Category name "${input.name}" already exists ! >_<`,
+            message: `Category name "${input.name}" already exists`,
           });
         }
       }
@@ -177,7 +177,7 @@ export const categoryRouter = createTRPCRouter({
         })
         .where(eq(schema.categories.id, id))
         .returning(schema.categories._.columns);
-      assert(result !== undefined, 'result should never be undefined ! >_<');
+      assert(result !== undefined, 'result should never be undefined');
 
       return {
         ...result,
