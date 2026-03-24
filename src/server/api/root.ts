@@ -1,4 +1,6 @@
 import { createCallerFactory, createTRPCRouter } from '@/server/api/trpc';
+import { assetsRouter } from '@/server/api/routers/assets';
+import { categoryRouter } from '@/server/api/routers/category';
 import { inventoryRouter } from '@/server/api/routers/inventory';
 
 /**
@@ -7,6 +9,8 @@ import { inventoryRouter } from '@/server/api/routers/inventory';
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
+  asset: assetsRouter,
+  category: categoryRouter,
   inventory: inventoryRouter,
 });
 

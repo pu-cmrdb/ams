@@ -1,37 +1,109 @@
 /* eslint-disable perfectionist/sort-objects */
 /* eslint @stylistic/key-spacing: ['warn', {align: 'value'}] */
 
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
+
+import {
+  AssetStatus,
+  BorrowRule,
+  OwnershipType,
+  RecordStatus,
+} from '@/lib/enums';
 
 const cascadeActions = {
   onDelete: 'cascade',
   onUpdate: 'cascade',
 } as const;
 
+/** 更新日期 */
 const updatedAt = integer('updated_at', { mode: 'timestamp' })
   .default(sql`(unixepoch())`)
   .$onUpdate(() => /* @__PURE__ */ new Date()).notNull();
 
+/** 建立日期 */
 const createdAt = integer('created_at', { mode: 'timestamp' })
   .default(sql`(unixepoch())`)
   .notNull();
 
+/** 財產 */
 export const assets = sqliteTable('assets', {
-  id:          text('id').primaryKey(),
-  name:        text('name').notNull(),
-  categoryId:  text('category_id').notNull().references(() => categories.id, cascadeActions),
-  description: text('description').notNull(),
-  createdById: text('created_by_id').notNull(),
+  /** 財產 ID */
+  id:                text('id').primaryKey(),
+  /** 財產名稱 */
+  name:              text('name').notNull(),
+  /** 歸屬單位：school（學校列管）或 cmrdb（社團自購） */
+  ownershipType:     text('ownership_type', { enum: OwnershipType.$values }).notNull(),
+  /** 學校產編：ownershipType 為 school 時必填 */
+  schoolAssetNumber: text('school_asset_number'),
+  /** 數量 */
+  quantity:          integer('quantity').notNull(),
+  /** 資產類別 UUID FK */
+  categoryId:        text('category_id').notNull().references(() => categories.id, cascadeActions),
+  /** 財產圖片 */
+  imageHash:         text('image_hash').references(() => images.id, { onDelete: 'set null' }),
+  /** 保管單位 */
+  custodian:         text('custodian').notNull(),
+  /** 財產補充說明，可記錄任何與此財產相關的額外資訊 */
+  description:       text('description'),
+  /** 建立財產的人的 ID */
+  createdById:       text('created_by_id').notNull(),
+  /** 最後更新此財產資料的人的 ID */
+  updatedById:       text('updated_by_id').notNull(),
+  /** 狀態  borrowed（借來的）lost（遺失）normal（正常）repairing（修理）scrapped（報廢）  */
+  status:            text('status', { enum: AssetStatus.$values }).notNull().default(AssetStatus.Normal),
+  /** 地點描述 */
+  location:          text('location').notNull(),
+  /** 購置日期 */
+  purchaseDate:      integer('purchase_date', { mode: 'timestamp' }),
+  /** 借用權限：public（所有人可借）、restricted（限授權人開單）、none（不可借） */
+  borrowRule:        text('borrow_rule', { enum: BorrowRule.$values }).notNull().default(BorrowRule.Public),
   createdAt,
   updatedAt,
 });
 
+/** 財產類別 */
 export const categories = sqliteTable('categories', {
-  id:          text('id').primaryKey(),
-  name:        text('name').notNull().unique(),
-  color:       integer('color').notNull(),
-  createdById: text('created_by_id').notNull(),
+  /** 財產類別 ID */
+  id:   text('id').primaryKey(),
+  /** 財產類別名稱 */
+  name: text('name').notNull().unique(),
+  createdAt,
+  updatedAt,
+});
+
+/** 財產授權出借人表 */
+export const assetAuthorizedLenders = sqliteTable('asset_authorized_lenders', {
+  /** 對應 assets.id  ID */
+  assetId: text('asset_id').notNull().references(() => assets.id, cascadeActions),
+  /** 被授權可開立出借單的使用者 ID（對應 IAM User ID） */
+  userId:  text('user_id').notNull(),
+}, (table) => [
+  primaryKey({
+    columns: [table.assetId, table.userId],
+  }),
+]);
+
+/** 財產借用紀錄表 */
+export const borrowRecords = sqliteTable('borrow_records', {
+  /** 借用紀錄主鍵 ID */
+  id:                 text('id').primaryKey(),
+  /** 借用的財產 */
+  assetId:            text('asset_id').notNull().references(() => assets.id, cascadeActions),
+  /** 開單人：只有此人有權限點擊「歸還」或修改此單據 */
+  creatorId:          text('creator_id').notNull(),
+  /** 實際借用人/拿走東西的人 */
+  borrowerId:         text('borrower_id').notNull(),
+  /** 單據狀態 */
+  recordStatus:       text('record_status', { enum: RecordStatus.$values }).notNull(),
+  /** 借出時間 */
+  borrowDate:         integer('borrow_date', { mode: 'timestamp' }).notNull(),
+  /** 預計歸還時間 */
+  expectedReturnDate: integer('expected_return_date', { mode: 'timestamp' }).notNull(),
+  /** 實際歸還時間 */
+  actualReturnDate:   integer('actual_return_date', { mode: 'timestamp' }),
+  /** 備註 */
+  notes:              text('notes'),
   createdAt,
   updatedAt,
 });
@@ -65,3 +137,37 @@ export const inventoryPlanAssignees = sqliteTable('inventory_plan_assignees', {
   /** 盤點人員使用者 ID */
   userId: text('user_id').notNull(),
 });
+
+export const images = sqliteTable('images', {
+  /** 檔案 hash，同時作為主鍵與實體檔名 */
+  id:               text('id').primaryKey(),
+  /** 圖片標題 ALT */
+  title:            text('title'),
+  /** 圖片描述 */
+  description:      text('description'),
+  /** 來源名稱 */
+  originalFilename: text('original_filename').notNull(),
+  /** MIME type，例：'image/jpeg', 'image/png', 'image/webp' */
+  format:           text('format').notNull(),
+  /** 單位：bytes */
+  size:             integer('size').notNull(),
+  /** 寬度單位：px */
+  width:            integer('width').notNull(),
+  /** 高度單位：px */
+  height:           integer('height').notNull(),
+  /** 上傳圖片的使用者 ID */
+  uploadedById:     text('uploaded_by_id').notNull(),
+  createdAt,
+});
+
+export const assetImages = sqliteTable('asset_images', {
+  /** 資產 ID */
+  assetId: text('asset_id').notNull().references(() => assets.id, cascadeActions),
+  /** 圖片 ID */
+  imageId: text('image_id').notNull().references(() => images.id, cascadeActions),
+  createdAt,
+}, (table) => [
+  primaryKey({
+    columns: [table.assetId, table.imageId],
+  }),
+]);
