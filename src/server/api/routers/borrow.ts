@@ -47,7 +47,6 @@ export const borrowRouter = createTRPCRouter({
       const asset = await ctx.db.query.assets.findFirst({
         where: {
           id: input.assetId,
-          status: AssetStatus.Normal,
         },
         with: {
           authorizedLenders: {
@@ -55,6 +54,8 @@ export const borrowRouter = createTRPCRouter({
               userId: true,
             },
           },
+          borrowRecords: true,
+          records: true,
         },
       });
 
@@ -74,8 +75,17 @@ export const borrowRouter = createTRPCRouter({
         });
       }
 
-      // TODO(kamiya4047,DavidWu94): 財產紀錄 junction table 數量計算
-      if (input.quantity > asset.quantity) {
+      const totalQuantity = asset.records
+        .filter((record) => record.status === AssetStatus.Normal)
+        .reduce((acc, v) => acc + v.quantity, 0);
+
+      const borrowedQuantity = asset.borrowRecords
+        .filter((record) => record.actualReturnDate === null)
+        .reduce((acc, v) => acc + v.quantity, 0);
+
+      const avaliableQuantity = totalQuantity - borrowedQuantity;
+
+      if (input.quantity > avaliableQuantity) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: `出借數量不能超過庫存數量`,

@@ -8,8 +8,6 @@ export const AssetsSortKey = defineEnum({
   CreatedAt: 'createdAt',
   /** 根據名稱 */
   Name: 'name',
-  /** 根據狀態 */
-  Status: 'status',
   /** 根據更新時間 */
   UpdatedAt: 'updatedAt',
 } as const);
@@ -17,8 +15,6 @@ export type AssetsSortKey = typeof AssetsSortKey.$schema.infer;
 
 /** 狀態設定 */
 export const AssetStatus = defineEnum({
-  /** 借來的 */
-  Borrowed: 'borrowed',
   /** 遺失 */
   Lost: 'lost',
   /** 正常 */

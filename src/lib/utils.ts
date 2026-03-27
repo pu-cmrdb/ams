@@ -118,32 +118,22 @@ export function valuesToTuple<T extends EnumLikeInput>(
 
 const LIKE_ESCAPE_CHAR = '\\' as const;
 
-type ColumnKeyOf<TTable extends object> = {
-  [K in Extract<keyof TTable, string>]: TTable[K] extends AnyColumn ? K : never;
-}[Extract<keyof TTable, string>];
-
 /**
  * 建立包含關鍵字的 `LIKE` SQL 條件，並附加 `ESCAPE` 子句
  *
- * 適用於 Drizzle relational queries 的 `RAW: (table) => ...` callback，
- *
- * @typeParam TTable - Drizzle relational query callback 中的資料表型別
- * @param table - `RAW` callback 提供的資料表物件
- * @param columnKey - 欄位名稱，例如 `'name'`、`'location'`
+ * @param column - 資料表欄位
  * @param keyword - 使用者輸入的搜尋關鍵字
  * @returns 對應的 SQL `LIKE ... ESCAPE ...` 條件片段
  *
  * @example
- * containsLike(table, 'name', '100%');
+ * containsLike(table.name, '100%');
  * // => table.name LIKE '%100\%%' ESCAPE '\'
  */
-export function containsLike<TTable extends object>(
-  table: TTable,
-  columnKey: ColumnKeyOf<TTable>,
+export function containsLike(
+  column: AnyColumn,
   keyword: string,
 ): SQL {
   const pattern = `%${escapeLikePattern(keyword)}%`;
-  const column = table[columnKey];
   return sql`${column} LIKE ${pattern} ESCAPE ${LIKE_ESCAPE_CHAR}`;
 }
 
