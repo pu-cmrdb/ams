@@ -1,4 +1,4 @@
-import { Geist } from 'next/font/google';
+import { Noto_Sans_TC } from 'next/font/google';
 
 import { TRPCReactProvider } from '@/trpc/react';
 
@@ -12,16 +12,16 @@ export const metadata: Metadata = {
   title: 'Create T3 App',
 };
 
-const geist = Geist({
-  subsets: ['latin'],
-  variable: '--font-geist-sans',
+const notoSansTC = Noto_Sans_TC({
+  preload: false,
+  variable: '--font-noto-sans-tc',
 });
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html
       className={`
-        ${geist.variable}
+        ${notoSansTC.variable}
       `}
       lang="zh-Hant"
     >

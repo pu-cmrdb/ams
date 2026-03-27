@@ -19,6 +19,12 @@ export const Assets = {
   update: createUpdateSchema(schema.assets).omit('createdAt', 'updatedAt'),
 };
 
+export const AssetRecords = {
+  insert: createInsertSchema(schema.assetRecords),
+  select: createSelectSchema(schema.assetRecords),
+  update: createUpdateSchema(schema.assetRecords),
+};
+
 export const Categories = {
   insert: createInsertSchema(schema.categories).omit('createdAt', 'updatedAt'),
   select: createSelectSchema(schema.categories),

@@ -31,9 +31,7 @@ export const assets = sqliteTable('assets', {
   ownershipType:     text('ownership_type', { enum: OwnershipType.$values }).notNull(),
   /** 學校產編：ownershipType 為 school 時必填 */
   schoolAssetNumber: text('school_asset_number'),
-  /** 數量 */
-  quantity:          integer('quantity').notNull(),
-  /** 資產類別 UUID FK */
+  /** 資產類別 UUID */
   categoryId:        text('category_id').notNull().references(() => categories.id, cascadeActions),
   /** 財產圖片 */
   imageHash:         text('image_hash').references(() => images.id, { onDelete: 'set null' }),
@@ -45,8 +43,6 @@ export const assets = sqliteTable('assets', {
   createdById:       text('created_by_id').notNull(),
   /** 最後更新此財產資料的人的 ID */
   updatedById:       text('updated_by_id').notNull(),
-  /** 狀態  borrowed（借來的）lost（遺失）normal（正常）repairing（修理）scrapped（報廢）  */
-  status:            text('status', { enum: AssetStatus.$values }).notNull().default(AssetStatus.Normal),
   /** 地點描述 */
   location:          text('location').notNull(),
   /** 購置日期 */
@@ -56,6 +52,21 @@ export const assets = sqliteTable('assets', {
   createdAt,
   updatedAt,
 });
+
+export const assetRecords = sqliteTable('asset_records', {
+  /** 資產 ID */
+  assetId:  text('asset_id').notNull().references(() => assets.id, cascadeActions),
+  /** 狀態 */
+  status:   text('status', { enum: AssetStatus.$values }).notNull().default(AssetStatus.Normal),
+  /** 數量 */
+  quantity: integer('quantity').notNull().default(1),
+  /** 備註 */
+  note:     text('note'),
+}, (table) => [
+  primaryKey({
+    columns: [table.assetId, table.status],
+  }),
+]);
 
 /** 財產類別 */
 export const categories = sqliteTable('categories', {
@@ -138,7 +149,7 @@ export const inventoryPlanAssignees = sqliteTable('inventory_plan_assignees', {
 export const images = sqliteTable('images', {
   /** 檔案 hash，同時作為主鍵與實體檔名 */
   id:               text('id').primaryKey(),
-  /** 圖片標題 ALT */
+  /** 圖片標題 */
   title:            text('title'),
   /** 圖片描述 */
   description:      text('description'),

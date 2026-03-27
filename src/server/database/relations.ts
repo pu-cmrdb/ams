@@ -34,6 +34,7 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.assets.imageHash,
       to: r.images.id,
     }),
+    records: r.many.assetRecords(),
   },
   /** 財產借用紀錄表（borrow_records）關聯定義 */
   borrowRecords: {

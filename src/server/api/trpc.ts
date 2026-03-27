@@ -31,6 +31,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session = await auth.api.getSession({
     headers: opts.headers,
   });
+
   return {
     db,
     session,
@@ -45,19 +46,21 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
  * ArkErrors so that you get typesafety on the frontend if your procedure fails due to validation
  * errors on the backend.
  */
-const t = initTRPC.context<typeof createTRPCContext>().create({
-  errorFormatter({ error, shape }) {
-    return {
-      ...shape,
-      data: {
-        ...shape.data,
-        validationError:
-          error.cause instanceof ArkErrors ? error.cause.flatByPath : null,
-      },
-    };
-  },
-  transformer: superjson,
-});
+const t = initTRPC
+  .context<typeof createTRPCContext>()
+  .create({
+    errorFormatter({ error, shape }) {
+      return {
+        ...shape,
+        data: {
+          ...shape.data,
+          validationError:
+            error.cause instanceof ArkErrors ? error.cause.flatByPath : null,
+        },
+      };
+    },
+    transformer: superjson,
+  });
 
 /**
  * Create a server-side caller.
