@@ -114,8 +114,8 @@ export const categoryRouter = createTRPCRouter({
           AND: [
             keyword
               ? {
-                RAW: (table: CategoriesTable) => containsLike(table.name, keyword),
-              }
+                  RAW: (table: CategoriesTable) => containsLike(table.name, keyword),
+                }
               : undefined,
           ].filter((v): v is NonNullable<typeof v> => v != null),
         },

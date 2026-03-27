@@ -57,9 +57,9 @@ export const assetRecords = sqliteTable('asset_records', {
   /** 資產 ID */
   assetId:  text('asset_id').notNull().references(() => assets.id, cascadeActions),
   /** 狀態 */
-  status:   text('status', { enum: AssetStatus.$values }).notNull().default(AssetStatus.Normal),
+  status:   text('status', { enum: AssetStatus.$values }).notNull(),
   /** 數量 */
-  quantity: integer('quantity').notNull().default(1),
+  quantity: integer('quantity').notNull(),
   /** 備註 */
   note:     text('note'),
 }, (table) => [

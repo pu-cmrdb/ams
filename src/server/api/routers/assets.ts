@@ -6,30 +6,44 @@ import { type } from 'arktype';
 import assert from 'assert';
 
 import { AssetsSortKey, BorrowRule, OwnershipType, SortDirection } from '@/lib/enums';
+import { AssetRecords, Assets } from '@/server/database/type';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
-import { Assets } from '@/server/database/type';
 import { containsLike } from '@/lib/utils';
 import { schema } from '@/server/database';
 
 type AssetsTable = typeof schema.assets;
 
-const CreateAssetsInput = Assets.insert
+const _CreateAssetsInputBase = Assets.insert
   .omit('id', 'borrowRule', 'createdById', 'updatedById')
   .and({
-    authorizedLenderIds: 'string[] > 0',
-    borrowRule: `'${BorrowRule.Restricted}'`,
-  })
-  .or(
-    Assets.insert.omit('id', 'borrowRule', 'createdById', 'updatedById').and({
-      borrowRule: BorrowRule.$schema.exclude(`'${BorrowRule.Restricted}'`),
-    }),
+    'records?': AssetRecords.insert.omit('assetId').array(),
+  });
+
+const CreateAssetsInput = _CreateAssetsInputBase
+  .and(
+    type({
+      authorizedLenderIds: 'string[] > 0',
+      borrowRule: `'${BorrowRule.Restricted}'`,
+    })
+      .or({
+        borrowRule: BorrowRule.$schema.exclude(`'${BorrowRule.Restricted}'`),
+      }),
+  )
+  .and(
+    type({
+      ownershipType: `'${OwnershipType.School}'`,
+      schoolAssetNumber: 'string.trim',
+    })
+      .or({
+        ownershipType: OwnershipType.$schema.exclude(`'${OwnershipType.School}'`),
+      }),
   );
 
 const _UpdateAssetsInputBase = Assets.update
   .omit('createdById', 'updatedById')
+  .and(Assets.update.pick('id').required())
   .and({
     'authorizedLenderIds?': 'string[] > 0',
-    'id': 'string.trim',
   });
 
 const UpdateAssetsInput = _UpdateAssetsInputBase
@@ -51,6 +65,14 @@ const UpdateAssetsInput = _UpdateAssetsInputBase
         'ownershipType?': OwnershipType.$schema.exclude(`'${OwnershipType.School}'`),
       }),
   );
+
+const UpdateAssetRecordInput = type({
+  id: 'string.trim',
+  records: AssetRecords.insert
+    .omit('assetId')
+    .and(AssetRecords.insert.pick('status').required())
+    .array(),
+});
 
 const ListAssetsInput = type({
   /** 財產群組 */
@@ -79,50 +101,68 @@ const GetAssetInput = type({
 
 export const assetsRouter = createTRPCRouter({
   /**
-   * 新增財產（含 `borrow_rule` 與授權人設定）
+   * 建立新財產
    */
   create: protectedProcedure
     .input(CreateAssetsInput)
-    .mutation(async ({ ctx, input }) => {
-      if (input.ownershipType === OwnershipType.School && !input.schoolAssetNumber) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: `schoolAssetNumber is required when ownershipType is school`,
+    .mutation(async ({ ctx, input }) => await ctx.db.transaction(async (tx) => {
+      const id = nanoid();
+
+      await tx.insert(schema.assets)
+        .values({
+          ...input,
+          createdById: ctx.session.user.id,
+          id: id,
+          updatedById: ctx.session.user.id,
         });
+
+      if (input.borrowRule === BorrowRule.Restricted) {
+        const uniqueIds = [...new Set(input.authorizedLenderIds)];
+
+        await tx.insert(schema.assetAuthorizedLenders)
+          .values(
+            uniqueIds.map((userId) => ({
+              assetId: id,
+              userId,
+            })),
+          );
       }
 
-      return await ctx.db.transaction(async (tx) => {
-        const id = nanoid();
+      if (input.records?.length) {
+        type AssetRecord = Omit<typeof AssetRecords.insert.infer, 'assetId'>;
 
-        await tx.insert(schema.assets)
-          .values({
-            ...input,
-            createdById: ctx.session.user.id,
-            id: id,
-            updatedById: ctx.session.user.id,
-          });
+        const values = input.records
+          .reduce<AssetRecord[]>(
+            (acc, record) => {
+              const existing = acc.find((v) => v.status === record.status && v.note === record.note);
 
-        if (input.borrowRule === BorrowRule.Restricted) {
-          const uniqueIds = [...new Set(input.authorizedLenderIds)];
+              if (!existing) {
+                acc.push(record);
+              }
+              else {
+                existing.quantity += record.quantity;
+              }
 
-          await tx.insert(schema.assetAuthorizedLenders)
-            .values(
-              uniqueIds.map((userId) => ({
-                assetId: id,
-                userId,
-              })),
-            );
-        }
+              return acc;
+            },
+            [],
+          )
+          .map((record) => ({
+            ...record,
+            assetId: id,
+          }));
 
-        const result = await tx.query.assets.findFirst({
-          where: { id },
-        });
+        await tx.insert(schema.assetRecords).values(values);
+      }
 
-        assert(result !== undefined, 'result should never be undefined');
-
-        return result;
+      const result = await tx.query.assets.findFirst({
+        where: { id },
       });
-    }),
+
+      assert(result !== undefined, 'result should never be undefined');
+
+      return result;
+    })),
   /**
    * 刪除財產
    */
@@ -262,6 +302,41 @@ export const assetsRouter = createTRPCRouter({
         assert(result !== undefined, 'result should never be undefined');
 
         return result;
+      });
+    }),
+  updateRecord: protectedProcedure
+    .input(UpdateAssetRecordInput)
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.transaction(async (tx) => {
+        type AssetRecord = Omit<typeof AssetRecords.insert.infer, 'assetId'>;
+
+        const values = input.records
+          .reduce<AssetRecord[]>(
+            (acc, record) => {
+              const existing = acc.find((v) => v.status === record.status && v.note === record.note);
+
+              if (!existing) {
+                acc.push(record);
+              }
+              else {
+                existing.quantity += record.quantity;
+              }
+
+              return acc;
+            },
+            [],
+          )
+          .map((record) => ({
+            ...record,
+            assetId: input.id,
+          }));
+
+        await tx.delete(schema.assetRecords)
+          .where(eq(schema.assetRecords.assetId, input.id));
+
+        if (values.length) {
+          await tx.insert(schema.assetRecords).values(values);
+        }
       });
     }),
 });
