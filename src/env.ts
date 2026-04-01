@@ -33,6 +33,7 @@ export const env = createEnv({
   },
   server: {
     APP_URL: type('string.url > 0'),
+    BETTER_AUTH_IAM_API_KEY: type('string > 0'),
     BETTER_AUTH_IAM_CLIENT_ID: type('string > 0'),
     BETTER_AUTH_IAM_CLIENT_SECRET: type('string > 0'),
     BETTER_AUTH_IAM_URL: type('string.url > 0'),
