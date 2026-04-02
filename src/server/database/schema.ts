@@ -131,8 +131,6 @@ export const inventoryPlans = sqliteTable('inventory_plans', {
   dueAt:       integer('due_at', { mode: 'timestamp' }).notNull(),
   /** 盤點完成時間，未完成時為 null */
   completedAt: integer('completed_at', { mode: 'timestamp' }),
-  /** 盤點範圍描述 */
-  scope:       text('scope').notNull(),
   /** 盤點狀態，預設為 pending */
   status:      text('status', { enum: ['pending', 'completed', 'cancelled'] }).notNull().default('pending'),
   createdAt,
@@ -144,6 +142,13 @@ export const inventoryPlanAssignees = sqliteTable('inventory_plan_assignees', {
   planId: text('plan_id').notNull().references(() => inventoryPlans.id, cascadeActions),
   /** 盤點人員使用者 ID */
   userId: text('user_id').notNull(),
+});
+
+export const inventoryPlanAssets = sqliteTable('inventory_plan_assets', {
+  /** 盤點計畫 ID */
+  planId:  text('plan_id').notNull().references(() => inventoryPlans.id, cascadeActions),
+  /** 財產 ID */
+  assetId: text('asset_id').notNull().references(() => assets.id, cascadeActions),
 });
 
 export const images = sqliteTable('images', {

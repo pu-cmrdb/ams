@@ -11,8 +11,23 @@ import { schema } from '@/server/database';
 
 const CreateInventoryInput = InventoryPlans.insert
   .omit('id', 'createdById', 'status')
-  .and({ /** 盤點人員 ID 陣列 */ assignedToIds: 'string[]' })
-  .narrow((data, ctx) => data.assignedToIds.length > 0 || ctx.mustBe('not empty'));
+  .and({
+    /** 財產 ID 陣列 */
+    assetIds: 'string[]',
+    /** 盤點人員 ID 陣列 */
+    assigneeIds: 'string[]',
+  });
+
+const UpdateInventoryInput = InventoryPlans.update
+  .omit('createdById')
+  .and({
+    /** 財產 ID 陣列 */
+    'assetIds?': 'string[]',
+    /** 盤點人員 ID 陣列 */
+    'assigneeIds?': 'string[]',
+    /** 盤點計畫 ID */
+    'id': 'string',
+  });
 
 export const inventoryRouter = createTRPCRouter({
   /**
@@ -22,7 +37,7 @@ export const inventoryRouter = createTRPCRouter({
     .input(CreateInventoryInput)
     .mutation(async ({ ctx, input }) => {
       const id = nanoid();
-      const { assignedToIds, ...planData } = input;
+      const { assetIds, assigneeIds, ...planData } = input;
 
       const value = {
         ...planData,
@@ -39,55 +54,13 @@ export const inventoryRouter = createTRPCRouter({
 
       await ctx.db
         .insert(schema.inventoryPlanAssignees)
-        .values(assignedToIds.map((userId) => ({ planId: id, userId })));
+        .values(assigneeIds.map((userId) => ({ planId: id, userId })));
 
-      return { ...result, assignedToIds };
-    }),
+      await ctx.db
+        .insert(schema.inventoryPlanAssets)
+        .values(assetIds.map((assetId) => ({ assetId, planId: id })));
 
-  /**
-   * 更新盤點計畫（部分欄位）。
-   */
-  edit: protectedProcedure
-    .input(InventoryPlans.update
-      .omit('createdById')
-      .and({
-        /** 盤點人員 ID 陣列 */
-        'assignedToIds?': 'string[]',
-        /** 盤點計畫 ID */
-        'id': 'string',
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const { assignedToIds, id, ...planData } = input;
-
-      const [result] = await ctx.db
-        .update(schema.inventoryPlans)
-        .set(planData)
-        .where(eq(schema.inventoryPlans.id, id))
-        .returning(schema.inventoryPlans._.columns);
-
-      if (!result) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: `Inventory plan with id ${id} does not exists`,
-        });
-      }
-
-      if (assignedToIds !== undefined) {
-        await ctx.db
-          .delete(schema.inventoryPlanAssignees)
-          .where(eq(schema.inventoryPlanAssignees.planId, id));
-
-        await ctx.db
-          .insert(schema.inventoryPlanAssignees)
-          .values(assignedToIds.map((userId) => ({ planId: id, userId })));
-      }
-
-      const finalAssignedToIds = assignedToIds
-        ?? (await ctx.db.query.inventoryPlanAssignees.findMany({ where: { planId: id } }))
-          .map((a) => a.userId);
-
-      return { ...result, assignedToIds: finalAssignedToIds };
+      return { ...result, assetIds, assigneeIds };
     }),
 
   /**
@@ -110,7 +83,6 @@ export const inventoryRouter = createTRPCRouter({
       const { assignees, ...rest } = plan;
       return { ...rest, assignedToIds: assignees.map((a) => a.userId) };
     }),
-
   /**
    * 取得所有盤點計畫。
    *
@@ -142,5 +114,60 @@ export const inventoryRouter = createTRPCRouter({
         ...rest,
         assignedToIds: assignees.map((a) => a.userId),
       }));
+    }),
+  /**
+   * 更新盤點計畫（部分欄位）。
+   */
+  update: protectedProcedure
+    .input(UpdateInventoryInput)
+    .mutation(async ({ ctx, input }) => {
+      const { assetIds, assigneeIds, id, ...planData } = input;
+
+      const [result] = await ctx.db
+        .update(schema.inventoryPlans)
+        .set(planData)
+        .where(eq(schema.inventoryPlans.id, id))
+        .returning(schema.inventoryPlans._.columns);
+
+      if (!result) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Inventory plan with id ${id} does not exists`,
+        });
+      }
+
+      if (assetIds !== undefined) {
+        await ctx.db
+          .delete(schema.inventoryPlanAssets)
+          .where(eq(schema.inventoryPlanAssets.planId, id));
+
+        await ctx.db
+          .insert(schema.inventoryPlanAssets)
+          .values(assetIds.map((assetId) => ({ assetId, planId: id })));
+      }
+
+      if (assigneeIds !== undefined) {
+        await ctx.db
+          .delete(schema.inventoryPlanAssignees)
+          .where(eq(schema.inventoryPlanAssignees.planId, id));
+
+        await ctx.db
+          .insert(schema.inventoryPlanAssignees)
+          .values(assigneeIds.map((userId) => ({ planId: id, userId })));
+      }
+
+      const finalAssetIds = assetIds
+        ?? (await ctx.db.query.inventoryPlanAssets.findMany({ where: { planId: id } }))
+          .map((a) => a.assetId);
+
+      const finalAssigneeIds = assigneeIds
+        ?? (await ctx.db.query.inventoryPlanAssignees.findMany({ where: { planId: id } }))
+          .map((a) => a.userId);
+
+      return {
+        ...result,
+        assetIds: finalAssetIds,
+        assigneeIds: finalAssigneeIds,
+      };
     }),
 });
