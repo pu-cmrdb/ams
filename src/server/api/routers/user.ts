@@ -40,9 +40,9 @@ type APIUserListResponse = typeof APIUserListResponse.infer;
 /**
  * IAM 回傳的 tRPC 回應封包
  */
-const APIResponseEnvelope = type('<T>', {
-  result: { data: { json: 'T' } },
-});
+const APIUserListResponseEnvelope = type({
+  result: { data: { json: APIUserListResponse } },
+}).array();
 
 /**
  * 向 IAM 分頁取得使用者時，每頁請求的筆數上限
@@ -83,7 +83,8 @@ async function fetchAllUsers(): Promise<APIUser[]> {
 
   while (cursor != null) {
     const url = new URL('/api/trpc/users.list', env.BETTER_AUTH_IAM_URL);
-    url.searchParams.set('input', JSON.stringify({ cursor, limit: IAM_PAGE_SIZE }));
+    url.searchParams.set('batch', '1');
+    url.searchParams.set('input', JSON.stringify({ 0: { json: { cursor, limit: IAM_PAGE_SIZE } } }));
 
     const response = (await Result.tryPromise({
       catch: (e) => new TRPCError({
@@ -110,7 +111,7 @@ async function fetchAllUsers(): Promise<APIUser[]> {
       catch: (e) => new TRPCError({ cause: e, code: 'BAD_GATEWAY', message: '無法解析 IAM 回應資料' }),
       try: () => response.json(),
     })).andThen((json) => {
-      const result = APIResponseEnvelope(APIUserListResponse)(json);
+      const result = APIUserListResponseEnvelope(json);
 
       if (result instanceof type.errors) return Result.err(new TRPCError({
         cause: result,
@@ -118,7 +119,7 @@ async function fetchAllUsers(): Promise<APIUser[]> {
         message: `IAM 使用者列表格式錯誤`,
       }));
 
-      return Result.ok(result.result.data.json);
+      return Result.ok(result[0].result.data.json);
     }).unwrap();
 
     users.push(...page.data);
