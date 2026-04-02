@@ -3,6 +3,7 @@ import { assetsRouter } from '@/server/api/routers/assets';
 import { borrowRouter } from '@/server/api/routers/borrow';
 import { categoryRouter } from '@/server/api/routers/category';
 import { inventoryRouter } from '@/server/api/routers/inventory';
+import { userRouter } from '@/server/api/routers/user';
 
 /**
  * This is the primary router for your server.
@@ -14,6 +15,7 @@ export const appRouter = createTRPCRouter({
   borrow: borrowRouter,
   category: categoryRouter,
   inventory: inventoryRouter,
+  user: userRouter,
 });
 
 // export type definition of API
@@ -27,3 +29,4 @@ export type AppRouter = typeof appRouter;
  *       ^? Post[]
  */
 export const createCaller = createCallerFactory(appRouter);
+
