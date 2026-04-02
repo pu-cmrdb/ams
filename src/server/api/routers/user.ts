@@ -1,145 +1,169 @@
+import { Result } from 'better-result';
 import { TRPCError } from '@trpc/server';
 import { type } from 'arktype';
 
-import { env } from '@/env';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
+import { env } from '@/env';
 
-type IamUser = {
-  id: string;
-  imageHash: string;
-  name: string;
-};
+/**
+ * IAM `users.list` 回傳的使用者資料列
+ */
+const APIUser = type({
+  banned: 'boolean',
+  banReason: 'string | null',
+  createdAt: 'string.date.parse',
+  displayUsername: 'string | null',
+  id: 'string',
+  role: 'string',
+  username: 'string',
+});
+type APIUser = typeof APIUser.infer;
 
-type IamListMeta = {
-  currentPage?: number;
-  hasNextPage?: boolean;
-  hasPreviousPage?: boolean;
-  nextCursor?: number | null;
-  totalItems?: number;
-  totalPages?: number;
-};
+/**
+ * IAM `users.list` 的回應結構，包含使用者列表與分頁資訊
+ */
+const APIUserListResponse = type({
+  data: APIUser.array(),
+  meta: {
+    currentCursor: 'number',
+    currentPage: 'number',
+    hasNextPage: 'boolean',
+    hasPreviousPage: 'boolean',
+    nextCursor: 'number | null',
+    perPage: 'number',
+    totalItems: 'number',
+    totalPages: 'number',
+  },
+});
+type APIUserListResponse = typeof APIUserListResponse.infer;
 
-type IamUsersListResponse = {
-  data: IamUser[];
-  meta: IamListMeta;
-};
-
-const CACHE_TTL_MS = 5 * 60 * 1000;
-
-const usersListCache = new Map<string, {
-  expiresAt: number;
-  value: IamUsersListResponse;
-}>();
-
-const ListUsersInput = type({
-  /** offset，預設 0 */
-  'cursor?': 'number.integer >= 0',
-  /** 每頁筆數，0-100，預設 10 */
-  'limit?': 'number.integer >= 0 <= 100',
+/**
+ * IAM 伺服器回傳的 tRPC 回應封包
+ */
+const APIResponseEnvelope = type('<T>', {
+  result: { data: { json: 'T' } },
 });
 
-function buildCacheKey(input: { cursor: number; limit: number }) {
-  return `${input.cursor}:${input.limit}`;
-}
+/**
+ * 向 IAM 分頁取得使用者時，每頁請求的筆數上限
+ */
+const IAM_PAGE_SIZE = 100 as const;
 
-function getCachedUsersList(key: string) {
-  const cached = usersListCache.get(key);
+/**
+ * 完整使用者列表的快取存活時間，單位為毫秒
+ */
+const CACHE_EXPIRY = 300_000 as const;
 
-  if (!cached) return null;
-  if (cached.expiresAt <= Date.now()) {
-    usersListCache.delete(key);
-    return null;
-  }
+/**
+ * 快取的完整使用者列表與其到期時間。超過 `CACHE_EXPIRY` 後自動失效
+ */
+let cachedUsers: APIUser[] | null = null;
+let cacheExpiresAt = 0;
 
-  return cached.value;
-}
+const ListUsersInput = type({
+  /** 從完整列表起算的偏移量，預設為 `0` */
+  cursor: 'number.integer >= 0 = 0',
+  /** 每頁筆數，範圍 1–100，預設為 `10` */
+  limit: '1 <= number.integer <= 100 = 10',
+});
 
+/**
+ * 向 IAM 服務逐頁取得所有使用者
+ *
+ * @throws {TRPCError} 連線失敗、HTTP 錯誤或回應格式不符時拋出 `BAD_GATEWAY`
+ */
+async function fetchAllUsers(): Promise<APIUser[]> {
+  const users: APIUser[] = [];
+  let cursor: null | number = 0;
 
-function setCachedUsersList(key: string, value: IamUsersListResponse) {
-  usersListCache.set(key, {
-    expiresAt: Date.now() + CACHE_TTL_MS,
-    value,
-  });
-}
+  while (cursor != null) {
+    const url = new URL(`${env.BETTER_AUTH_IAM_URL}/api/trpc/users.list`);
+    url.searchParams.set('input', JSON.stringify({ cursor, limit: IAM_PAGE_SIZE }));
 
-function parseUsersListResponse(payload: unknown): IamUsersListResponse {
-  if (!payload || typeof payload !== 'object') {
-    throw new TRPCError({
-      code: 'BAD_GATEWAY',
-      message: 'IAM users.list 回傳格式錯誤。',
-    });
-  }
-
-  const direct = payload as Partial<IamUsersListResponse>;
-  const wrapped = payload as {
-    result?: {
-      data?: {
-        json?: IamUsersListResponse;
-      };
-    };
-  };
-
-  const candidate = wrapped.result?.data?.json ?? direct;
-
-  if (!Array.isArray(candidate.data) || !candidate.meta || typeof candidate.meta !== 'object') {
-    throw new TRPCError({
-      code: 'BAD_GATEWAY',
-      message: 'IAM users.list 缺少 data 或 meta。',
-    });
-  }
-
-  return {
-    data: candidate.data.map((item) => ({
-      id: String(item.id ?? ''),
-      imageHash: String(item.imageHash ?? ''),
-      name: String(item.name ?? ''),
-    })),
-    meta: {
-      currentPage: typeof candidate.meta.currentPage === 'number' ? candidate.meta.currentPage : undefined,
-      hasNextPage: typeof candidate.meta.hasNextPage === 'boolean' ? candidate.meta.hasNextPage : undefined,
-      hasPreviousPage: typeof candidate.meta.hasPreviousPage === 'boolean' ? candidate.meta.hasPreviousPage : undefined,
-      nextCursor: typeof candidate.meta.nextCursor === 'number' || candidate.meta.nextCursor === null
-        ? candidate.meta.nextCursor
-        : undefined,
-      totalItems: typeof candidate.meta.totalItems === 'number' ? candidate.meta.totalItems : undefined,
-      totalPages: typeof candidate.meta.totalPages === 'number' ? candidate.meta.totalPages : undefined,
-    },
-  };
-}
-
-export const userRouter = createTRPCRouter({
-  list: protectedProcedure
-    .input(ListUsersInput)
-    .query(async ({ input }) => {
-      const cursor = input.cursor ?? 0;
-      const limit = input.limit ?? 10;
-      const normalizedInput = { cursor, limit };
-
-      const cacheKey = buildCacheKey(normalizedInput);
-      const cached = getCachedUsersList(cacheKey);
-      if (cached) return cached;
-
-      const url = new URL(`${env.BETTER_AUTH_IAM_URL}/api/trpc/users.list`);
-      url.searchParams.set('input', JSON.stringify(normalizedInput));
-
-      const response = await fetch(url, {
+    const response = (await Result.tryPromise({
+      catch: (e) => new TRPCError({
+        cause: e,
+        code: 'BAD_GATEWAY',
+        message: '無法連線至 IAM 服務',
+      }),
+      try: () => fetch(url, {
         headers: {
           'x-api-key': env.BETTER_AUTH_IAM_API_KEY,
         },
-      });
+      }),
+    })).andThen((response) => {
+      if (response.ok) return Result.ok(response);
+      return Result.err(new TRPCError({
+        cause: response,
+        code: 'BAD_GATEWAY',
+        message: `無法從 IAM 取得使用者列表（HTTP ${response.status}）`,
+      }));
+    }).unwrap();
 
-      if (!response.ok) {
-        throw new TRPCError({
-          code: 'BAD_GATEWAY',
-          message: `IAM users.list 呼叫失敗（HTTP ${response.status}）。`,
-        });
+    const page = (await Result.tryPromise({
+      catch: (e) => new TRPCError({ cause: e, code: 'BAD_GATEWAY', message: '無法解析 IAM 回應資料' }),
+      try: () => response.json(),
+    })).andThen((json) => {
+      const result = APIResponseEnvelope(APIUserListResponse)(json);
+
+      if (result instanceof type.errors) return Result.err(new TRPCError({
+        cause: result,
+        code: 'BAD_GATEWAY',
+        message: `IAM 使用者列表格式錯誤`,
+      }));
+
+      return Result.ok(result.result.data.json);
+    }).unwrap();
+
+    users.push(...page.data);
+
+    cursor = page.meta.hasNextPage ? page.meta.nextCursor : null;
+  }
+
+  return users;
+}
+
+export const userRouter = createTRPCRouter({
+  /**
+   * 回傳所有 IAM 使用者的分頁結果
+   *
+   * - `cursor` — 從完整列表起算的偏移量，預設為 `0`
+   * - `limit`  — 每頁筆數，範圍 1–100，預設為 `10`
+   *
+   * @remarks 完整使用者列表每五分鐘從 IAM 取得一次並快取於伺服器端，
+   * 在此期間的請求均直接從記憶體回應
+   */
+  list: protectedProcedure
+    .input(ListUsersInput)
+    .query(async ({ input }) => {
+      if (!cachedUsers || Date.now() > cacheExpiresAt) {
+        cachedUsers = await fetchAllUsers();
+        cacheExpiresAt = Date.now() + CACHE_EXPIRY;
       }
 
-      const payload = await response.json();
-      const parsed = parseUsersListResponse(payload);
+      const { cursor: currentCursor, limit: perPage } = input;
 
-      setCachedUsersList(cacheKey, parsed);
+      const data = cachedUsers.slice(currentCursor, currentCursor + perPage);
 
-      return parsed;
+      const totalItems = cachedUsers.length;
+      const totalPages = Math.ceil(totalItems / perPage);
+      const currentPage = Math.floor(currentCursor / perPage);
+      const hasNextPage = currentCursor + perPage < totalItems;
+      const hasPreviousPage = currentCursor > 0;
+      const nextCursor = hasNextPage ? currentCursor + perPage : null;
+
+      return {
+        data: data,
+        meta: {
+          currentCursor,
+          currentPage,
+          hasNextPage,
+          hasPreviousPage,
+          nextCursor,
+          perPage,
+          totalItems,
+          totalPages,
+        },
+      };
     }),
 });
