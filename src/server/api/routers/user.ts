@@ -40,22 +40,19 @@ const APIUserListResponse = type({
 type APIUserListResponse = typeof APIUserListResponse.infer;
 
 /**
- * IAM 回傳的 tRPC 回應封包
+ * IAM tRPC 成功封包
  */
-const APIUserListResponseEnvelope = type({
-  result: {
-    data: {
-      json: APIUserListResponse,
-    },
-  },
-}).or({
+const APIUserListSuccessEnvelope = type({
+  result: { data: { json: APIUserListResponse } },
+}).array().atLeastLength(1);
+
+/**
+ * IAM tRPC 錯誤封包
+ */
+const APIUserListErrorEnvelope = type({
   error: {
     code: 'number',
-    data: {
-      code: 'string',
-      httpStatus: 'number',
-      path: 'string',
-    },
+    data: { code: 'string', httpStatus: 'number', path: 'string' },
     message: 'string',
   },
 }).array().atLeastLength(1);
@@ -127,24 +124,34 @@ async function fetchAllUsers(): Promise<APIUser[]> {
       catch: (e) => new TRPCError({ cause: e, code: 'BAD_GATEWAY', message: '無法解析 IAM 回應資料' }),
       try: () => response.json(),
     })).andThen((json) => {
-      const parsed = APIUserListResponseEnvelope(json);
+      if (typeof json !== 'object' || !Array.isArray(json) || json.length === 0) {
+        return Result.err(new TRPCError({ code: 'BAD_GATEWAY', message: 'IAM 使用者列表格式錯誤' }));
+      }
 
+      if ('error' in json[0]) {
+        const parsed = APIUserListErrorEnvelope(json);
+        if (parsed instanceof type.errors) return Result.err(new TRPCError({
+          cause: parsed,
+          code: 'BAD_GATEWAY',
+          message: 'IAM 使用者列表格式錯誤',
+        }));
+        const result = parsed[0];
+        assert(result !== undefined, 'should never be undefined');
+        return Result.err(new TRPCError({
+          cause: result.error,
+          code: 'BAD_GATEWAY',
+          message: result.error.message,
+        }));
+      }
+
+      const parsed = APIUserListSuccessEnvelope(json);
       if (parsed instanceof type.errors) return Result.err(new TRPCError({
         cause: parsed,
         code: 'BAD_GATEWAY',
-        message: `IAM 使用者列表格式錯誤`,
+        message: 'IAM 使用者列表格式錯誤',
       }));
-
       const result = parsed[0];
-
       assert(result !== undefined, 'should never be undefined');
-
-      if ('error' in result) return Result.err(new TRPCError({
-        cause: result.error,
-        code: 'BAD_GATEWAY',
-        message: result.error.message,
-      }));
-
       return Result.ok(result.result.data.json);
     }).unwrap();
 
