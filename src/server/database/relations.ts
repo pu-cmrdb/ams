@@ -55,6 +55,13 @@ export const relations = defineRelations(schema, (r) => ({
     assetImages: r.many.assetImages(),
     assets: r.many.assets(),
   },
+  /** 盤點計畫財產表（inventory_plan_assets）關聯定義 */
+  inventoryPlanAssets: {
+    plan: r.one.inventoryPlans({
+      from: r.inventoryPlanAssets.planId,
+      to: r.inventoryPlans.id,
+    }),
+  },
   /** 盤點計畫指派人員表（inventory_plan_assignees）關聯定義 */
   inventoryPlanAssignees: {
     plan: r.one.inventoryPlans({
@@ -64,6 +71,7 @@ export const relations = defineRelations(schema, (r) => ({
   },
   /** 盤點計畫表（inventory_plans）關聯定義 */
   inventoryPlans: {
+    assets: r.many.inventoryPlanAssets(),
     assignees: r.many.inventoryPlanAssignees(),
   },
 }));
