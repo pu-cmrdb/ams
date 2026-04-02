@@ -6,7 +6,7 @@ import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { env } from '@/env';
 
 /**
- * IAM `users.list` 回傳的使用者資料列
+ * IAM 使用者列表的回傳資料
  */
 const APIUser = type({
   banned: 'boolean',
@@ -20,7 +20,7 @@ const APIUser = type({
 type APIUser = typeof APIUser.infer;
 
 /**
- * IAM `users.list` 的回應結構，包含使用者列表與分頁資訊
+ * IAM 使用者列表的回傳結構，包含資料和分頁資訊
  */
 const APIUserListResponse = type({
   data: APIUser.array(),
@@ -38,7 +38,7 @@ const APIUserListResponse = type({
 type APIUserListResponse = typeof APIUserListResponse.infer;
 
 /**
- * IAM 伺服器回傳的 tRPC 回應封包
+ * IAM 回傳的 tRPC 回應封包
  */
 const APIResponseEnvelope = type('<T>', {
   result: { data: { json: 'T' } },
@@ -55,10 +55,15 @@ const IAM_PAGE_SIZE = 100 as const;
 const CACHE_EXPIRY = 300_000 as const;
 
 /**
- * 快取的完整使用者列表與其到期時間。超過 `CACHE_EXPIRY` 後自動失效
+ * 快取的完整使用者列表與其到期時間
  */
 let cachedUsers: APIUser[] | null = null;
 let cacheExpiresAt = 0;
+
+/**
+ * 進行中的 `fetchAllUsers` 請求，用於避免快取失效時的重複請求
+ */
+let fetchInFlight: null | Promise<APIUser[]> = null;
 
 const ListUsersInput = type({
   /** 從完整列表起算的偏移量，預設為 `0` */
@@ -77,7 +82,7 @@ async function fetchAllUsers(): Promise<APIUser[]> {
   let cursor: null | number = 0;
 
   while (cursor != null) {
-    const url = new URL(`${env.BETTER_AUTH_IAM_URL}/api/trpc/users.list`);
+    const url = new URL('/api/trpc/users.list', env.BETTER_AUTH_IAM_URL);
     url.searchParams.set('input', JSON.stringify({ cursor, limit: IAM_PAGE_SIZE }));
 
     const response = (await Result.tryPromise({
@@ -90,6 +95,7 @@ async function fetchAllUsers(): Promise<APIUser[]> {
         headers: {
           'x-api-key': env.BETTER_AUTH_IAM_API_KEY,
         },
+        signal: AbortSignal.timeout(10_000),
       }),
     })).andThen((response) => {
       if (response.ok) return Result.ok(response);
@@ -137,7 +143,10 @@ export const userRouter = createTRPCRouter({
     .input(ListUsersInput)
     .query(async ({ input }) => {
       if (!cachedUsers || Date.now() > cacheExpiresAt) {
-        cachedUsers = await fetchAllUsers();
+        fetchInFlight ??= fetchAllUsers().finally(() => {
+          fetchInFlight = null;
+        });
+        cachedUsers = await fetchInFlight;
         cacheExpiresAt = Date.now() + CACHE_EXPIRY;
       }
 
