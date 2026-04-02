@@ -2,6 +2,8 @@ import { Result } from 'better-result';
 import { TRPCError } from '@trpc/server';
 import { type } from 'arktype';
 
+import assert from 'assert';
+
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { env } from '@/env';
 
@@ -41,8 +43,22 @@ type APIUserListResponse = typeof APIUserListResponse.infer;
  * IAM 回傳的 tRPC 回應封包
  */
 const APIUserListResponseEnvelope = type({
-  result: { data: { json: APIUserListResponse } },
-}).array();
+  result: {
+    data: {
+      json: APIUserListResponse,
+    },
+  },
+}).or({
+  error: {
+    code: 'number',
+    data: {
+      code: 'string',
+      httpStatus: 'number',
+      path: 'string',
+    },
+    message: 'string',
+  },
+}).array().atLeastLength(1);
 
 /**
  * 向 IAM 分頁取得使用者時，每頁請求的筆數上限
@@ -111,15 +127,25 @@ async function fetchAllUsers(): Promise<APIUser[]> {
       catch: (e) => new TRPCError({ cause: e, code: 'BAD_GATEWAY', message: '無法解析 IAM 回應資料' }),
       try: () => response.json(),
     })).andThen((json) => {
-      const result = APIUserListResponseEnvelope(json);
+      const parsed = APIUserListResponseEnvelope(json);
 
-      if (result instanceof type.errors) return Result.err(new TRPCError({
-        cause: result,
+      if (parsed instanceof type.errors) return Result.err(new TRPCError({
+        cause: parsed,
         code: 'BAD_GATEWAY',
         message: `IAM 使用者列表格式錯誤`,
       }));
 
-      return Result.ok(result[0].result.data.json);
+      const result = parsed[0];
+
+      assert(result !== undefined, 'should never be undefined');
+
+      if ('error' in result) return Result.err(new TRPCError({
+        cause: result.error,
+        code: 'BAD_GATEWAY',
+        message: result.error.message,
+      }));
+
+      return Result.ok(result.result.data.json);
     }).unwrap();
 
     users.push(...page.data);
@@ -157,7 +183,7 @@ export const userRouter = createTRPCRouter({
 
       const totalItems = cachedUsers.length;
       const totalPages = Math.ceil(totalItems / perPage);
-      const currentPage = Math.floor(currentCursor / perPage);
+      const currentPage = totalItems ? Math.floor(currentCursor / perPage) + 1 : 0;
       const hasNextPage = currentCursor + perPage < totalItems;
       const hasPreviousPage = currentCursor > 0;
       const nextCursor = hasNextPage ? currentCursor + perPage : null;
