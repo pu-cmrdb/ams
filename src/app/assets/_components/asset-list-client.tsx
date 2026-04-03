@@ -32,7 +32,7 @@ const borrowRuleMap: Record<string, string> = {
 export function AssetListClient() {
   const trpc = useTRPC();
   // 抓取全部資料
-  const { data: assets, isLoading } = useQuery(
+  const { data: assets, isError, isLoading } = useQuery(
     trpc.asset.list.queryOptions({
       limit: Number.MAX_SAFE_INTEGER,
     }),
@@ -58,6 +58,13 @@ export function AssetListClient() {
             </TableRow>
           </TableHeader>
           <TableBody>
+            {isError && (
+              <TableRow>
+                <TableCell className="h-24 text-center text-destructive" colSpan={8}>
+                  資料載入失敗，請重新整理頁面
+                </TableCell>
+              </TableRow>
+            )}
             {isLoading
               ? (
                   <TableRow>
