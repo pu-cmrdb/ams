@@ -1,9 +1,11 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { api } from '@/trpc/react';
+import { useTRPC } from '@/trpc/react';
 
 // 狀態
 const statusMap: Record<string, string> = {
@@ -28,7 +30,10 @@ const borrowRuleMap: Record<string, string> = {
 };
 
 export function AssetListClient() {
-  const { data: assets, isLoading } = api.asset.list.useQuery({});
+  const trpc = useTRPC();
+  const { data: assets, isLoading } = useQuery(
+    trpc.asset.list.queryOptions(),
+  );
 
   return (
     <Card>
