@@ -97,13 +97,23 @@ export function AssetListClient() {
                             <div className="text-xs text-muted-foreground">{asset.schoolAssetNumber}</div>
                           )}
                         </TableCell>
-                        <TableCell>{asset.quantity}</TableCell>
+                        <TableCell>{asset.records[0]?.quantity ?? 0}</TableCell>
                         <TableCell>{asset.location}</TableCell>
                         <TableCell>{asset.custodian}</TableCell>
-                        <TableCell>{asset.categoryName}</TableCell>
+                        <TableCell>{asset.category?.name}</TableCell>
                         <TableCell>
-                          <Badge variant={asset.status === 'normal' ? 'default' : 'secondary'}>
-                            {statusMap[asset.status] ?? asset.status}
+                          <Badge
+                            variant={
+                              asset.records[0]?.status === 'normal'
+                                ? 'default'
+                                : 'secondary'
+                            }
+                          >
+                            {asset.records[0]
+                              ? (statusMap[
+                                  asset.records[0].status as keyof typeof statusMap
+                                ] ?? asset.records[0].status)
+                              : '無狀態'}
                           </Badge>
                         </TableCell>
                         <TableCell>{borrowRuleMap[asset.borrowRule] ?? asset.borrowRule}</TableCell>
