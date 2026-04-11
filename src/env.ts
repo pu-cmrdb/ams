@@ -1,26 +1,8 @@
-import { ParseError, type } from 'arktype';
 import { createEnv } from '@t3-oss/env-nextjs';
+import { type } from 'arktype';
 
 export const env = createEnv({
   emptyStringAsUndefined: true,
-  onInvalidAccess: (variable) => {
-    throw new Error(
-      `❌ 嘗試在用戶端存取伺服器端 \`${variable}\` 環境變數`,
-    );
-  },
-  onValidationError: (issues) => {
-    const errorMessage = [
-      '❌ 環境變數驗證失敗',
-      '',
-      '錯誤詳情：',
-      ...issues.map((v) => v.message),
-      '',
-      '請檢查你的 .env 檔案或環境變數設定。',
-    ].join('\n');
-
-    console.error(errorMessage);
-    throw new ParseError(errorMessage);
-  },
   runtimeEnv: {
     APP_URL: process.env.NODE_ENV === 'production' ? process.env.APP_PROD_URL : process.env.APP_DEV_URL,
     BETTER_AUTH_IAM_API_KEY: process.env.BETTER_AUTH_IAM_API_KEY,

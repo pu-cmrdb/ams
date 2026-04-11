@@ -35,7 +35,7 @@ export const inventoryRouter = createTRPCRouter({
    */
   create: protectedProcedure
     .input(CreateInventoryInput)
-    .mutation(async ({ ctx, input }) => {
+    .mutation(({ ctx, input }) => {
       const id = nanoid();
       const { assetIds, assigneeIds, ...planData } = input;
 
@@ -45,21 +45,26 @@ export const inventoryRouter = createTRPCRouter({
         id,
       };
 
-      const result = await ctx.db.transaction(async (tx) => {
-        const [plan] = await tx
+      const result = ctx.db.transaction((tx) => {
+        const [plan] = tx
           .insert(schema.inventoryPlans)
           .values(value)
-          .returning(schema.inventoryPlans._.columns);
+          .returning()
+          .all();
 
         assert(plan !== undefined, 'result should never be undefined');
 
-        await tx
-          .insert(schema.inventoryPlanAssignees)
-          .values(assigneeIds.map((userId) => ({ planId: id, userId })));
+        if (assigneeIds.length > 0) {
+          tx.insert(schema.inventoryPlanAssignees)
+            .values(assigneeIds.map((userId) => ({ planId: id, userId })))
+            .run();
+        }
 
-        await tx
-          .insert(schema.inventoryPlanAssets)
-          .values(assetIds.map((assetId) => ({ assetId, planId: id })));
+        if (assetIds.length > 0) {
+          tx.insert(schema.inventoryPlanAssets)
+            .values(assetIds.map((assetId) => ({ assetId, planId: id })))
+            .run();
+        }
 
         return plan;
       });
@@ -128,15 +133,13 @@ export const inventoryRouter = createTRPCRouter({
    */
   update: protectedProcedure
     .input(UpdateInventoryInput)
-    .mutation(async ({ ctx, input }) => {
+    .mutation(({ ctx, input }) => {
       const { assetIds, assigneeIds, id, ...planData } = input;
 
-      return await ctx.db.transaction(async (tx) => {
-        const [result] = await tx
-          .update(schema.inventoryPlans)
-          .set(planData)
-          .where(eq(schema.inventoryPlans.id, id))
-          .returning(schema.inventoryPlans._.columns);
+      return ctx.db.transaction((tx) => {
+        let result = tx.query.inventoryPlans
+          .findFirst({ where: { id } })
+          .sync();
 
         if (!result) {
           throw new TRPCError({
@@ -145,32 +148,51 @@ export const inventoryRouter = createTRPCRouter({
           });
         }
 
-        if (assetIds !== undefined) {
-          await tx
-            .delete(schema.inventoryPlanAssets)
-            .where(eq(schema.inventoryPlanAssets.planId, id));
+        if (Object.keys(planData).length > 0) {
+          const [updated] = tx
+            .update(schema.inventoryPlans)
+            .set(planData)
+            .where(eq(schema.inventoryPlans.id, id))
+            .returning()
+            .all();
 
-          await tx
-            .insert(schema.inventoryPlanAssets)
-            .values(assetIds.map((assetId) => ({ assetId, planId: id })));
+          if (updated) result = updated;
+        }
+
+        if (assetIds !== undefined) {
+          tx.delete(schema.inventoryPlanAssets)
+            .where(eq(schema.inventoryPlanAssets.planId, id))
+            .run();
+
+          if (assetIds.length > 0) {
+            tx.insert(schema.inventoryPlanAssets)
+              .values(assetIds.map((assetId) => ({ assetId, planId: id })))
+              .run();
+          }
         }
 
         if (assigneeIds !== undefined) {
-          await tx
-            .delete(schema.inventoryPlanAssignees)
-            .where(eq(schema.inventoryPlanAssignees.planId, id));
+          tx.delete(schema.inventoryPlanAssignees)
+            .where(eq(schema.inventoryPlanAssignees.planId, id))
+            .run();
 
-          await tx
-            .insert(schema.inventoryPlanAssignees)
-            .values(assigneeIds.map((userId) => ({ planId: id, userId })));
+          if (assigneeIds.length > 0) {
+            tx.insert(schema.inventoryPlanAssignees)
+              .values(assigneeIds.map((userId) => ({ planId: id, userId })))
+              .run();
+          }
         }
 
         const finalAssetIds = assetIds
-          ?? (await tx.query.inventoryPlanAssets.findMany({ where: { planId: id } }))
+          ?? tx.query.inventoryPlanAssets
+            .findMany({ where: { planId: id } })
+            .sync()
             .map((a) => a.assetId);
 
         const finalAssigneeIds = assigneeIds
-          ?? (await tx.query.inventoryPlanAssignees.findMany({ where: { planId: id } }))
+          ?? tx.query.inventoryPlanAssignees
+            .findMany({ where: { planId: id } })
+            .sync()
             .map((a) => a.userId);
 
         return {

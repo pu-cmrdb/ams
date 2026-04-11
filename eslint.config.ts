@@ -70,6 +70,14 @@ export default defineConfig(
     },
   },
   {
+    files: ['tests/**/*.ts'],
+    name: 'test-overrides',
+    rules: {
+      // allow unused parameters prefixed with _ (common in mock function signatures)
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
+  },
+  {
     name: 'overrides',
     rules: {
       '@next/next/no-img-element': 'off',
