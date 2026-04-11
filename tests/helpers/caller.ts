@@ -1,12 +1,12 @@
 import { createCaller } from '@/server/api/root';
 
+import { MOCK_USER_ID } from './mock-data';
+
 import type { createTRPCContext } from '@/server/api/trpc';
 
 import type { TestDb } from './db';
 
 type Context = Awaited<ReturnType<typeof createTRPCContext>>;
-
-export const MOCK_USER_ID = 'test-user-id';
 
 export function createTestCaller(db: TestDb, userId = MOCK_USER_ID) {
   const ctx = {

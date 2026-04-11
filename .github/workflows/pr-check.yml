@@ -14,13 +14,13 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -47,13 +47,13 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -64,6 +64,14 @@ jobs:
 
       - name: Test
         run: bun test
+        env:
+          SKIP_ENV_VALIDATION: true
+          BETTER_AUTH_SECRET: dummy-secret-for-ci-at-least-32-chars
+          APP_DEV_URL: https://example.com
+          APP_PROD_URL: https://example.com
+          BETTER_AUTH_IAM_CLIENT_ID: dummy-client-id
+          BETTER_AUTH_IAM_CLIENT_SECRET: dummy-client-secret
+          BETTER_AUTH_IAM_URL: https://example.com
 
   build:
     name: Build
@@ -72,13 +80,13 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}

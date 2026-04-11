@@ -18,6 +18,8 @@ export const BORROW_DATES = {
   expectedReturnDate: new Date('2026-01-15'),
 } as const;
 
+export const MOCK_USER_ID = 'test-user-id';
+
 export const PLAN_DATES = {
   dueAt: new Date('2026-06-30'),
   startAt: new Date('2026-06-01'),
