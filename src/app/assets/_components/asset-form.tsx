@@ -1,9 +1,10 @@
 'use client';
 
 import { AlertCircleIcon, ChevronDownIcon, LoaderCircleIcon } from 'lucide-react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useEffect, useMemo, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -63,6 +64,9 @@ const statusOptions: { label: string; value: AssetStatus }[] = [
 export function AssetForm({ assetId, mode }: AssetFormProps) {
   const router = useRouter();
   const trpc = useTRPC();
+  const initializedAssetIdRef = useRef<null | string>(null);
+  const previousOwnershipTypeRef = useRef<null | OwnershipType>(null);
+  const previousBorrowRuleRef = useRef<null | BorrowRule>(null);
 
   const [submitError, setSubmitError] = useState<null | string>(null);
 
@@ -86,31 +90,50 @@ export function AssetForm({ assetId, mode }: AssetFormProps) {
 
   const assetQuery = useQuery({
     ...trpc.asset.get.queryOptions({ id: assetId ?? '' }),
-    enabled: mode === 'edit' && Boolean(assetId),
+    enabled: mode === 'edit' && (assetId?.trim().length ?? 0) > 0,
   });
 
   const ownershipType = useWatch({ control: form.control, name: 'ownershipType' });
   const borrowRule = useWatch({ control: form.control, name: 'borrowRule' });
   const authorizedLenderIds = useWatch({ control: form.control, name: 'authorizedLenderIds' });
-  const categoryId = useWatch({ control: form.control, name: 'categoryId' });
   const status = useWatch({ control: form.control, name: 'status' });
 
   useEffect(() => {
-    if (ownershipType !== OwnershipType.School) {
+    const previousOwnershipType = previousOwnershipTypeRef.current;
+
+    if (previousOwnershipType === OwnershipType.School && ownershipType !== OwnershipType.School) {
       form.setValue('schoolAssetNumber', '');
       form.clearErrors('schoolAssetNumber');
     }
+
+    previousOwnershipTypeRef.current = ownershipType;
   }, [form, ownershipType]);
 
   useEffect(() => {
-    if (borrowRule !== BorrowRule.Restricted) {
+    const previousBorrowRule = previousBorrowRuleRef.current;
+
+    if (previousBorrowRule === BorrowRule.Restricted && borrowRule !== BorrowRule.Restricted) {
       form.setValue('authorizedLenderIds', []);
       form.clearErrors('authorizedLenderIds');
     }
+
+    previousBorrowRuleRef.current = borrowRule;
   }, [borrowRule, form]);
 
   useEffect(() => {
-    if (mode !== 'edit' || !assetQuery.data) return;
+    if (mode !== 'edit') {
+      initializedAssetIdRef.current = null;
+      return;
+    }
+
+    if (assetId && initializedAssetIdRef.current !== assetId) {
+      initializedAssetIdRef.current = null;
+    }
+  }, [assetId, mode]);
+
+  useEffect(() => {
+    if (mode !== 'edit' || !assetQuery.data || !assetId) return;
+    if (initializedAssetIdRef.current === assetId) return;
 
     const normalRecord = assetQuery.data.records.find((record) => record.status === AssetStatus.Normal);
     const firstRecord = assetQuery.data.records[0];
@@ -130,6 +153,16 @@ export function AssetForm({ assetId, mode }: AssetFormProps) {
       schoolAssetNumber: assetQuery.data.schoolAssetNumber ?? '',
       status: displayRecord?.status ?? AssetStatus.Normal,
     });
+
+    initializedAssetIdRef.current = assetId;
+  }, [assetId, assetQuery.data, form, mode]);
+
+  useEffect(() => {
+    if (mode !== 'edit' || !assetQuery.data) return;
+
+    form.setValue('categoryId', assetQuery.data.categoryId, { shouldDirty: false, shouldValidate: false });
+    form.setValue('ownershipType', assetQuery.data.ownershipType, { shouldDirty: false, shouldValidate: false });
+    form.setValue('borrowRule', assetQuery.data.borrowRule, { shouldDirty: false, shouldValidate: false });
   }, [assetQuery.data, form, mode]);
 
   const usersData = usersQuery.data?.data;
@@ -374,7 +407,7 @@ export function AssetForm({ assetId, mode }: AssetFormProps) {
               <Label htmlFor="location">位置</Label>
               <Input
                 id="location"
-                placeholder="例如：B201"
+                placeholder="例如：鐵櫃"
                 {...form.register('location', { required: '請輸入存放位置' })}
               />
               {form.formState.errors.location && (
@@ -386,7 +419,7 @@ export function AssetForm({ assetId, mode }: AssetFormProps) {
               <Label htmlFor="custodian">保管單位</Label>
               <Input
                 id="custodian"
-                placeholder="例如：設備組"
+                placeholder="例如：主機組"
                 {...form.register('custodian', { required: '請輸入保管單位' })}
               />
               {form.formState.errors.custodian && (
@@ -397,19 +430,25 @@ export function AssetForm({ assetId, mode }: AssetFormProps) {
 
           <div className="grid gap-2">
             <Label>類別</Label>
-            <Select
-              onValueChange={(value) => { form.setValue('categoryId', value, { shouldValidate: true }); }}
-              value={categoryId}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={categoriesQuery.isLoading ? '載入類別中...' : '請選擇類別'} />
-              </SelectTrigger>
-              <SelectContent>
-                {(categoriesQuery.data ?? []).map((category) => (
-                  <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Controller
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={categoriesQuery.isLoading ? '載入類別中...' : '請選擇類別'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(categoriesQuery.data ?? []).map((category) => (
+                      <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
             {form.formState.errors.categoryId && (
               <p className="text-sm text-destructive">{form.formState.errors.categoryId.message}</p>
             )}
@@ -422,20 +461,26 @@ export function AssetForm({ assetId, mode }: AssetFormProps) {
           >
             <div className="grid gap-2">
               <Label>歸屬單位</Label>
-              <Select
-                onValueChange={(value) => {
-                  form.setValue('ownershipType', value as OwnershipType, { shouldValidate: true });
-                }}
-                value={ownershipType}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="請選擇歸屬單位" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={OwnershipType.Cmrdb}>社團自購</SelectItem>
-                  <SelectItem value={OwnershipType.School}>學校列管</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller
+                control={form.control}
+                name="ownershipType"
+                render={({ field }) => (
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value as OwnershipType);
+                    }}
+                    value={field.value}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="請選擇歸屬單位" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={OwnershipType.Cmrdb}>社團自購</SelectItem>
+                      <SelectItem value={OwnershipType.School}>學校列管</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             {ownershipType === OwnershipType.School && (
@@ -443,7 +488,7 @@ export function AssetForm({ assetId, mode }: AssetFormProps) {
                 <Label htmlFor="schoolAssetNumber">學校產編</Label>
                 <Input
                   id="schoolAssetNumber"
-                  placeholder="例如：SCH-001"
+                  placeholder="例如：31404032010D0132"
                   {...form.register('schoolAssetNumber', {
                     validate: (value) => Boolean(value.trim()) || '學校列管財產必填學校產編',
                   })}
@@ -457,19 +502,27 @@ export function AssetForm({ assetId, mode }: AssetFormProps) {
 
           <div className="grid gap-2">
             <Label>借用權限</Label>
-            <Select
-              onValueChange={(value) => { form.setValue('borrowRule', value as BorrowRule, { shouldValidate: true }); }}
-              value={borrowRule}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="請選擇借用權限" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={BorrowRule.Public}>公開借用</SelectItem>
-                <SelectItem value={BorrowRule.Restricted}>限制借用</SelectItem>
-                <SelectItem value={BorrowRule.None}>不可借用</SelectItem>
-              </SelectContent>
-            </Select>
+            <Controller
+              control={form.control}
+              name="borrowRule"
+              render={({ field }) => (
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value as BorrowRule);
+                  }}
+                  value={field.value}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="請選擇借用權限" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={BorrowRule.Public}>公開借用</SelectItem>
+                    <SelectItem value={BorrowRule.Restricted}>限制借用</SelectItem>
+                    <SelectItem value={BorrowRule.None}>不可借用</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
 
           {borrowRule === BorrowRule.Restricted && (
@@ -561,11 +614,15 @@ function getErrorMessage(error: unknown): string {
   return '請稍後再試';
 }
 
-function toDateInputValue(value: Date | null | undefined): string {
-  if (!value) return '';
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, '0');
-  const date = String(value.getDate()).padStart(2, '0');
+function toDateInputValue(value: Date | null | number | string | undefined): string {
+  if (value == null) return '';
+
+  const parsed = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const date = String(parsed.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${date}`;
 }

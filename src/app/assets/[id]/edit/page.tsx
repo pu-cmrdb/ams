@@ -1,15 +1,11 @@
-'use client';
-
-import { useParams } from 'next/navigation';
-
 import { AssetForm } from '@/app/assets/_components/asset-form';
 
-export default function EditAssetPage() {
-  const params = useParams<{ id: string }>();
+export default async function EditAssetPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   return (
     <div className="container mx-auto py-10">
-      <AssetForm assetId={params.id} mode="edit" />
+      <AssetForm assetId={id} mode="edit" />
     </div>
   );
 }
