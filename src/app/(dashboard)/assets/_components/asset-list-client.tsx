@@ -30,11 +30,8 @@ const borrowRuleMap: Record<string, string> = {
 
 export function AssetListClient() {
   const trpc = useTRPC();
-  // 抓取全部資料
-  const { data: assets, isError, isLoading } = useQuery(
-    trpc.asset.list.queryOptions({
-      limit: Number.MAX_SAFE_INTEGER,
-    }),
+  // 抓取最多10000筆資料
+  const { data: assets, isError, isLoading } = useQuery(trpc.asset.list.queryOptions({ limit: 10000 }),
   );
 
   return (
