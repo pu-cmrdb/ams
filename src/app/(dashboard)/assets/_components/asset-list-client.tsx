@@ -50,81 +50,86 @@ export function AssetListClient() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isError && (
-            <TableRow>
-              <TableCell className="h-24 text-center text-destructive" colSpan={8}>
-                資料載入失敗，請重新整理頁面
-              </TableCell>
-            </TableRow>
-          )}
-          {isLoading
+          {isError
             ? (
+                // 檢查錯誤
                 <TableRow>
-                  <TableCell
-                    className="h-24 text-center text-muted-foreground"
-                    colSpan={8}
-                  >
-                    資料載入中...
+                  <TableCell className="h-24 text-center text-destructive" colSpan={8}>
+                    資料載入失敗，請重新整理頁面
                   </TableCell>
                 </TableRow>
               )
-            : assets?.length === 0
+            : isLoading
               ? (
+                  // 檢查載入
                   <TableRow>
                     <TableCell
                       className="h-24 text-center text-muted-foreground"
                       colSpan={8}
                     >
-                      目前尚無財產紀錄
+                      資料載入中...
                     </TableCell>
                   </TableRow>
                 )
-              : (
-                  assets?.map((asset) => (
-                    <TableRow key={asset.id}>
-                      <TableCell>{ownershipMap[asset.ownershipType] ?? asset.ownershipType}</TableCell>
-                      <TableCell>
-                        <div className="font-medium">{asset.name}</div>
-                        {asset.schoolAssetNumber && (
-                          <div className="text-xs text-muted-foreground">{asset.schoolAssetNumber}</div>
-                        )}
+              : assets?.length === 0
+                ? (
+                    // 確認資料狀態
+                    <TableRow>
+                      <TableCell
+                        className="h-24 text-center text-muted-foreground"
+                        colSpan={8}
+                      >
+                        目前尚無財產紀錄
                       </TableCell>
-
-                      {/* 使用reduce加總所有record的quantity */}
-                      <TableCell>
-                        {asset.records.reduce((total, record) => total + record.quantity, 0)}
-                      </TableCell>
-
-                      <TableCell>{asset.location}</TableCell>
-                      <TableCell>{asset.custodian}</TableCell>
-                      <TableCell>{asset.category?.name}</TableCell>
-
-                      {/* 把status展開成Badge,並用Set去除重複 */}
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {asset.records.length > 0
-                            ? (
-                                Array.from(new Set(asset.records.map((r) => r.status))).map(
-                                  (status, index) => (
-                                    <Badge
-                                      key={index}
-                                      variant={status === 'normal' ? 'default' : 'secondary'}
-                                    >
-                                      {statusMap[status as keyof typeof statusMap] ?? status}
-                                    </Badge>
-                                  ),
-                                )
-                              )
-                            : (
-                                <Badge variant="outline">無狀態</Badge>
-                              )}
-                        </div>
-                      </TableCell>
-
-                      <TableCell>{borrowRuleMap[asset.borrowRule] ?? asset.borrowRule}</TableCell>
                     </TableRow>
-                  ))
-                )}
+                  )
+                : (
+                    // 印出資料
+                    assets?.map((asset) => (
+                      <TableRow key={asset.id}>
+                        <TableCell>{ownershipMap[asset.ownershipType] ?? asset.ownershipType}</TableCell>
+                        <TableCell>
+                          <div className="font-medium">{asset.name}</div>
+                          {asset.schoolAssetNumber && (
+                            <div className="text-xs text-muted-foreground">{asset.schoolAssetNumber}</div>
+                          )}
+                        </TableCell>
+
+                        {/* 使用reduce加總所有record的quantity */}
+                        <TableCell>
+                          {asset.records.reduce((total, record) => total + record.quantity, 0)}
+                        </TableCell>
+
+                        <TableCell>{asset.location}</TableCell>
+                        <TableCell>{asset.custodian}</TableCell>
+                        <TableCell>{asset.category?.name}</TableCell>
+
+                        {/* 把status展開成Badge,並用Set去除重複 */}
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {asset.records.length > 0
+                              ? (
+                                  Array.from(new Set(asset.records.map((r) => r.status))).map(
+                                    (status) => (
+                                      <Badge
+                                        key={status}
+                                        variant={status === 'normal' ? 'default' : 'secondary'}
+                                      >
+                                        {statusMap[status as keyof typeof statusMap] ?? status}
+                                      </Badge>
+                                    ),
+                                  )
+                                )
+                              : (
+                                  <Badge variant="outline">無狀態</Badge>
+                                )}
+                          </div>
+                        </TableCell>
+
+                        <TableCell>{borrowRuleMap[asset.borrowRule] ?? asset.borrowRule}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
         </TableBody>
       </Table>
     </div>
