@@ -27,7 +27,7 @@ type APIUser = typeof APIUser.infer;
 const APIUserListResponse = type({
   data: APIUser.array(),
   meta: {
-    currentCursor: 'number',
+    currentCurosr: 'number',
     currentPage: 'number',
     hasNextPage: 'boolean',
     hasPreviousPage: 'boolean',
