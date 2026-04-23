@@ -3,11 +3,12 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AssetStatus, BorrowRule, OwnershipType } from '@/lib/enums';
 import { Badge } from '@/components/ui/badge';
 import { useTRPC } from '@/trpc/react';
 
 // 狀態
-const statusMap: Record<string, string> = {
+const statusMap: Record<AssetStatus, string> = {
   borrowed: '借出',
   lost: '遺失',
   normal: '在庫',
@@ -16,13 +17,13 @@ const statusMap: Record<string, string> = {
 };
 
 // 歸屬單位
-const ownershipMap: Record<string, string> = {
+const ownershipMap: Record<OwnershipType, string> = {
   cmrdb: '社團',
   school: '學校',
 };
 
 // 借用權限
-const borrowRuleMap: Record<string, string> = {
+const borrowRuleMap: Record<BorrowRule, string> = {
   none: '不開放',
   public: '公開借用',
   restricted: '限制借用',
@@ -87,7 +88,7 @@ export function AssetListClient() {
                     // 印出資料
                     assets?.map((asset) => (
                       <TableRow key={asset.id}>
-                        <TableCell>{ownershipMap[asset.ownershipType] ?? asset.ownershipType}</TableCell>
+                        <TableCell>{ownershipMap[asset.ownershipType] || asset.ownershipType}</TableCell>
                         <TableCell>
                           <div className="font-medium">{asset.name}</div>
                           {asset.schoolAssetNumber && (
@@ -115,7 +116,7 @@ export function AssetListClient() {
                                         key={status}
                                         variant={status === 'normal' ? 'default' : 'secondary'}
                                       >
-                                        {statusMap[status as keyof typeof statusMap] ?? status}
+                                        {statusMap[status as keyof typeof statusMap] || status}
                                       </Badge>
                                     ),
                                   )
@@ -126,7 +127,7 @@ export function AssetListClient() {
                           </div>
                         </TableCell>
 
-                        <TableCell>{borrowRuleMap[asset.borrowRule] ?? asset.borrowRule}</TableCell>
+                        <TableCell>{borrowRuleMap[asset.borrowRule] || asset.borrowRule}</TableCell>
                       </TableRow>
                     ))
                   )}
