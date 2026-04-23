@@ -1,11 +1,11 @@
-import { AssetForm } from '@/app/assets/_components/asset-form';
+import { AssetEditForm } from '@/app/assets/_components/asset-edit-form';
 
 export default async function EditAssetPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   return (
     <div className="container mx-auto py-10">
-      <AssetForm assetId={id} mode="edit" />
+      <AssetEditForm assetId={id} />
     </div>
   );
 }
