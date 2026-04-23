@@ -14,6 +14,7 @@ import superjson from 'superjson';
 
 import { auth } from '@/server/auth';
 import { db } from '@/server/database';
+import { env } from '@/env';
 
 /**
  * 1. CONTEXT
@@ -90,11 +91,13 @@ export const createTRPCRouter = t.router;
  * network latency that would occur in production but not in local development.
  */
 const timingMiddleware = t.middleware(async ({ next, path }) => {
+  if (env.NODE_ENV === 'test') return next();
+
   const start = Date.now();
 
   if (t._config.isDev) {
     // artificial delay in dev
-    const waitMs = Math.floor(Math.random() * 400) + 100;
+    const waitMs = Math.floor(Math.random() * 200) + 100;
     await new Promise((resolve) => setTimeout(resolve, waitMs));
   }
 

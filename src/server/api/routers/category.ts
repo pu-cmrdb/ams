@@ -1,4 +1,4 @@
-import { count, eq } from 'drizzle-orm';
+import { count, eq, getColumns } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
 import { type } from 'arktype';
@@ -63,7 +63,7 @@ export const categoryRouter = createTRPCRouter({
           id: nanoid(),
           ...input,
         })
-        .returning(schema.categories._.columns);
+        .returning(getColumns(schema.categories));
 
       assert(result !== undefined, 'result should never be undefined');
       return { result };
@@ -176,7 +176,7 @@ export const categoryRouter = createTRPCRouter({
           name: input.name,
         })
         .where(eq(schema.categories.id, id))
-        .returning(schema.categories._.columns);
+        .returning(getColumns(schema.categories));
       assert(result !== undefined, 'result should never be undefined');
 
       return {

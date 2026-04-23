@@ -10,15 +10,17 @@ jobs:
   lint:
     name: Lint & Typecheck
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -38,18 +40,54 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
-  build:
-    name: Build
+  test:
+    name: Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Test
+        run: bun test
+        env:
+          SKIP_ENV_VALIDATION: true
+          BETTER_AUTH_SECRET: dummy-secret-for-ci-at-least-32-chars
+          APP_DEV_URL: https://example.com
+          APP_PROD_URL: https://example.com
+          BETTER_AUTH_IAM_CLIENT_ID: dummy-client-id
+          BETTER_AUTH_IAM_CLIENT_SECRET: dummy-client-secret
+          BETTER_AUTH_IAM_URL: https://example.com
+          DATABASE_URL: "file::memory:"
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}

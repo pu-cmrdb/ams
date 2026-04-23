@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/server/auth/config';
 
-const PUBLIC_PATHS: string[] = ['/login'];
+const PUBLIC_PATHS: string[] = [
+  '/login',
+  '/reference',
+  '/openapi.json',
+];
 
 const isPublic = (pathname: string): boolean => {
   return PUBLIC_PATHS.some((path) => pathname.startsWith(path));

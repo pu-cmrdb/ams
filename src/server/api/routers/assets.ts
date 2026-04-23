@@ -105,27 +105,29 @@ export const assetsRouter = createTRPCRouter({
    */
   create: protectedProcedure
     .input(CreateAssetsInput)
-    .mutation(async ({ ctx, input }) => await ctx.db.transaction(async (tx) => {
+    .mutation(({ ctx, input }) => ctx.db.transaction((tx) => {
       const id = nanoid();
 
-      await tx.insert(schema.assets)
+      tx.insert(schema.assets)
         .values({
           ...input,
           createdById: ctx.session.user.id,
           id: id,
           updatedById: ctx.session.user.id,
-        });
+        })
+        .run();
 
       if (input.borrowRule === BorrowRule.Restricted) {
         const uniqueIds = [...new Set(input.authorizedLenderIds)];
 
-        await tx.insert(schema.assetAuthorizedLenders)
+        tx.insert(schema.assetAuthorizedLenders)
           .values(
             uniqueIds.map((userId) => ({
               assetId: id,
               userId,
             })),
-          );
+          )
+          .run();
       }
 
       if (input.records?.length) {
@@ -152,12 +154,14 @@ export const assetsRouter = createTRPCRouter({
             assetId: id,
           }));
 
-        await tx.insert(schema.assetRecords).values(values);
+        tx.insert(schema.assetRecords).values(values).run();
       }
 
-      const result = await tx.query.assets.findFirst({
-        where: { id },
-      });
+      const result = tx.query.assets
+        .findFirst({
+          where: { id },
+        })
+        .sync();
 
       assert(result !== undefined, 'result should never be undefined');
 
@@ -168,13 +172,11 @@ export const assetsRouter = createTRPCRouter({
    */
   delete: protectedProcedure
     .input(DeleteAssetInput)
-    .mutation(async ({ ctx, input }) => {
-      return await ctx.db.transaction(async (tx) => {
-        await tx.delete(schema.assetAuthorizedLenders).where(eq(schema.assetAuthorizedLenders.assetId, input.id));
-        await tx.delete(schema.assets).where(eq(schema.assets.id, input.id));
-        return { success: true };
-      });
-    }),
+    .mutation(({ ctx, input }) => ctx.db.transaction((tx) => {
+      tx.delete(schema.assetAuthorizedLenders).where(eq(schema.assetAuthorizedLenders.assetId, input.id)).run();
+      tx.delete(schema.assets).where(eq(schema.assets.id, input.id)).run();
+      return { success: true };
+    })),
   /**
    * 依財產 ID 取得單一詳情
    */
@@ -250,64 +252,69 @@ export const assetsRouter = createTRPCRouter({
    */
   update: protectedProcedure
     .input(UpdateAssetsInput)
-    .mutation(async ({ ctx, input }) => {
-      return ctx.db.transaction(async (tx) => {
-        const existing = await tx.query.assets.findFirst({
+    .mutation(({ ctx, input }) => ctx.db.transaction((tx) => {
+      const existing = tx.query.assets
+        .findFirst({
           where: { id: input.id },
           with: {
             authorizedLenders: true,
           },
+        })
+        .sync();
+
+      if (!existing) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Asset with id ${input.id} does not exist`,
         });
+      }
 
-        if (!existing) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: `Asset with id ${input.id} does not exist`,
-          });
+      if (input.borrowRule && (
+        input.borrowRule === BorrowRule.Restricted
+        || input.borrowRule !== existing.borrowRule
+      )) {
+        if (input.borrowRule === BorrowRule.Restricted) {
+          const uniqueIds = [...new Set(input.authorizedLenderIds)];
+
+          tx.delete(schema.assetAuthorizedLenders)
+            .where(eq(schema.assetAuthorizedLenders.assetId, input.id))
+            .run();
+
+          tx.insert(schema.assetAuthorizedLenders)
+            .values(uniqueIds.map((userId) => ({
+              assetId: input.id,
+              userId,
+            })))
+            .run();
         }
+      }
 
-        if (input.borrowRule && (
-          input.borrowRule === BorrowRule.Restricted
-          || input.borrowRule !== existing.borrowRule
-        )) {
-          if (input.borrowRule === BorrowRule.Restricted) {
-            const uniqueIds = [...new Set(input.authorizedLenderIds)];
+      tx.update(schema.assets)
+        .set({
+          ...input,
+          updatedById: ctx.session.user.id,
+        })
+        .where(eq(schema.assets.id, input.id))
+        .run();
 
-            await tx.delete(schema.assetAuthorizedLenders)
-              .where(eq(schema.assetAuthorizedLenders.assetId, input.id));
-
-            await tx.insert(schema.assetAuthorizedLenders)
-              .values(uniqueIds.map((userId) => ({
-                assetId: input.id,
-                userId,
-              })));
-          }
-        }
-
-        await tx.update(schema.assets)
-          .set({
-            ...input,
-            updatedById: ctx.session.user.id,
-          })
-          .where(eq(schema.assets.id, input.id));
-
-        const result = await tx.query.assets.findFirst({
+      const result = tx.query.assets
+        .findFirst({
           where: { id: input.id },
           with: {
             authorizedLenders: true,
             category: true,
           },
-        });
+        })
+        .sync();
 
-        assert(result !== undefined, 'result should never be undefined');
+      assert(result !== undefined, 'result should never be undefined');
 
-        return result;
-      });
-    }),
+      return result;
+    })),
   updateRecord: protectedProcedure
     .input(UpdateAssetRecordInput)
-    .mutation(async ({ ctx, input }) => {
-      return ctx.db.transaction(async (tx) => {
+    .mutation(({ ctx, input }) => {
+      ctx.db.transaction((tx) => {
         type AssetRecord = Omit<typeof AssetRecords.insert.infer, 'assetId'>;
 
         const values = input.records
@@ -331,11 +338,12 @@ export const assetsRouter = createTRPCRouter({
             assetId: input.id,
           }));
 
-        await tx.delete(schema.assetRecords)
-          .where(eq(schema.assetRecords.assetId, input.id));
+        tx.delete(schema.assetRecords)
+          .where(eq(schema.assetRecords.assetId, input.id))
+          .run();
 
         if (values.length) {
-          await tx.insert(schema.assetRecords).values(values);
+          tx.insert(schema.assetRecords).values(values).run();
         }
       });
     }),

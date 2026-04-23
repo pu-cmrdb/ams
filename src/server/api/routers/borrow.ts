@@ -101,10 +101,11 @@ export const borrowRouter = createTRPCRouter({
         recordStatus: RecordStatus.Active,
       };
 
-      const [record] = await ctx.db.transaction(async (tx) => {
-        const [inserted] = await tx.insert(schema.borrowRecords)
+      const [record] = ctx.db.transaction((tx) => {
+        const [inserted] = tx.insert(schema.borrowRecords)
           .values(value)
-          .returning(schema.borrowRecords._.columns);
+          .returning()
+          .all();
 
         assert(inserted !== undefined, 'record should never be undefined');
 
@@ -202,11 +203,12 @@ export const borrowRouter = createTRPCRouter({
         });
       }
 
-      return await ctx.db.transaction(async (tx) => {
-        const [updatedRecord] = await tx.update(schema.borrowRecords)
+      return ctx.db.transaction((tx) => {
+        const [updatedRecord] = tx.update(schema.borrowRecords)
           .set(input)
           .where(eq(schema.borrowRecords.id, id))
-          .returning(schema.borrowRecords._.columns);
+          .returning()
+          .all();
 
         assert(updatedRecord !== undefined, 'updatedRecord should never be undefined');
 
