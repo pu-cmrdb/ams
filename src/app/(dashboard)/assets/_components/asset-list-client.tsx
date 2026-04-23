@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AssetStatus, BorrowRule, OwnershipType } from '@/lib/enums';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useTRPC } from '@/trpc/react';
 
 // 狀態
@@ -32,7 +33,7 @@ const borrowRuleMap: Record<BorrowRule, string> = {
 export function AssetListClient() {
   const trpc = useTRPC();
   // 抓取最多10000筆資料
-  const { data: assets, isError, isLoading } = useQuery(trpc.asset.list.queryOptions({ limit: 10000 }),
+  const { data: assets, isError, isLoading, refetch } = useQuery(trpc.asset.list.queryOptions({ limit: 10000 }),
   );
 
   return (
@@ -56,7 +57,19 @@ export function AssetListClient() {
                 // 檢查錯誤
                 <TableRow>
                   <TableCell className="h-24 text-center text-destructive" colSpan={8}>
-                    資料載入失敗，請重新整理頁面
+                    <div className="
+                      flex flex-col items-center justify-center gap-2
+                    "
+                    >
+                      <span>資料載入失敗</span>
+                      <Button
+                        onClick={() => void refetch()}
+                        size="sm"
+                        variant="outline"
+                      >
+                        再試一次
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               )
