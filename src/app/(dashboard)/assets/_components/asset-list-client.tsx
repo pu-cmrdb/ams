@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 import { AssetStatus, BorrowRule, OwnershipType } from '@/lib/enums';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,53 @@ export function AssetListClient() {
   const { data: assets, isError, isLoading, refetch } = useQuery(trpc.asset.list.queryOptions({ limit: 10000 }),
   );
 
+  // early return
+
+  // 檢查錯誤
+  if (isError) {
+    return (
+      <div className="rounded-md border p-8">
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle className="text-destructive">資料載入失敗，請稍後再試</EmptyTitle>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button onClick={() => void refetch()} size="sm" variant="outline">
+              再試一次
+            </Button>
+          </EmptyContent>
+        </Empty>
+      </div>
+    );
+  }
+
+  // 載入中
+  if (isLoading) {
+    return (
+      <div className="rounded-md border p-8">
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle className="text-muted-foreground">資料載入中...</EmptyTitle>
+          </EmptyHeader>
+        </Empty>
+      </div>
+    );
+  }
+
+  // 無資料
+  if (assets?.length === 0) {
+    return (
+      <div className="rounded-md border p-8">
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle className="text-muted-foreground">目前尚無財產紀錄</EmptyTitle>
+          </EmptyHeader>
+        </Empty>
+      </div>
+    );
+  }
+
+  // 有資料
   return (
     <div className="rounded-md border">
       <Table>
@@ -51,99 +99,51 @@ export function AssetListClient() {
             <TableHead className="whitespace-nowrap">借用權限</TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
-          {isError
-            ? (
-                // 檢查錯誤
-                <TableRow>
-                  <TableCell className="h-24 text-center text-destructive" colSpan={8}>
-                    <div className="
-                      flex flex-col items-center justify-center gap-2
-                    "
-                    >
-                      <span>資料載入失敗</span>
-                      <Button
-                        onClick={() => void refetch()}
-                        size="sm"
-                        variant="outline"
-                      >
-                        再試一次
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )
-            : isLoading
-              ? (
-                  // 檢查載入
-                  <TableRow>
-                    <TableCell
-                      className="h-24 text-center text-muted-foreground"
-                      colSpan={8}
-                    >
-                      資料載入中...
-                    </TableCell>
-                  </TableRow>
-                )
-              : assets?.length === 0
-                ? (
-                    // 確認資料狀態
-                    <TableRow>
-                      <TableCell
-                        className="h-24 text-center text-muted-foreground"
-                        colSpan={8}
-                      >
-                        目前尚無財產紀錄
-                      </TableCell>
-                    </TableRow>
-                  )
-                : (
-                    // 印出資料
-                    assets?.map((asset) => (
-                      <TableRow key={asset.id}>
-                        <TableCell>{ownershipMap[asset.ownershipType] || asset.ownershipType}</TableCell>
-                        <TableCell>
-                          <div className="font-medium">{asset.name}</div>
-                          {asset.schoolAssetNumber && (
-                            <div className="text-xs text-muted-foreground">{asset.schoolAssetNumber}</div>
-                          )}
-                        </TableCell>
+          {/* 印出資料 */}
+          {assets?.map((asset) => (
+            <TableRow key={asset.id}>
+              <TableCell>{ownershipMap[asset.ownershipType] || asset.ownershipType}</TableCell>
+              <TableCell>
+                <div className="font-medium">{asset.name}</div>
+                {asset.schoolAssetNumber && (
+                  <div className="text-xs text-muted-foreground">{asset.schoolAssetNumber}</div>
+                )}
+              </TableCell>
 
-                        {/* 使用reduce加總所有record的quantity */}
-                        <TableCell>
-                          {asset.records.reduce((total, record) => total + record.quantity, 0)}
-                        </TableCell>
+              {/* 使用reduce加總所有record的quantity */}
+              <TableCell>
+                {asset.records.reduce((total, record) => total + record.quantity, 0)}
+              </TableCell>
 
-                        <TableCell>{asset.location}</TableCell>
-                        <TableCell>{asset.custodian}</TableCell>
-                        <TableCell>{asset.category?.name}</TableCell>
+              <TableCell>{asset.location}</TableCell>
+              <TableCell>{asset.custodian}</TableCell>
+              <TableCell>{asset.category?.name}</TableCell>
 
-                        {/* 把status展開成Badge,並用Set去除重複 */}
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {asset.records.length > 0
-                              ? (
-                                  Array.from(new Set(asset.records.map((r) => r.status))).map(
-                                    (status) => (
-                                      <Badge
-                                        key={status}
-                                        variant={status === 'normal' ? 'default' : 'secondary'}
-                                      >
-                                        {statusMap[status as keyof typeof statusMap] || status}
-                                      </Badge>
-                                    ),
-                                  )
-                                )
-                              : (
-                                  <Badge variant="outline">無狀態</Badge>
-                                )}
-                          </div>
-                        </TableCell>
+              {/* 把status展開成Badge,並用Set去除重複 */}
+              <TableCell>
+                <div className="flex flex-wrap gap-1">
+                  {asset.records.length > 0
+                    ? (
+                        Array.from(new Set(asset.records.map((r) => r.status))).map((status) => (
+                          <Badge
+                            key={status}
+                            variant={status === 'normal' ? 'default' : 'secondary'}
+                          >
+                            {statusMap[status as keyof typeof statusMap] || status}
+                          </Badge>
+                        ))
+                      )
+                    : (
+                        <Badge variant="outline">無紀錄</Badge>
+                      )}
+                </div>
+              </TableCell>
 
-                        <TableCell>{borrowRuleMap[asset.borrowRule] || asset.borrowRule}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
+              <TableCell>{borrowRuleMap[asset.borrowRule] || asset.borrowRule}</TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </div>
