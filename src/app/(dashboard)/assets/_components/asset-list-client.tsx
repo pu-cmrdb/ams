@@ -4,10 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
-import { AssetStatus, BorrowRule, OwnershipType } from '@/lib/enums';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useTRPC } from '@/trpc/react';
+
+import type { AssetStatus, BorrowRule, OwnershipType } from '@/lib/enums';
 
 // 狀態
 const statusMap: Record<AssetStatus, string> = {
@@ -33,8 +34,9 @@ const borrowRuleMap: Record<BorrowRule, string> = {
 
 export function AssetListClient() {
   const trpc = useTRPC();
-  // 抓取最多10000筆資料
-  const { data: assets, isError, isLoading, refetch } = useQuery(trpc.asset.list.queryOptions({ limit: 10000 }),
+  // 抓取最多20筆資料
+  // TODO: 分頁控制
+  const { data: assets, isError, isLoading, refetch } = useQuery(trpc.asset.list.queryOptions({ limit: 20 }),
   );
 
   // early return
@@ -71,7 +73,7 @@ export function AssetListClient() {
   }
 
   // 無資料
-  if (assets?.length === 0) {
+  if (!assets?.length) {
     return (
       <div className="rounded-md border p-8">
         <Empty>
@@ -102,7 +104,7 @@ export function AssetListClient() {
 
         <TableBody>
           {/* 印出資料 */}
-          {assets?.map((asset) => (
+          {assets.map((asset) => (
             <TableRow key={asset.id}>
               <TableCell>{ownershipMap[asset.ownershipType] || asset.ownershipType}</TableCell>
               <TableCell>
@@ -131,7 +133,7 @@ export function AssetListClient() {
                             key={status}
                             variant={status === 'normal' ? 'default' : 'secondary'}
                           >
-                            {statusMap[status as keyof typeof statusMap] || status}
+                            {statusMap[status] || status}
                           </Badge>
                         ))
                       )
