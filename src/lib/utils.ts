@@ -1,7 +1,8 @@
 import { clsx } from 'clsx';
 import { sql } from 'drizzle-orm';
 import { twMerge } from 'tailwind-merge';
-import { type } from 'arktype';
+
+import { type } from '@/lib/arktype';
 
 import type { AnyColumn } from 'drizzle-orm';
 import type { ClassValue } from 'clsx';
@@ -81,7 +82,7 @@ export function defineEnum<const T extends EnumLikeInput>(definition: T): EnumLi
     ...definition,
     $schema,
     $values,
-  }) as EnumLike<T>;
+  });
 }
 
 /**

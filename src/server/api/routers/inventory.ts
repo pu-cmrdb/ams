@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { type } from 'arktype';
+import { type } from '@/lib/arktype';
 
 import assert from 'assert';
 

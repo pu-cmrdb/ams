@@ -1,7 +1,7 @@
 import { count, eq, getColumns } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
-import { type } from 'arktype';
+import { type } from '@/lib/arktype';
 
 import assert from 'assert';
 
