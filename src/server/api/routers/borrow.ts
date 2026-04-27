@@ -1,7 +1,6 @@
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { type } from '@/lib/arktype';
 
 import assert from 'assert';
 
@@ -9,6 +8,7 @@ import { AssetStatus, BorrowRecordSortKey, BorrowRule, RecordStatus, SortDirecti
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { BorrowRecords } from '@/server/database/type';
 import { schema } from '@/server/database';
+import { type } from '@/lib/arktype';
 
 const CreateBorrowRecordsInput = BorrowRecords.insert
   .omit('id', 'actualReturnDate', 'recordStatus', 'creatorId');

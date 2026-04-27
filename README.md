@@ -9,7 +9,7 @@
 - 認證：[Better Auth](https://www.better-auth.com/)（透過行雲 IAM OAuth2 登入）
 - API：[tRPC](https://trpc.io/) v11 + TanStack Query
 - 資料庫：SQLite（[libsql](https://github.com/tursodatabase/libsql)）+ [Drizzle ORM](https://orm.drizzle.team/)
-- UI：Tailwind CSS v4、Radix UI、shadcn/ui
+- UI：Tailwind CSS v4、Base UI、shadcn/ui
 - 執行環境：[Bun](https://bun.sh/)
 
 ## 環境設定
