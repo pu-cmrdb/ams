@@ -1,7 +1,6 @@
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { type } from 'arktype';
 
 import assert from 'assert';
 
@@ -10,6 +9,7 @@ import { AssetRecords, Assets } from '@/server/database/type';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { containsLike } from '@/lib/utils';
 import { schema } from '@/server/database';
+import { type } from '@/lib/arktype';
 
 type AssetsTable = typeof schema.assets;
 

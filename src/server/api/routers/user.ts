@@ -1,11 +1,11 @@
 import { Result } from 'better-result';
 import { TRPCError } from '@trpc/server';
-import { type } from 'arktype';
 
 import assert from 'assert';
 
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { env } from '@/env';
+import { type } from '@/lib/arktype';
 
 /**
  * IAM 使用者列表的回傳資料

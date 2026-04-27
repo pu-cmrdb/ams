@@ -1,13 +1,13 @@
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { type } from 'arktype';
 
 import assert from 'assert';
 
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { InventoryPlans } from '@/server/database/type';
 import { schema } from '@/server/database';
+import { type } from '@/lib/arktype';
 
 const CreateInventoryInput = InventoryPlans.insert
   .omit('id', 'createdById', 'status')

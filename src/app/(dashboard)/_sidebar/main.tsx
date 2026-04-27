@@ -81,27 +81,39 @@ const routes: NavGroup[] = [
 export function MainSidebarContent() {
   const pathname = usePathname();
 
-  return routes.map((group) => (
-    <SidebarGroup key={group.name}>
-      {group.items && <SidebarGroupLabel>{group.name}</SidebarGroupLabel>}
-      <SidebarMenu>
-        {group.href && group.icon
-          ? (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === group.href}>
-                  <Link href={group.href}>
-                    <group.icon />
-                    <span>{group.name}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )
-          : group.items?.map((item) => (
-              <NavMenuItem item={item} key={item.href} pathname={pathname} />
-            ))}
-      </SidebarMenu>
-    </SidebarGroup>
-  ));
+  return routes.map((group) => {
+    let contents: React.ReactNode;
+
+    if (group.href && group.icon) {
+      contents = (
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            isActive={pathname === group.href}
+            render={(
+              <Link href={group.href}>
+                <group.icon />
+                <span>{group.name}</span>
+              </Link>
+            )}
+          />
+        </SidebarMenuItem>
+      );
+    }
+    else {
+      contents = group.items?.map((item) => (
+        <NavMenuItem item={item} key={item.href} pathname={pathname} />
+      ));
+    }
+
+    return (
+      <SidebarGroup key={group.name}>
+        {group.items && <SidebarGroupLabel>{group.name}</SidebarGroupLabel>}
+        <SidebarMenu>
+          {contents}
+        </SidebarMenu>
+      </SidebarGroup>
+    );
+  });
 }
 
 function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
@@ -109,12 +121,15 @@ function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
 
   return (
     <SidebarMenuItem key={item.href}>
-      <SidebarMenuButton asChild isActive={isActive}>
-        <Link href={item.href}>
-          <item.icon />
-          <span>{item.name}</span>
-        </Link>
-      </SidebarMenuButton>
+      <SidebarMenuButton
+        isActive={isActive}
+        render={(
+          <Link href={item.href}>
+            <item.icon />
+            <span>{item.name}</span>
+          </Link>
+        )}
+      />
       {isActive && item.children && item.children.length > 0 && (
         <SidebarMenuSub>
           {item.children.map((sub) => (
@@ -129,9 +144,12 @@ function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
 function SubItem({ item, pathname }: { item: NavSubItem; pathname: string }) {
   return (
     <SidebarMenuSubItem key={item.href}>
-      <SidebarMenuSubButton asChild isActive={pathname.startsWith(item.href)}>
-        <Link href={item.href}>{item.name}</Link>
-      </SidebarMenuSubButton>
+      <SidebarMenuSubButton
+        isActive={pathname.startsWith(item.href)}
+        render={
+          <Link href={item.href}>{item.name}</Link>
+        }
+      />
     </SidebarMenuSubItem>
   );
 }

@@ -1,7 +1,6 @@
 import { count, eq, getColumns } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
-import { type } from 'arktype';
 
 import assert from 'assert';
 
@@ -10,6 +9,7 @@ import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { Categories } from '@/server/database/type';
 import { containsLike } from '@/lib/utils';
 import { schema } from '@/server/database';
+import { type } from '@/lib/arktype';
 
 type CategoriesTable = typeof schema.categories;
 

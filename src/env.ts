@@ -1,5 +1,6 @@
 import { createEnv } from '@t3-oss/env-nextjs';
-import { type } from 'arktype';
+
+import { type } from '@/lib/arktype';
 
 export const env = createEnv({
   emptyStringAsUndefined: true,
