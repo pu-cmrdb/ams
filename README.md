@@ -5,10 +5,10 @@
 ## 技術棧
 
 - 框架：[Next.js](https://nextjs.org/) 16（App Router）
-- 語言：TypeScript 5
+- 語言：TypeScript 6
 - 認證：[Better Auth](https://www.better-auth.com/)（透過行雲 IAM OAuth2 登入）
 - API：[tRPC](https://trpc.io/) v11 + TanStack Query
-- 資料庫：SQLite（[libsql](https://github.com/tursodatabase/libsql)）+ [Drizzle ORM](https://orm.drizzle.team/)
+- 資料庫：SQLite（[Bun SQLite](https://bun.com/docs/runtime/sqlite)）+ [Drizzle ORM](https://orm.drizzle.team/)
 - UI：Tailwind CSS v4、Base UI、shadcn/ui
 - 執行環境：[Bun](https://bun.sh/)
 
@@ -101,7 +101,7 @@ docker compose down          # 停止
 
 ## 授權
 
-本專案為行雲者研發基地團隊內部私有專案，未經授權不得對外散布或使用。
+本專案為行雲者研發基地團隊所有專案，未經授權不得對外散布或使用。
 
 ## 貢獻
 
