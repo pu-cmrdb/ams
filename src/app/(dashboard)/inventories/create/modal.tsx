@@ -64,18 +64,6 @@ export default function InventoryPage({ onSuccess }: { onSuccess?: () => void })
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-base font-medium text-gray-700">盤點範圍</label>
-          <input
-            className="
-              rounded-lg border border-gray-300 px-4 py-3 text-base
-              focus:ring-2 focus:ring-indigo-500 focus:outline-none
-            "
-            onChange={(e) => { setForm({ ...form, scope: e.target.value }); }}
-            type="text"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
           <label className="text-base font-medium text-gray-700">盤點人員</label>
           <input
             className="
@@ -110,7 +98,10 @@ export default function InventoryPage({ onSuccess }: { onSuccess?: () => void })
                 rounded-lg border border-gray-300 px-4 py-3 text-base
                 focus:ring-2 focus:ring-indigo-500 focus:outline-none
               "
-              onChange={(e) => { setForm({ ...form, dueAt: new Date(e.target.value) }); }}
+              onChange={(e) => {
+                const ids = e.target.value.split(',').map((id) => id.trim());
+                setForm({ ...form, assignedToIds: ids });
+              }}
               type="datetime-local"
             />
           </div>
