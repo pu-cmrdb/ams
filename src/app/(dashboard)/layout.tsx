@@ -21,9 +21,7 @@ export default async function DashboardLayout({ children }: LayoutProps<'/'>) {
       <SidebarProvider>
         <DashboardSidebar />
 
-        <main className="w-full">
-          {children}
-        </main>
+        <main className="w-full">{children}</main>
       </SidebarProvider>
     </SessionProvider>
   );

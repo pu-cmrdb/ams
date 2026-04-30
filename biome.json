@@ -1,0 +1,79 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
+  "assist": {
+    "actions": {
+      "recommended": true,
+      "source": {
+        "organizeImports": "off",
+        "useSortedAttributes": "on",
+        "useSortedInterfaceMembers": "on",
+        "useSortedKeys": "on",
+        "useSortedProperties": "on"
+      }
+    },
+    "enabled": true
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "files": {
+    "ignoreUnknown": false,
+    "includes": ["src/**/*", "!src/components/ui/**/*"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "javascript": {
+    "formatter": {
+      "operatorLinebreak": "before",
+      "quoteStyle": "single",
+      "semicolons": "always"
+    }
+  },
+  "linter": {
+    "domains": {
+      "drizzle": "all",
+      "project": "recommended",
+      "types": "all"
+    },
+    "enabled": true,
+    "rules": {
+      "nursery": {
+        "useSortedClasses": "on"
+      },
+      "recommended": true,
+      "style": {
+        "noNegationElse": "on",
+        "noNestedTernary": "on",
+        "noSubstr": "on",
+        "noUnusedTemplateLiteral": "on",
+        "noUselessElse": "on",
+        "useAsConstAssertion": "on",
+        "useAtIndex": "on",
+        "useBlockStatements": "on",
+        "useCollapsedElseIf": "on",
+        "useCollapsedIf": "on",
+        "useConsistentArrowReturn": "on",
+        "useForOf": "on",
+        "useImportType": "error",
+        "useNodejsImportProtocol": "on",
+        "useSelfClosingElements": "on"
+      },
+      "suspicious": {
+        "noImportCycles": "on",
+        "useAwait": "on",
+        "useGuardForIn": "on"
+      }
+    }
+  },
+  "plugins": ["./.biome/no-use-effect.grit"],
+  "vcs": {
+    "clientKind": "git",
+    "enabled": true,
+    "useIgnoreFile": true
+  }
+}

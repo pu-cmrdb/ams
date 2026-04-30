@@ -1,8 +1,8 @@
+import assert from 'node:assert';
+
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-
-import assert from 'assert';
 
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { InventoryPlans } from '@/server/database/type';
@@ -18,16 +18,14 @@ const CreateInventoryInput = InventoryPlans.insert
     assigneeIds: 'string[]',
   });
 
-const UpdateInventoryInput = InventoryPlans.update
-  .omit('createdById')
-  .and({
-    /** 財產 ID 陣列 */
-    'assetIds?': 'string[]',
-    /** 盤點人員 ID 陣列 */
-    'assigneeIds?': 'string[]',
-    /** 盤點計畫 ID */
-    'id': 'string',
-  });
+const UpdateInventoryInput = InventoryPlans.update.omit('createdById').and({
+  /** 財產 ID 陣列 */
+  'assetIds?': 'string[]',
+  /** 盤點人員 ID 陣列 */
+  'assigneeIds?': 'string[]',
+  /** 盤點計畫 ID */
+  id: 'string',
+});
 
 export const inventoryRouter = createTRPCRouter({
   /**
@@ -76,18 +74,21 @@ export const inventoryRouter = createTRPCRouter({
    * 取得單一盤點計畫詳情，包含所有盤點人員。
    */
   get: protectedProcedure
-    .input(type({
-      /** 盤點計畫 ID */
-      id: 'string > 0',
-    }))
+    .input(
+      type({
+        /** 盤點計畫 ID */
+        id: 'string > 0',
+      }),
+    )
     .query(async ({ ctx, input }) => {
-      const plan = await ctx.db.query.inventoryPlans
-        .findFirst({
-          where: { id: input.id },
-          with: { assets: true, assignees: true },
-        });
+      const plan = await ctx.db.query.inventoryPlans.findFirst({
+        where: { id: input.id },
+        with: { assets: true, assignees: true },
+      });
 
-      if (!plan) return null;
+      if (!plan) {
+        return null;
+      }
 
       const { assets, assignees, ...rest } = plan;
       return {
@@ -102,16 +103,18 @@ export const inventoryRouter = createTRPCRouter({
    * @returns 盤點計畫陣列
    */
   list: protectedProcedure
-    .input(type({
-      /** 每頁筆數，預設 20 */
-      limit: 'number.integer >= 1 = 20',
-      /** 跳過筆數，預設 0 */
-      offset: 'number.integer >= 0 = 0',
-      /** 排序欄位，預設 createdAt */
-      sort: '"name" | "status" | "startAt" | "dueAt" | "completedAt" | "createdAt" | "updatedAt" = "createdAt"',
-      /** 排序方向，預設 desc */
-      sortDirection: '"asc" | "desc" = "desc"',
-    }))
+    .input(
+      type({
+        /** 每頁筆數，預設 20 */
+        limit: 'number.integer >= 1 = 20',
+        /** 跳過筆數，預設 0 */
+        offset: 'number.integer >= 0 = 0',
+        /** 排序欄位，預設 createdAt */
+        sort: '"name" | "status" | "startAt" | "dueAt" | "completedAt" | "createdAt" | "updatedAt" = "createdAt"',
+        /** 排序方向，預設 desc */
+        sortDirection: '"asc" | "desc" = "desc"',
+      }),
+    )
     .query(async ({ ctx, input }) => {
       const plans = await ctx.db.query.inventoryPlans.findMany({
         limit: input.limit,
@@ -156,7 +159,9 @@ export const inventoryRouter = createTRPCRouter({
             .returning()
             .all();
 
-          if (updated) result = updated;
+          if (updated) {
+            result = updated;
+          }
         }
 
         if (assetIds !== undefined) {
@@ -183,13 +188,15 @@ export const inventoryRouter = createTRPCRouter({
           }
         }
 
-        const finalAssetIds = assetIds
+        const finalAssetIds =
+          assetIds
           ?? tx.query.inventoryPlanAssets
             .findMany({ where: { planId: id } })
             .sync()
             .map((a) => a.assetId);
 
-        const finalAssigneeIds = assigneeIds
+        const finalAssigneeIds =
+          assigneeIds
           ?? tx.query.inventoryPlanAssignees
             .findMany({ where: { planId: id } })
             .sync()

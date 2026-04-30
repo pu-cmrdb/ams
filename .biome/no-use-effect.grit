@@ -1,0 +1,29 @@
+language js
+
+or {
+  `useEffect($callback, $deps)`,
+  `React.useEffect($callback, $deps)`
+} as $expr where {
+  register_diagnostic(
+    span = $expr,
+    message = join(list = [
+      "Avoid useEffect unless synchronizing with an external system.",
+      "",
+      "Most useEffect usage in React applications is unnecessary.",
+      "",
+      "Effects are an escape hatch from the React paradigm.",
+      "They let you step outside of React and synchronize your components with external system like network or the browser DOM.",
+      "If there is no external system involved, you shouldn't need an Effect.",
+      "Removing unnecessary Effects will make your code easier to follow, faster to run, and less error-prone.",
+      "",
+      "Prefer instead:",
+      "• Compute derived values during render",
+      "• Use `useMemo` for expensive calculations",
+      "• Move logic into event handlers",
+      "• Lift state instead of syncing duplicated state",
+      "",
+      "You can find more information here:",
+      "https://react.dev/learn/you-might-not-need-an-effect"
+    ], separator = "\n")
+  )
+}

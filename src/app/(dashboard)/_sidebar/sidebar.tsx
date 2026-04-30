@@ -5,15 +5,11 @@ import { MainSidebarContent } from './main';
 export function DashboardSidebar() {
   return (
     <Sidebar>
-      <SidebarHeader>
-
-      </SidebarHeader>
+      <SidebarHeader />
       <SidebarContent>
         <MainSidebarContent />
       </SidebarContent>
-      <SidebarFooter>
-
-      </SidebarFooter>
+      <SidebarFooter />
     </Sidebar>
   );
 }

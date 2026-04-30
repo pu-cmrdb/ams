@@ -26,9 +26,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       lang="zh-Hant"
     >
       <body>
-        <TRPCReactProvider>
-          {children}
-        </TRPCReactProvider>
+        <TRPCReactProvider>{children}</TRPCReactProvider>
       </body>
     </html>
   );

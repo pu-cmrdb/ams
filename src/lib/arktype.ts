@@ -4,4 +4,4 @@ configure({
   exactOptionalPropertyTypes: false,
 });
 
-export const type = arktype;
+export const type: typeof arktype = arktype;
