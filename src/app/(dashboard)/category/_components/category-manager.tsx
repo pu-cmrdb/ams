@@ -1,45 +1,180 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { api } from '@/trpc/react';
+import { useTRPC } from '@/trpc/react';
 
 export function CategoryManager() {
-  const utils = api.useUtils();
+  // 呼叫hook,取得實體
+  const trpc = useTRPC();
 
-  const { data: categories, isLoading } = api.category.list.useQuery({});
+  const queryClient = useQueryClient();
+
+  // 將類別顯示上限設為100
+  const { data: categories, isError, isLoading, refetch } = useQuery(
+    trpc.category.list.queryOptions({ limit: 100 }),
+  );
 
   const [newName, setNewName] = useState('');
-
   const [editingId, setEditingId] = useState<null | string>(null);
   const [editName, setEditName] = useState('');
 
-  const createMutation = api.category.create.useMutation({
+  // 定義新增類別,成功後重新載入列表
+  const createMutation = useMutation({
+    ...trpc.category.create.mutationOptions(),
     onError: () => { alert('建立失敗'); },
     onSuccess: () => {
       setNewName('');
-      void utils.category.list.invalidate();
+      void queryClient.invalidateQueries(trpc.category.list.queryFilter());
     },
   });
 
-  const updateMutation = api.category.update.useMutation({
+  // 定義更新類別,成功後退出編輯模式並重新載入列表
+  const updateMutation = useMutation({
+    ...trpc.category.update.mutationOptions(),
     onError: () => { alert('修改失敗'); },
     onSuccess: () => {
       setEditingId(null);
-      void utils.category.list.invalidate();
+      void queryClient.invalidateQueries(trpc.category.list.queryFilter());
     },
   });
 
-  const deleteMutation = api.category.delete.useMutation({
+  // 定義刪除類別,成功後重新載入列表
+  const deleteMutation = useMutation({
+    ...trpc.category.delete.mutationOptions(),
     onError: () => { alert('刪除失敗'); },
     onSuccess: () => {
-      void utils.category.list.invalidate();
+      void queryClient.invalidateQueries(trpc.category.list.queryFilter());
     },
   });
+
+  // early return
+
+  const renderTableContent = () => {
+    // 檢查錯誤
+    if (isError) {
+      return (
+        <TableRow>
+          <TableCell className="p-4" colSpan={2}>
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle className="text-destructive">類別載入失敗，請稍後再試</EmptyTitle>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button onClick={() => void refetch()} size="sm" variant="outline">
+                  再試一次
+                </Button>
+              </EmptyContent>
+            </Empty>
+          </TableCell>
+        </TableRow>
+      );
+    }
+
+    // 載入中
+    if (isLoading) {
+      return (
+        <TableRow>
+          <TableCell className="p-4" colSpan={2}>
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle className="text-muted-foreground">類別載入中...</EmptyTitle>
+              </EmptyHeader>
+            </Empty>
+          </TableCell>
+        </TableRow>
+      );
+    }
+
+    // 無類別
+    if (categories?.length === 0) {
+      return (
+        <TableRow>
+          <TableCell className="p-4" colSpan={2}>
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle className="text-muted-foreground">目前尚無類別</EmptyTitle>
+              </EmptyHeader>
+            </Empty>
+          </TableCell>
+        </TableRow>
+      );
+    }
+
+    // 有類別
+    return categories?.map((category) => (
+      <TableRow key={category.id}>
+        <TableCell>
+          {/* 根據是否為編輯狀態,切換成 純文字名稱 或 可修改的輸入框 */}
+          {editingId === category.id
+            ? (
+                <Input
+                  autoFocus
+                  onChange={(e) => { setEditName(e.target.value); }}
+                  value={editName}
+                />
+              )
+            : (
+                category.name
+              )}
+        </TableCell>
+        <TableCell className="text-right">
+          {/* 根據是否為編輯狀態,將按鈕切換成 修改/刪除 或 儲存/取消  */}
+          {editingId === category.id
+            ? (
+                <div className="flex justify-end gap-2">
+                  <Button
+                    onClick={() => { setEditingId(null); }}
+                    size="sm"
+                    variant="ghost"
+                  >
+                    取消
+                  </Button>
+                  <Button
+                    disabled={updateMutation.isPending || !editName.trim()}
+                    onClick={() => { updateMutation.mutate({ id: category.id, name: editName.trim() }); }}
+                    size="sm"
+                  >
+                    儲存
+                  </Button>
+                </div>
+              )
+            : (
+                <div className="flex justify-end gap-2">
+                  <Button
+                    onClick={() => {
+                      setEditingId(category.id);
+                      setEditName(category.name);
+                    }}
+                    size="sm"
+                    variant="outline"
+                  >
+                    修改
+                  </Button>
+                  <Button
+                    disabled={deleteMutation.isPending}
+                    onClick={() => {
+                      if (window.confirm(`確定刪除「${category.name}」？`)) {
+                        deleteMutation.mutate({ id: category.id });
+                      }
+                    }}
+                    size="sm"
+                    variant="destructive"
+                  >
+                    刪除
+                  </Button>
+                </div>
+              )}
+        </TableCell>
+      </TableRow>
+    ));
+  };
 
   return (
     <Card className="mx-auto max-w-3xl">
@@ -51,14 +186,14 @@ export function CategoryManager() {
         <div className="flex gap-4">
           <Input
             onChange={(e) => { setNewName(e.target.value); }}
-            placeholder="輸入新類別名稱..."
+            placeholder="輸入新類別名稱"
             value={newName}
           />
           <Button
             disabled={createMutation.isPending || !newName.trim()}
-            onClick={() => { createMutation.mutate({ name: newName }); }}
+            onClick={() => { createMutation.mutate({ name: newName.trim() }); }}
           >
-            {createMutation.isPending ? '建立中...' : '新增類別'}
+            {createMutation.isPending ? '建立中' : '新增類別'}
           </Button>
         </div>
 
@@ -70,94 +205,8 @@ export function CategoryManager() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading
-              ? (
-                  <TableRow>
-                    <TableCell
-                      className="h-24 text-center text-muted-foreground"
-                      colSpan={2}
-                    >
-                      載入中...
-                    </TableCell>
-                  </TableRow>
-                )
-              : categories?.length === 0
-                ? (
-                    <TableRow>
-                      <TableCell
-                        className="h-24 text-center text-muted-foreground"
-                        colSpan={2}
-                      >
-                        目前尚無類別
-                      </TableCell>
-                    </TableRow>
-                  )
-                : (
-                    categories?.map((category) => (
-                      <TableRow key={category.id}>
-                        <TableCell>
-                          {editingId === category.id
-                            ? (
-                                <Input
-                                  autoFocus
-                                  onChange={(e) => { setEditName(e.target.value); }}
-                                  value={editName}
-                                />
-                              )
-                            : (
-                                category.name
-                              )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {editingId === category.id
-                            ? (
-                                <div className="flex justify-end gap-2">
-                                  <Button
-                                    onClick={() => { setEditingId(null); }}
-                                    size="sm"
-                                    variant="ghost"
-                                  >
-                                    取消
-                                  </Button>
-                                  <Button
-                                    disabled={updateMutation.isPending || !editName.trim()}
-                                    onClick={() => { updateMutation.mutate({ id: category.id, name: editName }); }}
-                                    size="sm"
-                                  >
-                                    儲存
-                                  </Button>
-                                </div>
-                              )
-                            : (
-                                <div className="flex justify-end gap-2">
-                                  <Button
-                                    onClick={() => {
-                                      setEditingId(category.id);
-                                      setEditName(category.name);
-                                    }}
-                                    size="sm"
-                                    variant="outline"
-                                  >
-                                    修改
-                                  </Button>
-                                  <Button
-                                    disabled={deleteMutation.isPending}
-                                    onClick={() => {
-                                      if (window.confirm(`確定要刪除「${category.name}」嗎？`)) {
-                                        deleteMutation.mutate({ id: category.id });
-                                      }
-                                    }}
-                                    size="sm"
-                                    variant="destructive"
-                                  >
-                                    刪除
-                                  </Button>
-                                </div>
-                              )}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
+            {/* 回傳狀態或資料 */}
+            {renderTableContent()}
           </TableBody>
         </Table>
 
