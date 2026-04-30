@@ -1,8 +1,8 @@
+import assert from 'node:assert';
+
 import { count, eq, getColumns } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
-
-import assert from 'assert';
 
 import { CategorySortKey, SortDirection } from '@/lib/enums';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
@@ -18,21 +18,20 @@ const SelectCategoryInput = type({
   /** 關鍵字 */
   'keyword?': 'string',
   /** 每頁筆數，預設 20 */
-  'limit': 'number.integer >= 1 = 20',
+  limit: 'number.integer >= 1 = 20',
   /** 跳過筆數，預設 0 */
-  'offset': 'number.integer >= 0 = 0',
+  offset: 'number.integer >= 0 = 0',
   /** 排序 */
   'sort?': CategorySortKey.$schema,
   /** 排序方向 */
   'sortDirection?': SortDirection.$schema,
 });
-const UpdateCategoryInput = Categories.update
-  .and({
-    /** 要有財產類別 ID 才可更新 */
-    id: 'string > 0',
-    /** 要有財產類別名稱才可更新 ( 也只有這個欄位能更新 ) */
-    name: 'string > 0',
-  });
+const UpdateCategoryInput = Categories.update.and({
+  /** 要有財產類別 ID 才可更新 */
+  id: 'string > 0',
+  /** 要有財產類別名稱才可更新 ( 也只有這個欄位能更新 ) */
+  name: 'string > 0',
+});
 const CategoryByIdInput = type({
   id: 'string > 0',
 });
@@ -108,13 +107,17 @@ export const categoryRouter = createTRPCRouter({
         offset: input.offset,
         orderBy: (table, { asc, desc }) => {
           const dir = input.sortDirection === 'asc' ? asc : desc;
-          return [dir(table[input.sort ?? CategorySortKey.Name]), asc(table.id)];
+          return [
+            dir(table[input.sort ?? CategorySortKey.Name]),
+            asc(table.id),
+          ];
         },
         where: {
           AND: [
             keyword
               ? {
-                  RAW: (table: CategoriesTable) => containsLike(table.name, keyword),
+                  RAW: (table: CategoriesTable) =>
+                    containsLike(table.name, keyword),
                 }
               : undefined,
           ].filter((v): v is NonNullable<typeof v> => v != null),
@@ -130,11 +133,10 @@ export const categoryRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id } = input;
 
-      const current = await ctx.db.query.categories
-        .findFirst({
-          columns: { id: true, name: true },
-          where: { id: { eq: id } },
-        });
+      const current = await ctx.db.query.categories.findFirst({
+        columns: { id: true, name: true },
+        where: { id: { eq: id } },
+      });
 
       if (!current) {
         throw new TRPCError({
@@ -153,7 +155,8 @@ export const categoryRouter = createTRPCRouter({
                 name: {
                   eq: input.name,
                 },
-              }, {
+              },
+              {
                 id: {
                   ne: id,
                 },

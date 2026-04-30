@@ -47,21 +47,19 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
  * ArkErrors so that you get typesafety on the frontend if your procedure fails due to validation
  * errors on the backend.
  */
-const t = initTRPC
-  .context<typeof createTRPCContext>()
-  .create({
-    errorFormatter({ error, shape }) {
-      return {
-        ...shape,
-        data: {
-          ...shape.data,
-          validationError:
-            error.cause instanceof ArkErrors ? error.cause.flatByPath : null,
-        },
-      };
-    },
-    transformer: superjson,
-  });
+const t = initTRPC.context<typeof createTRPCContext>().create({
+  errorFormatter({ error, shape }) {
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        validationError:
+          error.cause instanceof ArkErrors ? error.cause.flatByPath : null,
+      },
+    };
+  },
+  transformer: superjson,
+});
 
 /**
  * Create a server-side caller.
@@ -91,7 +89,9 @@ export const createTRPCRouter = t.router;
  * network latency that would occur in production but not in local development.
  */
 const timingMiddleware = t.middleware(async ({ next, path }) => {
-  if (env.NODE_ENV === 'test') return next();
+  if (env.NODE_ENV === 'test') {
+    return next();
+  }
 
   const start = Date.now();
 

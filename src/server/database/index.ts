@@ -1,8 +1,8 @@
 import { Database } from 'bun:sqlite';
+import { dirname } from 'node:path';
+import { mkdirSync } from 'node:fs';
 
-import { dirname } from 'path';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
-import { mkdirSync } from 'fs';
 
 import { env } from '@/env';
 
@@ -23,7 +23,9 @@ const globalForDb = globalThis as unknown as {
 };
 
 export const client = globalForDb.client ?? new Database(dbPath);
-if (env.NODE_ENV !== 'production') globalForDb.client = client;
+if (env.NODE_ENV !== 'production') {
+  globalForDb.client = client;
+}
 
 export const db = drizzle({ client, relations });
 

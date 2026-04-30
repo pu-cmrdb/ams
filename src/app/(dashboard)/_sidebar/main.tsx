@@ -89,17 +89,16 @@ export function MainSidebarContent() {
         <SidebarMenuItem>
           <SidebarMenuButton
             isActive={pathname === group.href}
-            render={(
+            render={
               <Link href={group.href}>
                 <group.icon />
                 <span>{group.name}</span>
               </Link>
-            )}
+            }
           />
         </SidebarMenuItem>
       );
-    }
-    else {
+    } else {
       contents = group.items?.map((item) => (
         <NavMenuItem item={item} key={item.href} pathname={pathname} />
       ));
@@ -108,9 +107,7 @@ export function MainSidebarContent() {
     return (
       <SidebarGroup key={group.name}>
         {group.items && <SidebarGroupLabel>{group.name}</SidebarGroupLabel>}
-        <SidebarMenu>
-          {contents}
-        </SidebarMenu>
+        <SidebarMenu>{contents}</SidebarMenu>
       </SidebarGroup>
     );
   });
@@ -123,12 +120,12 @@ function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
     <SidebarMenuItem key={item.href}>
       <SidebarMenuButton
         isActive={isActive}
-        render={(
+        render={
           <Link href={item.href}>
             <item.icon />
             <span>{item.name}</span>
           </Link>
-        )}
+        }
       />
       {isActive && item.children && item.children.length > 0 && (
         <SidebarMenuSub>
@@ -146,9 +143,7 @@ function SubItem({ item, pathname }: { item: NavSubItem; pathname: string }) {
     <SidebarMenuSubItem key={item.href}>
       <SidebarMenuSubButton
         isActive={pathname.startsWith(item.href)}
-        render={
-          <Link href={item.href}>{item.name}</Link>
-        }
+        render={<Link href={item.href}>{item.name}</Link>}
       />
     </SidebarMenuSubItem>
   );

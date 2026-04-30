@@ -4,9 +4,8 @@ import { twMerge } from 'tailwind-merge';
 
 import { type } from '@/lib/arktype';
 
-import type { AnyColumn } from 'drizzle-orm';
+import type { AnyColumn, SQL } from 'drizzle-orm';
 import type { ClassValue } from 'clsx';
-import type { SQL } from 'drizzle-orm';
 
 type EnumLike<T extends EnumLikeInput> = {
   /**
@@ -22,7 +21,6 @@ type EnumLike<T extends EnumLikeInput> = {
    * 例如 SQLite 的 enum 定義 API。
    */
   readonly $values: NonEmptyTuple<Values<T>>;
-
 } & Readonly<T>;
 
 type EnumLikeInput = Record<string, number | string | symbol>;
@@ -74,7 +72,9 @@ export function cn(...inputs: ClassValue[]) {
  *
  * ```
  */
-export function defineEnum<const T extends EnumLikeInput>(definition: T): EnumLike<T> {
+export function defineEnum<const T extends EnumLikeInput>(
+  definition: T,
+): EnumLike<T> {
   const $values = valuesToTuple(definition);
   const $schema = type.valueOf(definition);
 
@@ -130,10 +130,7 @@ const LIKE_ESCAPE_CHAR = '\\' as const;
  * containsLike(table.name, '100%');
  * // => table.name LIKE '%100\%%' ESCAPE '\'
  */
-export function containsLike(
-  column: AnyColumn,
-  keyword: string,
-): SQL {
+export function containsLike(column: AnyColumn, keyword: string): SQL {
   const pattern = `%${escapeLikePattern(keyword)}%`;
   return sql`${column} LIKE ${pattern} ESCAPE ${LIKE_ESCAPE_CHAR}`;
 }

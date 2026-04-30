@@ -14,7 +14,7 @@ import type { QueryClient } from '@tanstack/react-query';
 
 import type { AppRouter } from '@/server/api/root';
 
-let clientQueryClientSingleton: QueryClient | undefined = undefined;
+let clientQueryClientSingleton: QueryClient | undefined;
 const getQueryClient = () => {
   if (typeof window === 'undefined') {
     // Server: always make a new query client
@@ -26,7 +26,8 @@ const getQueryClient = () => {
   return clientQueryClientSingleton;
 };
 
-export const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
+export const { TRPCProvider, useTRPC, useTRPCClient } =
+  createTRPCContext<AppRouter>();
 
 /**
  * Inference helper for inputs.
@@ -60,7 +61,7 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
             return headers;
           },
           transformer: SuperJSON,
-          url: getBaseUrl() + '/api/trpc',
+          url: `${getBaseUrl()}/api/trpc`,
         }),
       ],
     }),
@@ -76,7 +77,15 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 }
 
 function getBaseUrl() {
-  if (typeof window !== 'undefined') return window.location.origin;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return `http://localhost:${process.env.PORT ?? 3000}`;
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
+  const DefaultNextjsPort = 3000;
+
+  return `http://localhost:${process.env.PORT ?? DefaultNextjsPort}`;
 }

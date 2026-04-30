@@ -1,8 +1,8 @@
+import assert from 'node:assert';
+
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-
-import assert from 'assert';
 
 import { AssetStatus, BorrowRecordSortKey, BorrowRule, RecordStatus, SortDirection } from '@/lib/enums';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
@@ -10,20 +10,23 @@ import { BorrowRecords } from '@/server/database/type';
 import { schema } from '@/server/database';
 import { type } from '@/lib/arktype';
 
-const CreateBorrowRecordsInput = BorrowRecords.insert
-  .omit('id', 'actualReturnDate', 'recordStatus', 'creatorId');
+const CreateBorrowRecordsInput = BorrowRecords.insert.omit(
+  'id',
+  'actualReturnDate',
+  'recordStatus',
+  'creatorId',
+);
 
-const SelectBorrowRecordsInput = BorrowRecords.select.partial()
-  .and({
-    /** 每頁筆數 */
-    limit: '0 < number.integer <= 100 = 20',
-    /** 跳過筆數 */
-    offset: 'number.integer >= 0 = 0',
-    /** 排序 */
-    sort: BorrowRecordSortKey.$schema.default(BorrowRecordSortKey.CreatedAt),
-    /** 排序方向 */
-    sortDirection: SortDirection.$schema.default(SortDirection.Descending),
-  });
+const SelectBorrowRecordsInput = BorrowRecords.select.partial().and({
+  /** 每頁筆數 */
+  limit: '0 < number.integer <= 100 = 20',
+  /** 跳過筆數 */
+  offset: 'number.integer >= 0 = 0',
+  /** 排序 */
+  sort: BorrowRecordSortKey.$schema.default(BorrowRecordSortKey.CreatedAt),
+  /** 排序方向 */
+  sortDirection: SortDirection.$schema.default(SortDirection.Descending),
+});
 
 const UpdateBorrowRecordsInput = BorrowRecords.update
   .omit('assetId', 'borrowerId')
@@ -66,12 +69,16 @@ export const borrowRouter = createTRPCRouter({
         });
       }
 
-      if (asset.borrowRule === BorrowRule.None
+      if (
+        asset.borrowRule === BorrowRule.None
         || (asset.borrowRule === BorrowRule.Restricted
-          && !asset.authorizedLenders.some(({ userId }) => userId === ctx.session.user.id))) {
+          && !asset.authorizedLenders.some(
+            ({ userId }) => userId === ctx.session.user.id,
+          ))
+      ) {
         throw new TRPCError({
           code: 'FORBIDDEN',
-          message: `你沒有權限建立這個財產的出借單`,
+          message: '你沒有權限建立這個財產的出借單',
         });
       }
 
@@ -88,7 +95,7 @@ export const borrowRouter = createTRPCRouter({
       if (input.quantity > avaliableQuantity) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: `出借數量不能超過庫存數量`,
+          message: '出借數量不能超過庫存數量',
         });
       }
 
@@ -102,7 +109,8 @@ export const borrowRouter = createTRPCRouter({
       };
 
       const [record] = ctx.db.transaction((tx) => {
-        const [inserted] = tx.insert(schema.borrowRecords)
+        const [inserted] = tx
+          .insert(schema.borrowRecords)
           .values(value)
           .returning()
           .all();
@@ -151,23 +159,27 @@ export const borrowRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const conditions = [];
 
-      if (input.assetId) conditions.push({ assetId: input.assetId.trim() });
-      if (input.creatorId) conditions.push({ creatorId: input.creatorId.trim() });
-      if (input.borrowerId) conditions.push({ borrowerId: input.borrowerId.trim() });
-      if (input.recordStatus) conditions.push({ recordStatus: input.recordStatus });
+      if (input.assetId) {
+        conditions.push({ assetId: input.assetId.trim() });
+      }
+      if (input.creatorId) {
+        conditions.push({ creatorId: input.creatorId.trim() });
+      }
+      if (input.borrowerId) {
+        conditions.push({ borrowerId: input.borrowerId.trim() });
+      }
+      if (input.recordStatus) {
+        conditions.push({ recordStatus: input.recordStatus });
+      }
 
       const result = await ctx.db.query.borrowRecords.findMany({
         limit: input.limit,
         offset: input.offset,
         orderBy: (table, { asc, desc }) => {
-          const dir = input.sortDirection === SortDirection.Ascending
-            ? asc
-            : desc;
+          const dir =
+            input.sortDirection === SortDirection.Ascending ? asc : desc;
 
-          return [
-            dir(table[input.sort]),
-            asc(table.id),
-          ];
+          return [dir(table[input.sort]), asc(table.id)];
         },
         where: { AND: conditions },
         with: { asset: true },
@@ -204,13 +216,17 @@ export const borrowRouter = createTRPCRouter({
       }
 
       return ctx.db.transaction((tx) => {
-        const [updatedRecord] = tx.update(schema.borrowRecords)
+        const [updatedRecord] = tx
+          .update(schema.borrowRecords)
           .set(input)
           .where(eq(schema.borrowRecords.id, id))
           .returning()
           .all();
 
-        assert(updatedRecord !== undefined, 'updatedRecord should never be undefined');
+        assert(
+          updatedRecord !== undefined,
+          'updatedRecord should never be undefined',
+        );
 
         // TODO(kamiya4047,DavidWu94): 討論處理歸還後財產狀態更新
 
