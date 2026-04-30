@@ -24,6 +24,7 @@ export function CategoryManager() {
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<null | string>(null);
   const [editName, setEditName] = useState('');
+  const [deletingId, setDeletingId] = useState<null | string>(null);
 
   // 定義新增類別,成功後重新載入列表
   const createMutation = useMutation({
@@ -49,6 +50,9 @@ export function CategoryManager() {
   const deleteMutation = useMutation({
     ...trpc.category.delete.mutationOptions(),
     onError: () => { alert('刪除失敗'); },
+    onSettled: () => {
+      setDeletingId(null);
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries(trpc.category.list.queryFilter());
     },
@@ -158,9 +162,10 @@ export function CategoryManager() {
                     修改
                   </Button>
                   <Button
-                    disabled={deleteMutation.isPending}
+                    disabled={deletingId === category.id}
                     onClick={() => {
                       if (window.confirm(`確定刪除「${category.name}」？`)) {
+                        setDeletingId(category.id);
                         deleteMutation.mutate({ id: category.id });
                       }
                     }}
