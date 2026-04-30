@@ -1,6 +1,9 @@
 'use client';
 
+import { PencilIcon } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+
+import Link from 'next/link';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
@@ -109,6 +112,7 @@ export function AssetListClient() {
             <TableHead>類別</TableHead>
             <TableHead>狀態</TableHead>
             <TableHead className="whitespace-nowrap">借用權限</TableHead>
+            <TableHead className="text-right whitespace-nowrap">操作</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -164,6 +168,16 @@ export function AssetListClient() {
 
               <TableCell>
                 {borrowRuleMap[asset.borrowRule] || asset.borrowRule}
+              </TableCell>
+
+              <TableCell className="text-right">
+                <Link
+                  className="inline-flex h-9 items-center gap-1.5 rounded-4xl border border-border bg-input/30 px-3 text-sm font-medium whitespace-nowrap transition-all hover:bg-input/50 hover:text-foreground"
+                  href={`/assets/${asset.id}/edit`}
+                >
+                  <PencilIcon className="size-4" />
+                  編輯
+                </Link>
               </TableCell>
             </TableRow>
           ))}

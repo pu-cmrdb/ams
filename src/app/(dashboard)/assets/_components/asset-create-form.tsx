@@ -1,15 +1,17 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { arktypeResolver } from '@hookform/resolvers/arktype';
+import { useForm } from 'react-hook-form';
 
 import { BorrowRule, OwnershipType } from '@/lib/enums';
 import { useTRPC } from '@/trpc/react';
 
-import { defaultValues, getErrorMessage } from './asset-form-utils';
 import { AssetFormFields } from './asset-form-fields';
+import { assetFormSchema, defaultValues, getErrorMessage } from './asset-form-utils';
 
 import type { AssetFormValues } from './asset-form-utils';
 
@@ -20,6 +22,7 @@ export function AssetCreateForm() {
 
   const form = useForm<AssetFormValues>({
     defaultValues,
+    resolver: arktypeResolver(assetFormSchema as never),
   });
 
   const createMutation = useMutation(trpc.asset.create.mutationOptions());

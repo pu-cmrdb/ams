@@ -1,4 +1,4 @@
-import { AssetCreateForm } from '@/app/assets/_components/asset-create-form';
+import { AssetCreateForm } from '@/app/(dashboard)/assets/_components/asset-create-form';
 
 export default function CreateAssetPage() {
   return (

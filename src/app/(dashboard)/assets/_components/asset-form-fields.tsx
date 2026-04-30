@@ -2,15 +2,15 @@
 
 import { AlertCircleIcon, ChevronDownIcon, LoaderCircleIcon } from 'lucide-react';
 
-import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AssetStatus, BorrowRule, OwnershipType } from '@/lib/enums';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Form, FormField } from '@/components/ui/form';
-import { Button } from '@/components/ui/button';
+import { BorrowRule, OwnershipType } from '@/lib/enums';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Form, FormField } from '@/components/ui/form';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
 import { statusOptions } from './asset-form-utils';
@@ -126,7 +126,8 @@ export function AssetFormFields({
                   <FieldContent>
                     <Select
                       onValueChange={(value) => {
-                        field.onChange(value as AssetStatus);
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        field.onChange(value!);
                       }}
                       value={field.value}
                     >
@@ -221,7 +222,8 @@ export function AssetFormFields({
                   <FieldContent>
                     <Select
                       onValueChange={(value) => {
-                        const nextOwnershipType = value as OwnershipType;
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        const nextOwnershipType = value!;
 
                         if (field.value === OwnershipType.School && nextOwnershipType !== OwnershipType.School) {
                           form.setValue('schoolAssetNumber', '');
@@ -277,7 +279,8 @@ export function AssetFormFields({
                 <FieldContent>
                   <Select
                     onValueChange={(value) => {
-                      const nextBorrowRule = value as BorrowRule;
+                      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                      const nextBorrowRule = value!;
 
                       if (field.value === BorrowRule.Restricted && nextBorrowRule !== BorrowRule.Restricted) {
                         form.setValue('authorizedLenderIds', []);
@@ -312,13 +315,14 @@ export function AssetFormFields({
                   <FieldLabel>授權名單</FieldLabel>
                   <FieldContent>
                     <Popover>
-                      <PopoverTrigger asChild>
-                        <Button className="w-full justify-between" type="button" variant="outline">
-                          {selectedLenderLabels.length > 0
-                            ? `已選擇 ${selectedLenderLabels.length} 位人員`
-                            : '請選擇授權人員'}
-                          <ChevronDownIcon className="size-4" />
-                        </Button>
+                      <PopoverTrigger
+                        className="inline-flex h-9 w-full items-center justify-between rounded-4xl border border-border bg-input/30 px-3 text-sm font-medium whitespace-nowrap transition-all outline-none select-none hover:bg-input/50 hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+                        type="button"
+                      >
+                        {selectedLenderLabels.length > 0
+                          ? `已選擇 ${selectedLenderLabels.length} 位人員`
+                          : '請選擇授權人員'}
+                        <ChevronDownIcon className="size-4" />
                       </PopoverTrigger>
                       <PopoverContent align="start" className="w-80">
                         <div className="max-h-60 space-y-2 overflow-y-auto">

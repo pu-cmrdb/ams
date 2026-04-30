@@ -1,17 +1,19 @@
 'use client';
 
-import { AlertCircleIcon, LoaderCircleIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
+
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
+import { AlertCircleIcon, LoaderCircleIcon } from 'lucide-react';
+import { arktypeResolver } from '@hookform/resolvers/arktype';
+import { useForm } from 'react-hook-form';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { BorrowRule, OwnershipType } from '@/lib/enums';
 import { useTRPC } from '@/trpc/react';
 
-import { defaultValues, getErrorMessage, mapAssetToFormValues } from './asset-form-utils';
 import { AssetFormFields } from './asset-form-fields';
+import { assetFormSchema, defaultValues, getErrorMessage, mapAssetToFormValues } from './asset-form-utils';
 
 import type { AssetFormValues } from './asset-form-utils';
 
@@ -46,6 +48,7 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
 
   const form = useForm<AssetFormValues>({
     defaultValues,
+    resolver: arktypeResolver(assetFormSchema as never),
     values: formValues,
   });
 

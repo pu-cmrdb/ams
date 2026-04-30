@@ -1,4 +1,24 @@
 import { AssetStatus, BorrowRule, OwnershipType } from '@/lib/enums';
+import { type } from '@/lib/arktype';
+
+// ArkType schema 用於運行時驗證，型別與 AssetFormValues 保持一致
+// 注意：schema 返回型別為 any，由 react-hook-form resolver 進行型別強制轉換
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+export const assetFormSchema = type({
+  authorizedLenderIds: 'string[]',
+  borrowRule: 'string',
+  categoryId: 'string',
+  custodian: 'string',
+  description: 'string',
+  location: 'string',
+  name: 'string',
+  ownershipType: 'string',
+  purchaseDate: 'string',
+  quantity: 'number',
+  schoolAssetNumber: 'string',
+  status: 'string',
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+}) as any;
 
 export interface AssetFormValues {
   authorizedLenderIds: string[];
