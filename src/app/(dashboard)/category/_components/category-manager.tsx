@@ -167,7 +167,7 @@ export function CategoryManager() {
                   {/* 避免誤觸刪除,進行彈窗確認 */}
                   <AlertDialog>
                     {/* 觸發彈窗 */}
-                    <AlertDialogTrigger asChild>
+                    <AlertDialogTrigger>
                       <Button
                         disabled={deletingId === category.id}
                         size="sm"
