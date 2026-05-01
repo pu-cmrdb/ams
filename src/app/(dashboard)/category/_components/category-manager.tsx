@@ -1,8 +1,11 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useState } from 'react';
 
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
@@ -29,7 +32,7 @@ export function CategoryManager() {
   // 定義新增類別,成功後重新載入列表
   const createMutation = useMutation({
     ...trpc.category.create.mutationOptions(),
-    onError: () => { alert('建立失敗'); },
+    onError: () => { toast.error('建立失敗'); },
     onSuccess: () => {
       setNewName('');
       void queryClient.invalidateQueries(trpc.category.list.queryFilter());
@@ -39,7 +42,7 @@ export function CategoryManager() {
   // 定義更新類別,成功後退出編輯模式並重新載入列表
   const updateMutation = useMutation({
     ...trpc.category.update.mutationOptions(),
-    onError: () => { alert('修改失敗'); },
+    onError: () => { toast.error('修改失敗'); },
     onSuccess: () => {
       setEditingId(null);
       void queryClient.invalidateQueries(trpc.category.list.queryFilter());
@@ -49,7 +52,7 @@ export function CategoryManager() {
   // 定義刪除類別,成功後重新載入列表
   const deleteMutation = useMutation({
     ...trpc.category.delete.mutationOptions(),
-    onError: () => { alert('刪除失敗'); },
+    onError: () => { toast.error('刪除失敗'); },
     onSettled: () => {
       setDeletingId(null);
     },
@@ -129,7 +132,7 @@ export function CategoryManager() {
               )}
         </TableCell>
         <TableCell className="text-right">
-          {/* 根據是否為編輯狀態,將按鈕切換成 修改/刪除 或 儲存/取消  */}
+          {/* 根據是否為編輯狀態,將按鈕切換成 取消/儲存 或 修改/刪除  */}
           {editingId === category.id
             ? (
                 <div className="flex justify-end gap-2">
@@ -161,19 +164,44 @@ export function CategoryManager() {
                   >
                     修改
                   </Button>
-                  <Button
-                    disabled={deletingId === category.id}
-                    onClick={() => {
-                      if (window.confirm(`確定刪除「${category.name}」？`)) {
-                        setDeletingId(category.id);
-                        deleteMutation.mutate({ id: category.id });
-                      }
-                    }}
-                    size="sm"
-                    variant="destructive"
-                  >
-                    刪除
-                  </Button>
+                  {/* 避免誤觸刪除,進行彈窗確認 */}
+                  <AlertDialog>
+                    {/* 觸發彈窗 */}
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        disabled={deletingId === category.id}
+                        size="sm"
+                        variant="destructive"
+                      >
+                        {deletingId === category.id ? '刪除中' : '刪除'}
+                      </Button>
+                    </AlertDialogTrigger>
+
+                    {/* 彈窗內容 */}
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          確定刪除「
+                          {category.name}
+                          」類別？
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          此動作無法復原,將永久刪除該類別
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            setDeletingId(category.id);
+                            deleteMutation.mutate({ id: category.id });
+                          }}
+                        >
+                          刪除
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               )}
         </TableCell>
