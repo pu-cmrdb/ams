@@ -8,6 +8,7 @@ export default function InventoryPage() {
       <PageHeader>
         <PageTitle>建立盤點計劃</PageTitle>
       </PageHeader>
+
       <InventoryCreateForm />
     </PageContainer>
   );

@@ -101,7 +101,7 @@ export function AssetPicker({ onChange, value }: AssetPickerProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <Popover>
           <PopoverTrigger
             render={
@@ -133,9 +133,11 @@ export function AssetPicker({ onChange, value }: AssetPickerProps) {
             </Command>
           </PopoverContent>
         </Popover>
-        <Button onClick={onClear} variant="outline">
-          清除
-        </Button>
+        {value.length > 0 && (
+          <Button onClick={onClear} variant="outline">
+            清除
+          </Button>
+        )}
       </div>
       <ItemGroup>
         {value.map((id) => {

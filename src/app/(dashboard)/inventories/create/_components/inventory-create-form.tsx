@@ -1,16 +1,18 @@
 'use client';
 
+import { ArrowLeftIcon, CalendarDaysIcon } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { addDays, format } from 'date-fns';
-import { CalendarDaysIcon } from 'lucide-react';
 import { arktypeResolver } from '@hookform/resolvers/arktype';
 import { useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { zhTW } from 'react-day-picker/locale';
 
+import Link from 'next/link';
+
 import { Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -71,47 +73,59 @@ export function InventoryCreateForm() {
       <div className="flex grid-cols-2 flex-col gap-8 lg:grid">
         <FieldSet>
           <FieldLegend>基礎資訊</FieldLegend>
+
           <Controller
             control={form.control}
             name="name"
             render={({ field, fieldState }) => (
               <Field>
                 <FieldLabel htmlFor={field.name}>名稱</FieldLabel>
+
                 <Input
                   aria-invalid={fieldState.invalid}
+                  autoComplete="off"
+                  data-1p-ignore
                   disabled={isPending}
                   id={field.name}
                   placeholder="期末數量盤點"
                   required
                   {...field}
                 />
+
                 <FieldError errors={fieldState.error && [fieldState.error]} />
               </Field>
             )}
           />
+
           <Controller
             control={form.control}
             name="description"
             render={({ field, fieldState }) => (
               <Field>
                 <FieldLabel htmlFor={field.name}>計劃敘述</FieldLabel>
+
                 <Textarea
                   aria-invalid={fieldState.invalid}
+                  autoComplete="off"
                   className="resize-y"
+                  data-1p-ignore
                   disabled={isPending}
                   id={field.name}
                   {...field}
                 />
+
                 <FieldError errors={fieldState.error && [fieldState.error]} />
               </Field>
             )}
           />
+
           <Controller
             control={form.control}
             name="assigneeIds"
             render={({ field: { onChange, ...field }, fieldState }) => (
               <Field>
                 <FieldLabel htmlFor={field.name}>盤點人員</FieldLabel>
+
                 <UserSelect
                   aria-invalid={fieldState.invalid}
                   disabled={isPending}
@@ -120,16 +134,19 @@ export function InventoryCreateForm() {
                   onValueChange={onChange}
                   {...field}
                 />
+
                 <FieldError errors={fieldState.error && [fieldState.error]} />
               </Field>
             )}
           />
+
           <Controller
             control={form.control}
             name="startAt"
             render={({ field, fieldState }) => (
               <Field>
                 <FieldLabel htmlFor={field.name}>開始日期</FieldLabel>
+
                 <Popover>
                   <PopoverTrigger
                     render={
@@ -139,12 +156,14 @@ export function InventoryCreateForm() {
                         variant="outline"
                       >
                         <CalendarDaysIcon data-icon="inline-start" />
+
                         {format(field.value, 'LLLdo EEEE, y', {
                           locale: zhTW,
                         })}
                       </Button>
                     }
                   />
+
                   <PopoverContent align="start" className="w-auto p-0">
                     <Calendar
                       captionLayout="dropdown"
@@ -157,16 +176,19 @@ export function InventoryCreateForm() {
                     />
                   </PopoverContent>
                 </Popover>
+
                 <FieldError errors={fieldState.error && [fieldState.error]} />
               </Field>
             )}
           />
+
           <Controller
             control={form.control}
             name="dueAt"
             render={({ field, fieldState }) => (
               <Field>
                 <FieldLabel htmlFor={field.name}>截止日期</FieldLabel>
+
                 <Popover>
                   <PopoverTrigger
                     render={
@@ -176,10 +198,12 @@ export function InventoryCreateForm() {
                         variant="outline"
                       >
                         <CalendarDaysIcon data-icon="inline-start" />
+
                         {format(field.value, 'LLLdo EEEE, y', { locale: zhTW })}
                       </Button>
                     }
                   />
+
                   <PopoverContent align="start" className="w-auto p-0">
                     <Calendar
                       captionLayout="dropdown"
@@ -192,13 +216,16 @@ export function InventoryCreateForm() {
                     />
                   </PopoverContent>
                 </Popover>
+
                 <FieldError errors={fieldState.error && [fieldState.error]} />
               </Field>
             )}
           />
         </FieldSet>
+
         <FieldSet>
           <FieldLegend>盤點財產清單</FieldLegend>
+
           <Controller
             control={form.control}
             name="assetIds"
@@ -207,6 +234,7 @@ export function InventoryCreateForm() {
                 <FieldDescription>
                   請選擇這個盤點計劃的目標財產
                 </FieldDescription>
+
                 <AssetPicker {...field} />
               </Field>
             )}
@@ -215,6 +243,15 @@ export function InventoryCreateForm() {
       </div>
       <Field orientation="horizontal">
         <Button type="submit">建立</Button>
+
+        <Link
+          className={buttonVariants({ variant: 'outline' })}
+          href="/inventories"
+        >
+          <ArrowLeftIcon data-icon="inline-start" />
+
+          <span>返回</span>
+        </Link>
       </Field>
     </form>
   );

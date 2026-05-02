@@ -42,7 +42,12 @@ export function UserSelect(props: UserSelectProps) {
             return <ComboboxChip key={id}>{name}</ComboboxChip>;
           })}
         </ComboboxValue>
-        <ComboboxChipsInput placeholder="選擇使用者" />
+
+        <ComboboxChipsInput
+          autoComplete="off"
+          data-1p-ignore
+          placeholder="選擇使用者"
+        />
       </ComboboxChips>
       <ComboboxContent>
         <ComboboxEmpty>
@@ -50,14 +55,17 @@ export function UserSelect(props: UserSelectProps) {
             <EmptyMedia variant="icon">
               <GhostIcon />
             </EmptyMedia>
+
             <EmptyHeader>
               <EmptyTitle>找不到相符的使用者</EmptyTitle>
+
               <EmptyDescription>
                 請確認拼字是否正確，或使用其他關鍵字搜尋
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
         </ComboboxEmpty>
+
         <ComboboxList>
           {(item: User) => {
             const name = item.displayUsername ?? item.username;
@@ -68,8 +76,10 @@ export function UserSelect(props: UserSelectProps) {
                     draggable={false}
                     src={`${env.NEXT_PUBLIC_BETTER_AUTH_IAM_URL}/api/user/${item.id}/image`}
                   />
+
                   <AvatarFallback>{name[0]}</AvatarFallback>
                 </Avatar>
+
                 {name}
               </ComboboxItem>
             );
