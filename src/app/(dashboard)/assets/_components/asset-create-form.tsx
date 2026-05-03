@@ -11,9 +11,9 @@ import { BorrowRule, OwnershipType } from '@/lib/enums';
 import { useTRPC } from '@/trpc/react';
 
 import { AssetFormFields } from './asset-form-fields';
-import { assetFormSchema, defaultValues, getErrorMessage } from './asset-form-utils';
+import { AssetFormSchema, defaultValues, getErrorMessage } from '../asset-form-utils';
 
-import type { AssetFormValues } from './asset-form-utils';
+import type { AssetFormValues } from '../asset-form-utils';
 
 export function AssetCreateForm() {
   const router = useRouter();
@@ -22,10 +22,19 @@ export function AssetCreateForm() {
 
   const form = useForm<AssetFormValues>({
     defaultValues,
-    resolver: arktypeResolver(assetFormSchema as never),
+    resolver: arktypeResolver(AssetFormSchema) as any,
   });
 
-  const createMutation = useMutation(trpc.asset.create.mutationOptions());
+  const createMutation = useMutation({
+    ...trpc.asset.create.mutationOptions(),
+    onSuccess: () => {
+      router.push('/assets');
+      router.refresh();
+    },
+    onError: (error) => {
+      setSubmitError(`登記財產失敗：${getErrorMessage(error)}`);
+    },
+  });
 
   const categoriesQuery = useQuery(trpc.category.list.queryOptions({
     limit: 200,
@@ -65,13 +74,7 @@ export function AssetCreateForm() {
       return;
     }
 
-    if (values.quantity <= 0 || !Number.isFinite(values.quantity)) {
-      form.setError('quantity', {
-        message: '數量必須大於 0',
-        type: 'manual',
-      });
-      return;
-    }
+    // Schema 已驗證 quantity > 0 和 integer，此檢查由 schema 負責
 
     const commonPayload = {
       categoryId: values.categoryId,
@@ -100,25 +103,17 @@ export function AssetCreateForm() {
           borrowRule: values.borrowRule,
         };
 
-    try {
-      await createMutation.mutateAsync({
-        ...commonPayload,
-        ...borrowRulePayload,
-        ...ownershipPayload,
-        records: [
-          {
-            quantity: values.quantity,
-            status: values.status,
-          },
-        ],
-      });
-
-      router.push('/assets');
-      router.refresh();
-    }
-    catch (error) {
-      setSubmitError(`登記財產失敗：${getErrorMessage(error)}`);
-    }
+    createMutation.mutate({
+      ...commonPayload,
+      ...borrowRulePayload,
+      ...ownershipPayload,
+      records: [
+        {
+          quantity: values.quantity,
+          status: values.status,
+        },
+      ],
+    });
   });
 
   return (

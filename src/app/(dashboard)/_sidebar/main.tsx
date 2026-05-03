@@ -39,7 +39,7 @@ const routes: NavGroup[] = [
       {
         children: [
           {
-            href: '/assets/create',
+            href: '/asset/create',
             name: '建立財產',
           },
           {

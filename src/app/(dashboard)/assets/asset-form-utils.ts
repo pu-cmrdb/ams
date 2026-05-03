@@ -1,38 +1,36 @@
 import { AssetStatus, BorrowRule, OwnershipType } from '@/lib/enums';
 import { type } from '@/lib/arktype';
 
-// ArkType schema 用於運行時驗證，型別與 AssetFormValues 保持一致
-// 注意：schema 返回型別為 any，由 react-hook-form resolver 進行型別強制轉換
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-export const assetFormSchema = type({
+// ArkType schema 用於運行時驗證，使用 enum $schema 提供精確的型別驗證
+export const AssetFormSchema = type({
   authorizedLenderIds: 'string[]',
-  borrowRule: 'string',
+  borrowRule: BorrowRule.$schema,
   categoryId: 'string',
   custodian: 'string',
   description: 'string',
   location: 'string',
   name: 'string',
-  ownershipType: 'string',
+  ownershipType: OwnershipType.$schema,
   purchaseDate: 'string',
   quantity: 'number',
   schoolAssetNumber: 'string',
-  status: 'string',
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-}) as any;
+  status: AssetStatus.$schema,
+});
 
+// 表單值的明確型別定義
 export interface AssetFormValues {
   authorizedLenderIds: string[];
-  borrowRule: BorrowRule;
+  borrowRule: 'none' | 'public' | 'restricted';
   categoryId: string;
   custodian: string;
   description: string;
   location: string;
   name: string;
-  ownershipType: OwnershipType;
+  ownershipType: 'cmrdb' | 'school';
   purchaseDate: string;
   quantity: number;
   schoolAssetNumber: string;
-  status: AssetStatus;
+  status: 'borrowed' | 'lost' | 'normal' | 'repairing' | 'scrapped';
 }
 
 export interface AssetQueryData {
@@ -51,17 +49,17 @@ export interface AssetQueryData {
 
 export const defaultValues: AssetFormValues = {
   authorizedLenderIds: [],
-  borrowRule: BorrowRule.Public,
+  borrowRule: BorrowRule.Public as 'none' | 'public' | 'restricted',
   categoryId: '',
   custodian: '',
   description: '',
   location: '',
   name: '',
-  ownershipType: OwnershipType.Cmrdb,
+  ownershipType: OwnershipType.Cmrdb as 'cmrdb' | 'school',
   purchaseDate: '',
   quantity: 1,
   schoolAssetNumber: '',
-  status: AssetStatus.Normal,
+  status: AssetStatus.Normal as 'borrowed' | 'lost' | 'normal' | 'repairing' | 'scrapped',
 };
 
 export const statusOptions: { label: string; value: AssetStatus }[] = [
@@ -83,17 +81,17 @@ export function mapAssetToFormValues(asset: AssetQueryData): AssetFormValues {
 
   return {
     authorizedLenderIds: asset.authorizedLenders.map((lender) => lender.userId),
-    borrowRule: asset.borrowRule,
+    borrowRule: asset.borrowRule as 'none' | 'public' | 'restricted',
     categoryId: asset.categoryId,
     custodian: asset.custodian,
     description: asset.description ?? '',
     location: asset.location,
     name: asset.name,
-    ownershipType: asset.ownershipType,
+    ownershipType: asset.ownershipType as 'cmrdb' | 'school',
     purchaseDate: toDateInputValue(asset.purchaseDate),
     quantity: displayRecord?.quantity ?? 1,
     schoolAssetNumber: asset.schoolAssetNumber ?? '',
-    status: displayRecord?.status ?? AssetStatus.Normal,
+    status: (displayRecord?.status ?? AssetStatus.Normal) as 'borrowed' | 'lost' | 'normal' | 'repairing' | 'scrapped',
   };
 }
 

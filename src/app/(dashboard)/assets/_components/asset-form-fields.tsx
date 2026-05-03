@@ -5,7 +5,7 @@ import { AlertCircleIcon, ChevronDownIcon, LoaderCircleIcon } from 'lucide-react
 import { BorrowRule, OwnershipType } from '@/lib/enums';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Form, FormField } from '@/components/ui/form';
+import { Form, FormField } from '@/components/form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,12 +13,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
-import { statusOptions } from './asset-form-utils';
+import { statusOptions } from '../asset-form-utils';
 
 import type React from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 
-import type { AssetFormValues } from './asset-form-utils';
+import type { AssetFormValues } from '../asset-form-utils';
 
 interface AssetFormFieldsProps {
   categories: { id: string; name: string }[];
@@ -105,8 +105,17 @@ export function AssetFormFields({
                       min={1}
                       onBlur={field.onBlur}
                       onChange={(event) => {
-                        field.onChange(Number(event.target.value));
+                        const value = event.target.value;
+                        if (value === '') {
+                          field.onChange('');
+                          return;
+                        }
+                        const parsed = Number.parseInt(value, 10);
+                        if (!Number.isNaN(parsed)) {
+                          field.onChange(parsed);
+                        }
                       }}
+                      step={1}
                       type="number"
                       value={field.value}
                     />
@@ -114,9 +123,16 @@ export function AssetFormFields({
                   </FieldContent>
                 </Field>
               )}
-              rules={{ required: '請輸入數量' }}
+              rules={{
+                required: '請輸入數量',
+                validate: (value) => {
+                  if (typeof value !== 'number' || value <= 0) {
+                    return '數量必須大於 0';
+                  }
+                  return true;
+                },
+              }}
             />
-
             <FormField
               control={form.control}
               name="status"
@@ -206,6 +222,10 @@ export function AssetFormFields({
                 </FieldContent>
               </Field>
             )}
+            rules={{
+              required: '請選擇財產類別',
+              validate: (value) => Boolean(value?.trim()) || '請選擇財產類別',
+            }}
           />
 
           <div className="

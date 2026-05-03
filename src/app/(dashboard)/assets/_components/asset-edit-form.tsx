@@ -13,9 +13,9 @@ import { BorrowRule, OwnershipType } from '@/lib/enums';
 import { useTRPC } from '@/trpc/react';
 
 import { AssetFormFields } from './asset-form-fields';
-import { assetFormSchema, defaultValues, getErrorMessage, mapAssetToFormValues } from './asset-form-utils';
+import { AssetFormSchema, defaultValues, getErrorMessage, mapAssetToFormValues } from '../asset-form-utils';
 
-import type { AssetFormValues } from './asset-form-utils';
+import type { AssetFormValues } from '../asset-form-utils';
 
 interface AssetEditFormProps {
   assetId: string;
@@ -25,6 +25,7 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
   const router = useRouter();
   const trpc = useTRPC();
   const [submitError, setSubmitError] = useState<null | string>(null);
+  const safeAssetId = assetId?.trim() ?? '';
 
   const categoriesQuery = useQuery(trpc.category.list.queryOptions({
     limit: 200,
@@ -37,8 +38,10 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
   }));
 
   const assetQuery = useQuery({
-    ...trpc.asset.get.queryOptions({ id: assetId }),
-    enabled: assetId.trim().length > 0,
+    ...trpc.asset.get.queryOptions({ id: safeAssetId }),
+    enabled: safeAssetId.length > 0,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 
   const formValues = useMemo(() => {
@@ -48,12 +51,27 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
 
   const form = useForm<AssetFormValues>({
     defaultValues,
-    resolver: arktypeResolver(assetFormSchema as never),
+    resolver: arktypeResolver(AssetFormSchema) as any,
     values: formValues,
+    mode: 'onChange',
   });
 
-  const updateMutation = useMutation(trpc.asset.update.mutationOptions());
-  const updateRecordMutation = useMutation(trpc.asset.updateRecord.mutationOptions());
+  const updateMutation = useMutation({
+    ...trpc.asset.update.mutationOptions(),
+    onSuccess: () => {
+      router.push('/assets');
+      router.refresh();
+    },
+    onError: (error) => {
+      setSubmitError(`修改財產失敗：${getErrorMessage(error)}`);
+    },
+  });
+  const updateRecordMutation = useMutation({
+    ...trpc.asset.updateRecord.mutationOptions(),
+    onError: (error) => {
+      setSubmitError(`更新庫存狀態失敗：${getErrorMessage(error)}`);
+    },
+  });
 
   const onSubmit = form.handleSubmit(async (values) => {
     setSubmitError(null);
@@ -84,13 +102,7 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
       return;
     }
 
-    if (values.quantity <= 0 || !Number.isFinite(values.quantity)) {
-      form.setError('quantity', {
-        message: '數量必須大於 0',
-        type: 'manual',
-      });
-      return;
-    }
+    // Schema 已驗證 quantity > 0 和 integer，此檢查由 schema 負責
 
     const commonPayload = {
       categoryId: values.categoryId,
@@ -120,14 +132,14 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
         };
 
     try {
-      await updateMutation.mutateAsync({
+      updateMutation.mutate({
         ...commonPayload,
         ...borrowRulePayload,
         id: assetId,
         ...ownershipPayload,
       });
 
-      await updateRecordMutation.mutateAsync({
+      updateRecordMutation.mutate({
         id: assetId,
         records: [
           {

@@ -173,7 +173,7 @@ export function AssetListClient() {
               <TableCell className="text-right">
                 <Link
                   className="inline-flex h-9 items-center gap-1.5 rounded-4xl border border-border bg-input/30 px-3 text-sm font-medium whitespace-nowrap transition-all hover:bg-input/50 hover:text-foreground"
-                  href={`/assets/${asset.id}/edit`}
+                  href={`/asset/${asset.id}/edit`}
                 >
                   <PencilIcon className="size-4" />
                   編輯
