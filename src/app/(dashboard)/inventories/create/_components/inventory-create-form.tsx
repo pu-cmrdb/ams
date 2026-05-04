@@ -229,11 +229,13 @@ export function InventoryCreateForm() {
           <Controller
             control={form.control}
             name="assetIds"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <Field>
                 <FieldDescription>
                   請選擇這個盤點計劃的目標財產
                 </FieldDescription>
+
+                {fieldState.error && <FieldError errors={[fieldState.error]} />}
 
                 <AssetPicker {...field} />
               </Field>

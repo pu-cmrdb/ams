@@ -1,3 +1,5 @@
+'use client';
+
 import { GhostIcon } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
