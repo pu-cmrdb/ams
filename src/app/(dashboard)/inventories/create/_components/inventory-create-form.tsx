@@ -243,6 +243,7 @@ export function InventoryCreateForm() {
           />
         </FieldSet>
       </div>
+
       <Field orientation="horizontal">
         <Button type="submit">建立</Button>
 
