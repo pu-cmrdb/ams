@@ -1,21 +1,21 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
 import { AlertCircleIcon, LoaderCircleIcon } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { arktypeResolver } from '@hookform/resolvers/arktype';
 import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { BorrowRule, OwnershipType } from '@/lib/enums';
 import { useTRPC } from '@/trpc/react';
 
-import { AssetFormFields } from './asset-form-fields';
 import { AssetFormSchema, defaultValues, getErrorMessage, mapAssetToFormValues } from '../asset-form-utils';
+import { AssetFormFields } from './asset-form-fields';
 
 import type { AssetFormValues } from '../asset-form-utils';
+
 
 interface AssetEditFormProps {
   assetId: string;
@@ -27,43 +27,49 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
   const [submitError, setSubmitError] = useState<null | string>(null);
   const safeAssetId = assetId?.trim() ?? '';
 
-  const categoriesQuery = useQuery(trpc.category.list.queryOptions({
-    limit: 200,
-    offset: 0,
-  }));
+  const categoriesQuery = useQuery(
+    trpc.category.list.queryOptions({
+      limit: 200,
+      offset: 0,
+    }),
+  );
 
-  const usersQuery = useQuery(trpc.user.list.queryOptions({
-    cursor: 0,
-    limit: 100,
-  }));
+  const usersQuery = useQuery(
+    trpc.user.list.queryOptions({
+      cursor: 0,
+      limit: 100,
+    }),
+  );
 
   const assetQuery = useQuery({
     ...trpc.asset.get.queryOptions({ id: safeAssetId }),
     enabled: safeAssetId.length > 0,
-    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
   });
 
   const formValues = useMemo(() => {
-    if (!assetQuery.data) return defaultValues;
+    if (!assetQuery.data) {
+      return defaultValues;
+    }
     return mapAssetToFormValues(assetQuery.data);
   }, [assetQuery.data]);
 
   const form = useForm<AssetFormValues>({
     defaultValues,
+    mode: 'onChange',
     resolver: arktypeResolver(AssetFormSchema) as any,
     values: formValues,
-    mode: 'onChange',
   });
 
   const updateMutation = useMutation({
     ...trpc.asset.update.mutationOptions(),
+    onError: (error) => {
+      setSubmitError(`修改財產失敗：${getErrorMessage(error)}`);
+    },
     onSuccess: () => {
       router.push('/assets');
       router.refresh();
-    },
-    onError: (error) => {
-      setSubmitError(`修改財產失敗：${getErrorMessage(error)}`);
     },
   });
   const updateRecordMutation = useMutation({
@@ -86,7 +92,10 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
       return;
     }
 
-    if (values.ownershipType === OwnershipType.School && schoolAssetNumber.length === 0) {
+    if (
+      values.ownershipType === OwnershipType.School
+      && schoolAssetNumber.length === 0
+    ) {
       form.setError('schoolAssetNumber', {
         message: '學校列管財產必須填寫學校產編',
         type: 'manual',
@@ -94,7 +103,10 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
       return;
     }
 
-    if (values.borrowRule === BorrowRule.Restricted && values.authorizedLenderIds.length === 0) {
+    if (
+      values.borrowRule === BorrowRule.Restricted
+      && values.authorizedLenderIds.length === 0
+    ) {
       form.setError('authorizedLenderIds', {
         message: '限制借用時，至少要選擇一位授權人員',
         type: 'manual',
@@ -107,29 +119,35 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
     const commonPayload = {
       categoryId: values.categoryId,
       custodian: values.custodian,
-      description: values.description.trim() ? values.description.trim() : undefined,
+      description: values.description.trim()
+        ? values.description.trim()
+        : undefined,
       location: values.location,
       name: values.name,
-      purchaseDate: values.purchaseDate ? new Date(`${values.purchaseDate}T00:00:00`) : undefined,
+      purchaseDate: values.purchaseDate
+        ? new Date(`${values.purchaseDate}T00:00:00`)
+        : undefined,
     };
 
-    const ownershipPayload = values.ownershipType === OwnershipType.School
-      ? {
-          ownershipType: OwnershipType.School,
-          schoolAssetNumber,
-        }
-      : {
-          ownershipType: OwnershipType.Cmrdb,
-        };
+    const ownershipPayload =
+      values.ownershipType === OwnershipType.School
+        ? {
+            ownershipType: OwnershipType.School,
+            schoolAssetNumber,
+          }
+        : {
+            ownershipType: OwnershipType.Cmrdb,
+          };
 
-    const borrowRulePayload = values.borrowRule === BorrowRule.Restricted
-      ? {
-          authorizedLenderIds: values.authorizedLenderIds,
-          borrowRule: BorrowRule.Restricted,
-        }
-      : {
-          borrowRule: values.borrowRule,
-        };
+    const borrowRulePayload =
+      values.borrowRule === BorrowRule.Restricted
+        ? {
+            authorizedLenderIds: values.authorizedLenderIds,
+            borrowRule: BorrowRule.Restricted,
+          }
+        : {
+            borrowRule: values.borrowRule,
+          };
 
     try {
       updateMutation.mutate({
@@ -151,15 +169,14 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
 
       router.push('/assets');
       router.refresh();
-    }
-    catch (error) {
+    } catch (error) {
       setSubmitError(`修改財產失敗：${getErrorMessage(error)}`);
     }
   });
 
   if (assetQuery.isLoading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 text-muted-foreground text-sm">
         <LoaderCircleIcon className="size-4 animate-spin" />
         載入財產資料中...
       </div>

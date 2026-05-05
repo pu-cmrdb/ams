@@ -2,15 +2,15 @@
 
 import { AlertCircleIcon, ChevronDownIcon, LoaderCircleIcon } from 'lucide-react';
 
-import { BorrowRule, OwnershipType } from '@/lib/enums';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Form, FormField } from '@/components/form';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { BorrowRule, OwnershipType } from '@/lib/enums';
+import { Form, FormField } from '@/components/form';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 import { statusOptions } from '../asset-form-utils';
@@ -19,6 +19,7 @@ import type React from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 
 import type { AssetFormValues } from '../asset-form-utils';
+
 
 interface AssetFormFieldsProps {
   categories: { id: string; name: string }[];
@@ -62,14 +63,18 @@ export function AssetFormFields({
         {submitError && (
           <Alert variant="destructive">
             <AlertCircleIcon />
-            <AlertTitle>{mode === 'create' ? '登記財產失敗' : '修改財產失敗'}</AlertTitle>
+            <AlertTitle>
+              {mode === 'create' ? '登記財產失敗' : '修改財產失敗'}
+            </AlertTitle>
             <AlertDescription>{submitError}</AlertDescription>
           </Alert>
         )}
 
         <div className="grid gap-2">
-          <h1 className="text-lg font-semibold">{pageTitle}</h1>
-          <p className="text-sm text-muted-foreground">填寫完整資料後即可送出。</p>
+          <h1 className="font-semibold text-lg">{pageTitle}</h1>
+          <p className="text-muted-foreground text-sm">
+            填寫完整資料後即可送出。
+          </p>
         </div>
 
         <FieldGroup>
@@ -88,11 +93,7 @@ export function AssetFormFields({
             rules={{ required: '請輸入財產名稱' }}
           />
 
-          <div className="
-            grid gap-2
-            sm:grid-cols-2
-          "
-          >
+          <div className="grid gap-2 sm:grid-cols-2">
             <FormField
               control={form.control}
               name="quantity"
@@ -165,11 +166,7 @@ export function AssetFormFields({
             />
           </div>
 
-          <div className="
-            grid gap-2
-            sm:grid-cols-2
-          "
-          >
+          <div className="grid gap-2 sm:grid-cols-2">
             <FormField
               control={form.control}
               name="location"
@@ -192,7 +189,11 @@ export function AssetFormFields({
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="custodian">保管單位</FieldLabel>
                   <FieldContent>
-                    <Input id="custodian" placeholder="例如：主機組" {...field} />
+                    <Input
+                      id="custodian"
+                      placeholder="例如：主機組"
+                      {...field}
+                    />
                     <FieldError errors={[fieldState.error]} />
                   </FieldContent>
                 </Field>
@@ -210,11 +211,17 @@ export function AssetFormFields({
                 <FieldContent>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder={categoriesLoading ? '載入類別中...' : '請選擇類別'} />
+                      <SelectValue
+                        placeholder={
+                          categoriesLoading ? '載入類別中...' : '請選擇類別'
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -228,11 +235,7 @@ export function AssetFormFields({
             }}
           />
 
-          <div className="
-            grid gap-2
-            sm:grid-cols-2
-          "
-          >
+          <div className="grid gap-2 sm:grid-cols-2">
             <FormField
               control={form.control}
               name="ownershipType"
@@ -245,7 +248,10 @@ export function AssetFormFields({
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         const nextOwnershipType = value!;
 
-                        if (field.value === OwnershipType.School && nextOwnershipType !== OwnershipType.School) {
+                        if (
+                          field.value === OwnershipType.School
+                          && nextOwnershipType !== OwnershipType.School
+                        ) {
                           form.setValue('schoolAssetNumber', '');
                           form.clearErrors('schoolAssetNumber');
                         }
@@ -258,8 +264,12 @@ export function AssetFormFields({
                         <SelectValue placeholder="請選擇歸屬單位" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={OwnershipType.Cmrdb}>社團自購</SelectItem>
-                        <SelectItem value={OwnershipType.School}>學校列管</SelectItem>
+                        <SelectItem value={OwnershipType.Cmrdb}>
+                          社團自購
+                        </SelectItem>
+                        <SelectItem value={OwnershipType.School}>
+                          學校列管
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FieldError errors={[fieldState.error]} />
@@ -274,17 +284,22 @@ export function AssetFormFields({
                 name="schoolAssetNumber"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="schoolAssetNumber">學校產編</FieldLabel>
+                    <FieldLabel htmlFor="schoolAssetNumber">
+                      學校產編
+                    </FieldLabel>
                     <FieldContent>
-                      <Input id="schoolAssetNumber" placeholder="例如：31404032010D0132" {...field} />
+                      <Input
+                        id="schoolAssetNumber"
+                        placeholder="例如：31404032010D0132"
+                        {...field}
+                      />
                       <FieldError errors={[fieldState.error]} />
                     </FieldContent>
                   </Field>
                 )}
                 rules={{
-                  validate: (value) => {
-                    return Boolean(value.trim()) || '學校列管財產必填學校產編';
-                  },
+                  validate: (value) =>
+                    Boolean(value.trim()) || '學校列管財產必填學校產編',
                 }}
               />
             )}
@@ -302,7 +317,10 @@ export function AssetFormFields({
                       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                       const nextBorrowRule = value!;
 
-                      if (field.value === BorrowRule.Restricted && nextBorrowRule !== BorrowRule.Restricted) {
+                      if (
+                        field.value === BorrowRule.Restricted
+                        && nextBorrowRule !== BorrowRule.Restricted
+                      ) {
                         form.setValue('authorizedLenderIds', []);
                         form.clearErrors('authorizedLenderIds');
                       }
@@ -315,8 +333,12 @@ export function AssetFormFields({
                       <SelectValue placeholder="請選擇借用權限" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={BorrowRule.Public}>公開借用</SelectItem>
-                      <SelectItem value={BorrowRule.Restricted}>限制借用</SelectItem>
+                      <SelectItem value={BorrowRule.Public}>
+                        公開借用
+                      </SelectItem>
+                      <SelectItem value={BorrowRule.Restricted}>
+                        限制借用
+                      </SelectItem>
                       <SelectItem value={BorrowRule.None}>不可借用</SelectItem>
                     </SelectContent>
                   </Select>
@@ -336,7 +358,7 @@ export function AssetFormFields({
                   <FieldContent>
                     <Popover>
                       <PopoverTrigger
-                        className="inline-flex h-9 w-full items-center justify-between rounded-4xl border border-border bg-input/30 px-3 text-sm font-medium whitespace-nowrap transition-all outline-none select-none hover:bg-input/50 hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+                        className="inline-flex h-9 w-full select-none items-center justify-between whitespace-nowrap rounded-4xl border border-border bg-input/30 px-3 font-medium text-sm outline-none transition-all hover:bg-input/50 hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
                         type="button"
                       >
                         {selectedLenderLabels.length > 0
@@ -347,23 +369,33 @@ export function AssetFormFields({
                       <PopoverContent align="start" className="w-80">
                         <div className="max-h-60 space-y-2 overflow-y-auto">
                           {usersLoading && (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-muted-foreground text-sm">
                               載入人員中...
                             </p>
                           )}
                           {users.map((user) => {
-                            const checked = authorizedLenderIds.includes(user.id);
-                            const displayName = user.displayUsername ?? user.username;
+                            const checked = authorizedLenderIds.includes(
+                              user.id,
+                            );
+                            const displayName =
+                              user.displayUsername ?? user.username;
 
                             return (
-                              <label className="flex items-center gap-2 text-sm" key={user.id}>
+                              <label
+                                className="flex items-center gap-2 text-sm"
+                                key={user.id}
+                              >
                                 <Checkbox
                                   aria-label={`授權 ${displayName}`}
                                   checked={checked}
                                   onCheckedChange={() => {
-                                    const current = form.getValues('authorizedLenderIds');
+                                    const current = form.getValues(
+                                      'authorizedLenderIds',
+                                    );
                                     const next = current.includes(user.id)
-                                      ? current.filter((currentId) => currentId !== user.id)
+                                      ? current.filter(
+                                          (currentId) => currentId !== user.id,
+                                        )
                                       : [...current, user.id];
 
                                     form.setValue('authorizedLenderIds', next, {
@@ -376,13 +408,17 @@ export function AssetFormFields({
                             );
                           })}
                           {!usersLoading && users.length === 0 && (
-                            <p className="text-sm text-muted-foreground">目前沒有可選的使用者</p>
+                            <p className="text-muted-foreground text-sm">
+                              目前沒有可選的使用者
+                            </p>
                           )}
                         </div>
                       </PopoverContent>
                     </Popover>
                     {selectedLenderLabels.length > 0 && (
-                      <p className="text-xs text-muted-foreground">{selectedLenderLabels.join('、')}</p>
+                      <p className="text-muted-foreground text-xs">
+                        {selectedLenderLabels.join('、')}
+                      </p>
                     )}
                     <FieldError errors={[fieldState.error]} />
                   </FieldContent>
@@ -412,7 +448,11 @@ export function AssetFormFields({
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor="description">補充說明</FieldLabel>
                 <FieldContent>
-                  <Textarea id="description" placeholder="可填寫資產來源、備註等資訊" {...field} />
+                  <Textarea
+                    id="description"
+                    placeholder="可填寫資產來源、備註等資訊"
+                    {...field}
+                  />
                   <FieldError errors={[fieldState.error]} />
                 </FieldContent>
               </Field>
@@ -421,16 +461,18 @@ export function AssetFormFields({
         </FieldGroup>
 
         <div className="flex justify-end gap-2">
-          <Button onClick={onCancel} type="button" variant="outline">取消</Button>
+          <Button onClick={onCancel} type="button" variant="outline">
+            取消
+          </Button>
           <Button disabled={isSubmitting} type="submit">
-            {isSubmitting
-              ? (
-                  <>
-                    <LoaderCircleIcon className="size-4 animate-spin" />
-                    處理中...
-                  </>
-                )
-              : actionText}
+            {isSubmitting ? (
+              <>
+                <LoaderCircleIcon className="size-4 animate-spin" />
+                處理中...
+              </>
+            ) : (
+              actionText
+            )}
           </Button>
         </div>
       </form>

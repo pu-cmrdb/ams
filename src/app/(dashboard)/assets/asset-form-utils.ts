@@ -59,7 +59,12 @@ export const defaultValues: AssetFormValues = {
   purchaseDate: '',
   quantity: 1,
   schoolAssetNumber: '',
-  status: AssetStatus.Normal as 'borrowed' | 'lost' | 'normal' | 'repairing' | 'scrapped',
+  status: AssetStatus.Normal as
+    | 'borrowed'
+    | 'lost'
+    | 'normal'
+    | 'repairing'
+    | 'scrapped',
 };
 
 export const statusOptions: { label: string; value: AssetStatus }[] = [
@@ -70,12 +75,16 @@ export const statusOptions: { label: string; value: AssetStatus }[] = [
 ];
 
 export function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
+  if (error instanceof Error) {
+    return error.message;
+  }
   return '請稍後再試';
 }
 
 export function mapAssetToFormValues(asset: AssetQueryData): AssetFormValues {
-  const normalRecord = asset.records.find((record) => record.status === AssetStatus.Normal);
+  const normalRecord = asset.records.find(
+    (record) => record.status === AssetStatus.Normal,
+  );
   const firstRecord = asset.records[0];
   const displayRecord = normalRecord ?? firstRecord;
 
@@ -91,15 +100,26 @@ export function mapAssetToFormValues(asset: AssetQueryData): AssetFormValues {
     purchaseDate: toDateInputValue(asset.purchaseDate),
     quantity: displayRecord?.quantity ?? 1,
     schoolAssetNumber: asset.schoolAssetNumber ?? '',
-    status: (displayRecord?.status ?? AssetStatus.Normal) as 'borrowed' | 'lost' | 'normal' | 'repairing' | 'scrapped',
+    status: (displayRecord?.status ?? AssetStatus.Normal) as
+      | 'borrowed'
+      | 'lost'
+      | 'normal'
+      | 'repairing'
+      | 'scrapped',
   };
 }
 
-export function toDateInputValue(value: Date | null | number | string | undefined): string {
-  if (value == null) return '';
+export function toDateInputValue(
+  value: Date | null | number | string | undefined,
+): string {
+  if (value == null) {
+    return '';
+  }
 
   const parsed = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(parsed.getTime())) return '';
+  if (Number.isNaN(parsed.getTime())) {
+    return '';
+  }
 
   const year = parsed.getFullYear();
   const month = String(parsed.getMonth() + 1).padStart(2, '0');

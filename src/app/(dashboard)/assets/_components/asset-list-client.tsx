@@ -112,7 +112,7 @@ export function AssetListClient() {
             <TableHead>類別</TableHead>
             <TableHead>狀態</TableHead>
             <TableHead className="whitespace-nowrap">借用權限</TableHead>
-            <TableHead className="text-right whitespace-nowrap">操作</TableHead>
+            <TableHead className="whitespace-nowrap text-right">操作</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -172,7 +172,7 @@ export function AssetListClient() {
 
               <TableCell className="text-right">
                 <Link
-                  className="inline-flex h-9 items-center gap-1.5 rounded-4xl border border-border bg-input/30 px-3 text-sm font-medium whitespace-nowrap transition-all hover:bg-input/50 hover:text-foreground"
+                  className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-4xl border border-border bg-input/30 px-3 font-medium text-sm transition-all hover:bg-input/50 hover:text-foreground"
                   href={`/asset/${asset.id}/edit`}
                 >
                   <PencilIcon className="size-4" />

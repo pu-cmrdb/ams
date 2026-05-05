@@ -3,19 +3,17 @@
 import { GhostIcon } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
-import { Combobox, ComboboxChip, ComboboxChips, ComboboxChipsInput, ComboboxContent, ComboboxEmpty, ComboboxItem, ComboboxList, ComboboxValue } from '@/components/ui/combobox';
+import { Combobox, ComboboxChip, ComboboxChips, ComboboxChipsInput, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList, ComboboxValue } from '@/components/ui/combobox';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { env } from '@/env';
 import { useTRPC } from '@/trpc/react';
 
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
-import type { ComponentPropsWithoutRef } from 'react';
+import type { ComboboxRootProps } from '@base-ui/react';
 
 type UserSelectProps = Readonly<
-  Omit<ComponentPropsWithoutRef<typeof Combobox>, 'items' | 'value'> & {
-    value: string[];
-  }
+  Omit<ComboboxRootProps<string, boolean>, 'items'>
 >;
 
 export function UserSelect(props: UserSelectProps) {
@@ -34,30 +32,30 @@ export function UserSelect(props: UserSelectProps) {
 
   type User = NonNullable<typeof data>[number];
 
-  const input = (
-    <ComboboxChipsInput
-      autoComplete="off"
-      data-1p-ignore
-      placeholder="選擇使用者"
-    />
-  );
-
   return (
     <Combobox items={data} {...props}>
       {props.multiple ? (
         <ComboboxChips>
           <ComboboxValue>
-            {props.value?.map((id) => {
+            {(props as ComboboxRootProps<string, true>).value?.map((id) => {
               const item = data?.find((item) => item.id === id);
               const name = item?.displayUsername ?? item?.username ?? id;
               return <ComboboxChip key={id}>{name}</ComboboxChip>;
             })}
           </ComboboxValue>
 
-          {input}
+          <ComboboxChipsInput
+            autoComplete="off"
+            data-1p-ignore
+            placeholder="選擇使用者"
+          />
         </ComboboxChips>
       ) : (
-        input
+        <ComboboxInput
+          autoComplete="off"
+          data-1p-ignore
+          placeholder="選擇使用者"
+        />
       )}
 
       <ComboboxContent>

@@ -1,6 +1,8 @@
 import { AssetEditForm } from '@/app/(dashboard)/assets/_components/asset-edit-form';
 
-export default async function EditAssetPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+export default async function EditAssetPage({
+  params,
+}: PageProps<'/asset/[id]/edit'>) {
   const { id } = await params;
 
   return (
