@@ -3,6 +3,9 @@ import { createEnv } from '@t3-oss/env-nextjs';
 import { type } from '@/lib/arktype';
 
 export const env = createEnv({
+  client: {
+    NEXT_PUBLIC_BETTER_AUTH_IAM_URL: type('string.url > 0'),
+  },
   emptyStringAsUndefined: true,
   runtimeEnv: {
     APP_URL:
@@ -19,6 +22,8 @@ export const env = createEnv({
         ? process.env.APP_PROD_URL
         : process.env.APP_DEV_URL,
     DATABASE_URL: process.env.DATABASE_URL,
+    NEXT_PUBLIC_BETTER_AUTH_IAM_URL:
+      process.env.NEXT_PUBLIC_BETTER_AUTH_IAM_URL,
     NODE_ENV: process.env.NODE_ENV,
   },
   server: {
