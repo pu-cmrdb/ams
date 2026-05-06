@@ -14,12 +14,10 @@ import { Input } from '@/components/ui/input';
 import { useTRPC } from '@/trpc/react';
 
 export function CategoryManager() {
-  // 呼叫hook,取得實體
   const trpc = useTRPC();
 
   const queryClient = useQueryClient();
 
-  // 將類別顯示上限設為100
   const { data: categories, isError, isLoading, refetch } = useQuery(
     trpc.category.list.queryOptions({ limit: 100 }),
   );
@@ -29,37 +27,31 @@ export function CategoryManager() {
   const [editName, setEditName] = useState('');
   const [deletingId, setDeletingId] = useState<null | string>(null);
 
-  // 定義新增類別,成功後重新載入列表
-  const createMutation = useMutation({
-    ...trpc.category.create.mutationOptions(),
-    onError: () => { toast.error('建立失敗'); },
-    onSuccess: () => {
-      setNewName('');
-      void queryClient.invalidateQueries(trpc.category.list.queryFilter());
+  const createMutation = useMutation(trpc.category.create.mutationOptions({  
+    onError: () => { toast.error('建立失敗'); },  
+    onSuccess: () => {  
+      setNewName('');  
+      void queryClient.invalidateQueries(trpc.category.list.queryFilter());  
     },
-  });
+  }));
 
-  // 定義更新類別,成功後退出編輯模式並重新載入列表
-  const updateMutation = useMutation({
-    ...trpc.category.update.mutationOptions(),
-    onError: () => { toast.error('修改失敗'); },
-    onSuccess: () => {
-      setEditingId(null);
-      void queryClient.invalidateQueries(trpc.category.list.queryFilter());
+  const updateMutation = useMutation(trpc.category.update.mutationOptions({  
+    onError: () => { toast.error('修改失敗'); },  
+    onSuccess: () => {  
+      setEditingId(null);  
+      void queryClient.invalidateQueries(trpc.category.list.queryFilter());  
     },
-  });
+  }));
 
-  // 定義刪除類別,成功後重新載入列表
-  const deleteMutation = useMutation({
-    ...trpc.category.delete.mutationOptions(),
-    onError: () => { toast.error('刪除失敗'); },
-    onSettled: () => {
-      setDeletingId(null);
+  const deleteMutation = useMutation(trpc.category.delete.mutationOptions({  
+    onError: () => { toast.error('刪除失敗'); },  
+    onSettled: () => {  
+      setDeletingId(null);  
+    },  
+    onSuccess: () => {  
+      void queryClient.invalidateQueries(trpc.category.list.queryFilter());  
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries(trpc.category.list.queryFilter());
-    },
-  });
+  }));
 
   // early return
 
