@@ -1,8 +1,8 @@
+import assert from 'node:assert';
+
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-
-import assert from 'assert';
 
 import { AssetsSortKey, BorrowRule, OwnershipType, SortDirection } from '@/lib/enums';
 import { AssetRecords, Assets } from '@/server/database/type';
@@ -24,19 +24,17 @@ const CreateAssetsInput = _CreateAssetsInputBase
     type({
       authorizedLenderIds: 'string[] > 0',
       borrowRule: `'${BorrowRule.Restricted}'`,
-    })
-      .or({
-        borrowRule: BorrowRule.$schema.exclude(`'${BorrowRule.Restricted}'`),
-      }),
+    }).or({
+      borrowRule: BorrowRule.$schema.exclude(`'${BorrowRule.Restricted}'`),
+    }),
   )
   .and(
     type({
       ownershipType: `'${OwnershipType.School}'`,
       schoolAssetNumber: 'string.trim',
-    })
-      .or({
-        ownershipType: OwnershipType.$schema.exclude(`'${OwnershipType.School}'`),
-      }),
+    }).or({
+      ownershipType: OwnershipType.$schema.exclude(`'${OwnershipType.School}'`),
+    }),
   );
 
 const _UpdateAssetsInputBase = Assets.update
@@ -51,19 +49,19 @@ const UpdateAssetsInput = _UpdateAssetsInputBase
     type({
       authorizedLenderIds: 'string[] > 0',
       borrowRule: `'${BorrowRule.Restricted}'`,
-    })
-      .or({
-        'borrowRule?': BorrowRule.$schema.exclude(`'${BorrowRule.Restricted}'`),
-      }),
+    }).or({
+      'borrowRule?': BorrowRule.$schema.exclude(`'${BorrowRule.Restricted}'`),
+    }),
   )
   .and(
     type({
       ownershipType: `'${OwnershipType.School}'`,
       schoolAssetNumber: 'string.trim',
-    })
-      .or({
-        'ownershipType?': OwnershipType.$schema.exclude(`'${OwnershipType.School}'`),
-      }),
+    }).or({
+      'ownershipType?': OwnershipType.$schema.exclude(
+        `'${OwnershipType.School}'`,
+      ),
+    }),
   );
 
 const UpdateAssetRecordInput = type({
@@ -80,9 +78,9 @@ const ListAssetsInput = type({
   /** 關鍵字 */
   'keyword?': 'string.trim',
   /** 每頁筆數，預設 20 */
-  'limit': 'number.integer >= 1 = 20',
+  limit: 'number.integer >= 1 = 20',
   /** 跳過筆數，預設 0 */
-  'offset': 'number.integer >= 0 = 0',
+  offset: 'number.integer >= 0 = 0',
   /**  歸屬單位 */
   'ownershipType?': OwnershipType.$schema,
   /** 排序 */
@@ -105,103 +103,105 @@ export const assetsRouter = createTRPCRouter({
    */
   create: protectedProcedure
     .input(CreateAssetsInput)
-    .mutation(({ ctx, input }) => ctx.db.transaction((tx) => {
-      const id = nanoid();
+    .mutation(({ ctx, input }) =>
+      ctx.db.transaction((tx) => {
+        const id = nanoid();
 
-      tx.insert(schema.assets)
-        .values({
-          ...input,
-          createdById: ctx.session.user.id,
-          id: id,
-          updatedById: ctx.session.user.id,
-        })
-        .run();
-
-      if (input.borrowRule === BorrowRule.Restricted) {
-        const uniqueIds = [...new Set(input.authorizedLenderIds)];
-
-        tx.insert(schema.assetAuthorizedLenders)
-          .values(
-            uniqueIds.map((userId) => ({
-              assetId: id,
-              userId,
-            })),
-          )
+        tx.insert(schema.assets)
+          .values({
+            ...input,
+            createdById: ctx.session.user.id,
+            id: id,
+            updatedById: ctx.session.user.id,
+          })
           .run();
-      }
 
-      if (input.records?.length) {
-        type AssetRecord = Omit<typeof AssetRecords.insert.infer, 'assetId'>;
+        if (input.borrowRule === BorrowRule.Restricted) {
+          const uniqueIds = [...new Set(input.authorizedLenderIds)];
 
-        const values = input.records
-          .reduce<AssetRecord[]>(
-            (acc, record) => {
-              const existing = acc.find((v) => v.status === record.status && v.note === record.note);
+          tx.insert(schema.assetAuthorizedLenders)
+            .values(
+              uniqueIds.map((userId) => ({
+                assetId: id,
+                userId,
+              })),
+            )
+            .run();
+        }
 
-              if (!existing) {
-                acc.push(record);
-              }
-              else {
+        if (input.records?.length) {
+          type AssetRecord = Omit<typeof AssetRecords.insert.infer, 'assetId'>;
+
+          const values = input.records
+            .reduce<AssetRecord[]>((acc, record) => {
+              const existing = acc.find(
+                (v) => v.status === record.status && v.note === record.note,
+              );
+
+              if (existing) {
                 existing.quantity += record.quantity;
+              } else {
+                acc.push(record);
               }
 
               return acc;
-            },
-            [],
-          )
-          .map((record) => ({
-            ...record,
-            assetId: id,
-          }));
+            }, [])
+            .map((record) => ({
+              ...record,
+              assetId: id,
+            }));
 
-        tx.insert(schema.assetRecords).values(values).run();
-      }
+          tx.insert(schema.assetRecords).values(values).run();
+        }
 
-      const result = tx.query.assets
-        .findFirst({
-          where: { id },
-        })
-        .sync();
+        const result = tx.query.assets
+          .findFirst({
+            where: { id },
+          })
+          .sync();
 
-      assert(result !== undefined, 'result should never be undefined');
+        assert(result !== undefined, 'result should never be undefined');
 
-      return result;
-    })),
+        return result;
+      }),
+    ),
   /**
    * 刪除財產
    */
   delete: protectedProcedure
     .input(DeleteAssetInput)
-    .mutation(({ ctx, input }) => ctx.db.transaction((tx) => {
-      tx.delete(schema.assetAuthorizedLenders).where(eq(schema.assetAuthorizedLenders.assetId, input.id)).run();
-      tx.delete(schema.assets).where(eq(schema.assets.id, input.id)).run();
-      return { success: true };
-    })),
+    .mutation(({ ctx, input }) =>
+      ctx.db.transaction((tx) => {
+        tx.delete(schema.assetAuthorizedLenders)
+          .where(eq(schema.assetAuthorizedLenders.assetId, input.id))
+          .run();
+        tx.delete(schema.assets).where(eq(schema.assets.id, input.id)).run();
+        return { success: true };
+      }),
+    ),
   /**
    * 依財產 ID 取得單一詳情
    */
-  get: protectedProcedure
-    .input(GetAssetInput)
-    .query(async ({ ctx, input }) => {
-      const result = await ctx.db.query.assets.findFirst({
-        where: { id: input.id },
-        with: {
-          authorizedLenders: true,
-          borrowRecords: true,
-          category: true,
-          records: true,
-        },
+  get: protectedProcedure.input(GetAssetInput).query(async ({ ctx, input }) => {
+    const result = await ctx.db.query.assets.findFirst({
+      where: { id: input.id },
+      with: {
+        authorizedLenders: true,
+        borrowRecords: true,
+        category: true,
+        records: true,
+      },
+    });
+
+    if (!result) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: `assets with id ${input.id} does not exists`,
       });
+    }
 
-      if (!result) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: `assets with id ${input.id} does not exists`,
-        });
-      }
-
-      return result;
-    }),
+    return result;
+  }),
   /**
    * 取得財產列表
    *
@@ -217,21 +217,38 @@ export const assetsRouter = createTRPCRouter({
         conditions.push({
           OR: [
             { RAW: (table: AssetsTable) => containsLike(table.name, keyword) },
-            { RAW: (table: AssetsTable) => containsLike(table.schoolAssetNumber, keyword) },
-            { RAW: (table: AssetsTable) => containsLike(table.custodian, keyword) },
-            { RAW: (table: AssetsTable) => containsLike(table.description, keyword) },
-            { RAW: (table: AssetsTable) => containsLike(table.location, keyword) },
+            {
+              RAW: (table: AssetsTable) =>
+                containsLike(table.schoolAssetNumber, keyword),
+            },
+            {
+              RAW: (table: AssetsTable) =>
+                containsLike(table.custodian, keyword),
+            },
+            {
+              RAW: (table: AssetsTable) =>
+                containsLike(table.description, keyword),
+            },
+            {
+              RAW: (table: AssetsTable) =>
+                containsLike(table.location, keyword),
+            },
           ],
         });
       }
-      if (input.categoryId) conditions.push({ categoryId: input.categoryId });
-      if (input.ownershipType) conditions.push({ ownershipType: input.ownershipType });
+      if (input.categoryId) {
+        conditions.push({ categoryId: input.categoryId });
+      }
+      if (input.ownershipType) {
+        conditions.push({ ownershipType: input.ownershipType });
+      }
 
       const result = await ctx.db.query.assets.findMany({
         limit: input.limit,
         offset: input.offset,
         orderBy: (table, { asc, desc }) => {
-          const dir = input.sortDirection === SortDirection.Ascending ? asc : desc;
+          const dir =
+            input.sortDirection === SortDirection.Ascending ? asc : desc;
 
           return [
             dir(table[input.sort ?? AssetsSortKey.UpdatedAt]),
@@ -252,28 +269,30 @@ export const assetsRouter = createTRPCRouter({
    */
   update: protectedProcedure
     .input(UpdateAssetsInput)
-    .mutation(({ ctx, input }) => ctx.db.transaction((tx) => {
-      const existing = tx.query.assets
-        .findFirst({
-          where: { id: input.id },
-          with: {
-            authorizedLenders: true,
-          },
-        })
-        .sync();
+    .mutation(({ ctx, input }) =>
+      ctx.db.transaction((tx) => {
+        const existing = tx.query.assets
+          .findFirst({
+            where: { id: input.id },
+            with: {
+              authorizedLenders: true,
+            },
+          })
+          .sync();
 
-      if (!existing) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: `Asset with id ${input.id} does not exist`,
-        });
-      }
+        if (!existing) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: `Asset with id ${input.id} does not exist`,
+          });
+        }
 
-      if (input.borrowRule && (
-        input.borrowRule === BorrowRule.Restricted
-        || input.borrowRule !== existing.borrowRule
-      )) {
-        if (input.borrowRule === BorrowRule.Restricted) {
+        if (
+          input.borrowRule
+          && (input.borrowRule === BorrowRule.Restricted
+            || input.borrowRule !== existing.borrowRule)
+          && input.borrowRule === BorrowRule.Restricted
+        ) {
           const uniqueIds = [...new Set(input.authorizedLenderIds)];
 
           tx.delete(schema.assetAuthorizedLenders)
@@ -281,36 +300,38 @@ export const assetsRouter = createTRPCRouter({
             .run();
 
           tx.insert(schema.assetAuthorizedLenders)
-            .values(uniqueIds.map((userId) => ({
-              assetId: input.id,
-              userId,
-            })))
+            .values(
+              uniqueIds.map((userId) => ({
+                assetId: input.id,
+                userId,
+              })),
+            )
             .run();
         }
-      }
 
-      tx.update(schema.assets)
-        .set({
-          ...input,
-          updatedById: ctx.session.user.id,
-        })
-        .where(eq(schema.assets.id, input.id))
-        .run();
+        tx.update(schema.assets)
+          .set({
+            ...input,
+            updatedById: ctx.session.user.id,
+          })
+          .where(eq(schema.assets.id, input.id))
+          .run();
 
-      const result = tx.query.assets
-        .findFirst({
-          where: { id: input.id },
-          with: {
-            authorizedLenders: true,
-            category: true,
-          },
-        })
-        .sync();
+        const result = tx.query.assets
+          .findFirst({
+            where: { id: input.id },
+            with: {
+              authorizedLenders: true,
+              category: true,
+            },
+          })
+          .sync();
 
-      assert(result !== undefined, 'result should never be undefined');
+        assert(result !== undefined, 'result should never be undefined');
 
-      return result;
-    })),
+        return result;
+      }),
+    ),
   updateRecord: protectedProcedure
     .input(UpdateAssetRecordInput)
     .mutation(({ ctx, input }) => {
@@ -318,21 +339,19 @@ export const assetsRouter = createTRPCRouter({
         type AssetRecord = Omit<typeof AssetRecords.insert.infer, 'assetId'>;
 
         const values = input.records
-          .reduce<AssetRecord[]>(
-            (acc, record) => {
-              const existing = acc.find((v) => v.status === record.status && v.note === record.note);
+          .reduce<AssetRecord[]>((acc, record) => {
+            const existing = acc.find(
+              (v) => v.status === record.status && v.note === record.note,
+            );
 
-              if (!existing) {
-                acc.push(record);
-              }
-              else {
-                existing.quantity += record.quantity;
-              }
+            if (existing) {
+              existing.quantity += record.quantity;
+            } else {
+              acc.push(record);
+            }
 
-              return acc;
-            },
-            [],
-          )
+            return acc;
+          }, [])
           .map((record) => ({
             ...record,
             assetId: input.id,

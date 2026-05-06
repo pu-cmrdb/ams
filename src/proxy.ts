@@ -1,16 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import { auth } from '@/server/auth/config';
 
-const PUBLIC_PATHS: string[] = [
-  '/login',
-  '/reference',
-  '/openapi.json',
-];
+import type { NextRequest } from 'next/server';
 
-const isPublic = (pathname: string): boolean => {
-  return PUBLIC_PATHS.some((path) => pathname.startsWith(path));
-};
+const PUBLIC_PATHS: string[] = ['/login', '/reference', '/openapi.json'];
+
+const isPublic = (pathname: string): boolean =>
+  PUBLIC_PATHS.some((path) => pathname.startsWith(path));
 
 export const config = {
   matcher: [
@@ -30,16 +27,16 @@ export default async function proxy(request: NextRequest) {
 
   if (
     // Allow API routes
-    pathname.startsWith('/api')
-
-    // Allow public paths
-    || isPublic(pathname)
-
-    // Allow static files
+    pathname.startsWith('/api') // Allow public paths
+    || isPublic(pathname) // Allow static files
     || pathname.startsWith('/_next')
     || pathname.startsWith('/static')
-    || (/\.(ico|png|jpg|jpeg|svg|webp|gif|css|js|woff|woff2|ttf|otf)$/.exec(pathname))
-  ) return NextResponse.next();
+    || /\.(ico|png|jpg|jpeg|svg|webp|gif|css|js|woff|woff2|ttf|otf)$/.exec(
+      pathname,
+    )
+  ) {
+    return NextResponse.next();
+  }
 
   const session = await auth.api.getSession({
     headers: request.headers,

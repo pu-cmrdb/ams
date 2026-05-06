@@ -20,10 +20,7 @@ export const auth = betterAuth({
       ],
     }),
   ],
-  trustedOrigins: [
-    'http://localhost:*',
-    'https://*.cmrdb.cs.pu.edu.tw',
-  ],
+  trustedOrigins: ['http://localhost:*', 'https://*.cmrdb.cs.pu.edu.tw'],
 });
 
 export type Session = typeof auth.$Infer.Session;

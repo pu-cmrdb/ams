@@ -36,8 +36,12 @@ export function AssetListClient() {
   const trpc = useTRPC();
   // 抓取最多20筆資料
   // TODO: 分頁控制
-  const { data: assets, isError, isLoading, refetch } = useQuery(trpc.asset.list.queryOptions({ limit: 20 }),
-  );
+  const {
+    data: assets,
+    isError,
+    isLoading,
+    refetch,
+  } = useQuery(trpc.asset.list.queryOptions({ limit: 20 }));
 
   // early return
 
@@ -47,7 +51,9 @@ export function AssetListClient() {
       <div className="rounded-md border p-8">
         <Empty>
           <EmptyHeader>
-            <EmptyTitle className="text-destructive">資料載入失敗，請稍後再試</EmptyTitle>
+            <EmptyTitle className="text-destructive">
+              資料載入失敗，請稍後再試
+            </EmptyTitle>
           </EmptyHeader>
           <EmptyContent>
             <Button onClick={() => void refetch()} size="sm" variant="outline">
@@ -65,7 +71,9 @@ export function AssetListClient() {
       <div className="rounded-md border p-8">
         <Empty>
           <EmptyHeader>
-            <EmptyTitle className="text-muted-foreground">資料載入中...</EmptyTitle>
+            <EmptyTitle className="text-muted-foreground">
+              資料載入中...
+            </EmptyTitle>
           </EmptyHeader>
         </Empty>
       </div>
@@ -78,7 +86,9 @@ export function AssetListClient() {
       <div className="rounded-md border p-8">
         <Empty>
           <EmptyHeader>
-            <EmptyTitle className="text-muted-foreground">目前尚無財產紀錄</EmptyTitle>
+            <EmptyTitle className="text-muted-foreground">
+              目前尚無財產紀錄
+            </EmptyTitle>
           </EmptyHeader>
         </Empty>
       </div>
@@ -106,17 +116,24 @@ export function AssetListClient() {
           {/* 印出資料 */}
           {assets.map((asset) => (
             <TableRow key={asset.id}>
-              <TableCell>{ownershipMap[asset.ownershipType] || asset.ownershipType}</TableCell>
+              <TableCell>
+                {ownershipMap[asset.ownershipType] || asset.ownershipType}
+              </TableCell>
               <TableCell>
                 <div className="font-medium">{asset.name}</div>
                 {asset.schoolAssetNumber && (
-                  <div className="text-xs text-muted-foreground">{asset.schoolAssetNumber}</div>
+                  <div className="text-muted-foreground text-xs">
+                    {asset.schoolAssetNumber}
+                  </div>
                 )}
               </TableCell>
 
               {/* 使用reduce加總所有record的quantity */}
               <TableCell>
-                {asset.records.reduce((total, record) => total + record.quantity, 0)}
+                {asset.records.reduce(
+                  (total, record) => total + record.quantity,
+                  0,
+                )}
               </TableCell>
 
               <TableCell>{asset.location}</TableCell>
@@ -126,24 +143,28 @@ export function AssetListClient() {
               {/* 把status展開成Badge,並用Set去除重複 */}
               <TableCell>
                 <div className="flex flex-wrap gap-1">
-                  {asset.records.length > 0
-                    ? (
-                        Array.from(new Set(asset.records.map((r) => r.status))).map((status) => (
-                          <Badge
-                            key={status}
-                            variant={status === 'normal' ? 'default' : 'secondary'}
-                          >
-                            {statusMap[status] || status}
-                          </Badge>
-                        ))
-                      )
-                    : (
-                        <Badge variant="outline">無紀錄</Badge>
-                      )}
+                  {asset.records.length > 0 ? (
+                    Array.from(new Set(asset.records.map((r) => r.status))).map(
+                      (status) => (
+                        <Badge
+                          key={status}
+                          variant={
+                            status === 'normal' ? 'default' : 'secondary'
+                          }
+                        >
+                          {statusMap[status] || status}
+                        </Badge>
+                      ),
+                    )
+                  ) : (
+                    <Badge variant="outline">無紀錄</Badge>
+                  )}
                 </div>
               </TableCell>
 
-              <TableCell>{borrowRuleMap[asset.borrowRule] || asset.borrowRule}</TableCell>
+              <TableCell>
+                {borrowRuleMap[asset.borrowRule] || asset.borrowRule}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

@@ -12,11 +12,14 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') ?? '/';
 
-  const initiateOAuth = useCallback(() =>
-    void authClient.signIn.oauth2({
-      callbackURL: callbackUrl,
-      providerId: 'identity',
-    }), [callbackUrl]);
+  const initiateOAuth = useCallback(
+    () =>
+      void authClient.signIn.oauth2({
+        callbackURL: callbackUrl,
+        providerId: 'identity',
+      }),
+    [callbackUrl],
+  );
 
   useMountEffect(() => {
     initiateOAuth();
@@ -32,7 +35,14 @@ export default function LoginPage() {
           <EmptyTitle>正在重新導向</EmptyTitle>
           <EmptyDescription>
             如果頁面沒有自動跳轉，請點擊
-            <span className="cursor-pointer px-0.5 text-primary underline" onClick={initiateOAuth}>這裡</span>
+            <button
+              className="cursor-pointer px-0.5 text-primary underline"
+              onClick={initiateOAuth}
+              onKeyUp={initiateOAuth}
+              type="button"
+            >
+              這裡
+            </button>
             繼續
           </EmptyDescription>
         </EmptyHeader>

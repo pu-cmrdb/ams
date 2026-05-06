@@ -3,9 +3,15 @@ import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'driz
 import * as schema from './schema';
 
 export const InventoryPlans = {
-  insert: createInsertSchema(schema.inventoryPlans).omit('createdAt', 'updatedAt'),
+  insert: createInsertSchema(schema.inventoryPlans).omit(
+    'createdAt',
+    'updatedAt',
+  ),
   select: createSelectSchema(schema.inventoryPlans),
-  update: createUpdateSchema(schema.inventoryPlans).omit('createdAt', 'updatedAt'),
+  update: createUpdateSchema(schema.inventoryPlans).omit(
+    'createdAt',
+    'updatedAt',
+  ),
 };
 
 export const InventoryPlanAssignees = {
@@ -38,7 +44,14 @@ export const AssetAuthorizedLenders = {
 };
 
 export const BorrowRecords = {
-  insert: createInsertSchema(schema.borrowRecords).omit('createdAt', 'updatedAt'),
+  insert: createInsertSchema(schema.borrowRecords).omit(
+    'createdAt',
+    'updatedAt',
+  ),
   select: createSelectSchema(schema.borrowRecords),
-  update: createUpdateSchema(schema.borrowRecords).omit('createdAt', 'creatorId', 'updatedAt'),
+  update: createUpdateSchema(schema.borrowRecords).omit(
+    'createdAt',
+    'creatorId',
+    'updatedAt',
+  ),
 };
