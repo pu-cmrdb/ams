@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDaysIcon, CornerDownRightIcon } from 'lucide-react';
+import { ArrowLeftIcon, CalendarDaysIcon, CornerDownRightIcon } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { arktypeResolver } from '@hookform/resolvers/arktype';
 import { format } from 'date-fns';
@@ -9,11 +9,13 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { zhTW } from 'react-day-picker/locale';
 
+import Link from 'next/link';
+
 import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field';
 import { AssetStatus, BorrowRule, OwnershipType } from '@/lib/enums';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { CategorySelect } from '@/components/category-select';
 import { Input } from '@/components/ui/input';
@@ -25,20 +27,30 @@ import { useTRPC } from '@/trpc/react';
 import { AssetRecordEditor } from './asset-record-editor';
 
 const AssetCreateFormSchema = type({
-  authorizedLenderIds: 'string[] > 0',
+  authorizedLenderIds: type.string.array(),
   borrowRule: BorrowRule.$schema,
-  categoryId: 'string',
-  custodian: 'string',
-  description: 'string',
-  location: 'string',
-  name: 'string',
+  categoryId: type.string
+    .atLeastLength(1)
+    .configure({ message: '財產類別不得為空' }),
+  custodian: type.string
+    .atLeastLength(1)
+    .configure({ message: '保管單位不得為空' }),
+  description: type.string,
+  location: type.string.atLeastLength(1).configure({ message: '位置不得為空' }),
+  name: type.string.atLeastLength(1).configure({ message: '財產名稱不得為空' }),
   ownershipType: OwnershipType.$schema,
-  purchaseDate: 'Date',
+  purchaseDate: type.Date,
   records: type({
-    note: 'string',
-    quantity: 'number',
+    note: type.string,
+    quantity: type.keywords.number.integer
+      .configure({ message: '數量必須為整數' })
+      .atLeast(1)
+      .configure({ message: '數量必須大於等於 1' }),
     status: AssetStatus.$schema,
-  }).array(),
+  })
+    .array()
+    .atLeastLength(1)
+    .configure({ message: '必須至少要有一項財產紀錄' }),
   schoolAssetNumber: 'string',
 }).narrow((value, ctx) => {
   let isValid = true;
@@ -49,6 +61,7 @@ const AssetCreateFormSchema = type({
   ) {
     ctx.reject({
       message: '限制借用時，至少要選擇一位授權人員',
+      path: ['authorizedLenderIds'],
     });
     isValid = false;
   }
@@ -59,6 +72,7 @@ const AssetCreateFormSchema = type({
   ) {
     ctx.reject({
       message: '學校列管財產必須填寫學校產編',
+      path: ['schoolAssetNumber'],
     });
     isValid = false;
   }
@@ -90,7 +104,7 @@ export function AssetCreateForm() {
   const borrowRule = form.watch('borrowRule');
   const ownershipType = form.watch('ownershipType');
 
-  const createMutation = useMutation(
+  const { mutate, isPending } = useMutation(
     trpc.asset.create.mutationOptions({
       onError: (error) => {
         toast.error(`新增財產時發生錯誤：${error.message}`);
@@ -102,12 +116,13 @@ export function AssetCreateForm() {
     }),
   );
 
-  const onSubmit = form.handleSubmit((values) => {
-    createMutation.mutate(values);
-  });
+  const onSubmit: React.SubmitEventHandler = (event) =>
+    form.handleSubmit((values) => {
+      mutate(values);
+    })(event);
 
   return (
-    <form onSubmit={onSubmit}>
+    <form className="space-y-8" onSubmit={onSubmit}>
       <div className="flex grid-cols-2 flex-col gap-8 lg:grid">
         <FieldSet>
           <FieldLegend>基本資料</FieldLegend>
@@ -125,6 +140,7 @@ export function AssetCreateForm() {
                   data-1p-ignore
                   id={field.name}
                   placeholder="藍色原子筆"
+                  required
                   type="text"
                 />
 
@@ -143,8 +159,10 @@ export function AssetCreateForm() {
                 <Textarea
                   {...field}
                   aria-invalid={fieldState.invalid}
+                  className="resize-y"
                   id={field.name}
                   placeholder="無印良品的藍色原子筆..."
+                  required
                 />
 
                 {fieldState.error && <FieldError errors={[fieldState.error]} />}
@@ -163,7 +181,7 @@ export function AssetCreateForm() {
                   {...field}
                   aria-invalid={fieldState.invalid}
                   id={field.name}
-                  onValueChange={field.onChange}
+                  required
                 />
 
                 {fieldState.error && <FieldError errors={[fieldState.error]} />}
@@ -184,6 +202,7 @@ export function AssetCreateForm() {
                   data-1p-ignore
                   id={field.name}
                   placeholder="伺服器維護小組"
+                  required
                   type="text"
                 />
 
@@ -205,6 +224,7 @@ export function AssetCreateForm() {
                   data-1p-ignore
                   id={field.name}
                   placeholder="主顧 304 櫃子上筆筒"
+                  required
                   type="text"
                 />
 
@@ -224,6 +244,7 @@ export function AssetCreateForm() {
                   {...field}
                   aria-invalid={fieldState.invalid}
                   id={field.name}
+                  required
                 >
                   <NativeSelectOption value={OwnershipType.Cmrdb}>
                     行雲者研發基地
@@ -256,6 +277,7 @@ export function AssetCreateForm() {
                       id={field.name}
                       multiple
                       placeholder="學校財產編號"
+                      required
                     />
 
                     {fieldState.error && (
@@ -278,6 +300,7 @@ export function AssetCreateForm() {
                   {...field}
                   aria-invalid={fieldState.invalid}
                   id={field.name}
+                  required
                 >
                   <NativeSelectOption value={BorrowRule.Public}>
                     公開
@@ -314,6 +337,7 @@ export function AssetCreateForm() {
                       id={field.name}
                       multiple
                       onValueChange={field.onChange}
+                      required
                     />
 
                     {fieldState.error && (
@@ -356,6 +380,7 @@ export function AssetCreateForm() {
                       locale={zhTW}
                       mode="single"
                       onSelect={field.onChange}
+                      required
                       selected={field.value}
                     />
                   </PopoverContent>
@@ -375,14 +400,26 @@ export function AssetCreateForm() {
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel>財產紀錄</FieldLabel>
 
-                <AssetRecordEditor {...field} />
-
                 {fieldState.error && <FieldError errors={[fieldState.error]} />}
+
+                <AssetRecordEditor {...field} />
               </Field>
             )}
           />
         </FieldSet>
       </div>
+
+      <Field orientation="horizontal">
+        <Button disabled={isPending} type="submit">
+          建立
+        </Button>
+
+        <Link className={buttonVariants({ variant: 'outline' })} href="/assets">
+          <ArrowLeftIcon data-icon="inline-start" />
+
+          <span>返回</span>
+        </Link>
+      </Field>
     </form>
   );
 }

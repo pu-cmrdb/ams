@@ -10,17 +10,47 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from './
 
 import type { ComboboxRootProps } from '@base-ui/react';
 
+type Value = { label: string; value: string };
+
 type CategorySelectProps = Readonly<
-  Omit<ComboboxRootProps<string, false>, 'items'>
+  Omit<
+    ComboboxRootProps<string, false>,
+    | 'items'
+    | 'isItemEqualToValue'
+    | 'onValueChange'
+    | 'itemToStringLabel'
+    | 'itemToStringValue'
+  > & {
+    onChange?: (value: string) => void;
+  }
 >;
 
-export function CategorySelect(props: CategorySelectProps): React.ReactNode {
+export function CategorySelect({
+  value,
+  onChange,
+  disabled,
+}: CategorySelectProps): React.ReactNode {
   const trpc = useTRPC();
 
-  const { data } = useQuery(trpc.category.list.queryOptions({ limit: 100 }));
+  const { data } = useQuery(
+    trpc.category.list.queryOptions(
+      { limit: 100 },
+      {
+        select: (data) => data.map((c) => ({ label: c.name, value: c.id })),
+      },
+    ),
+  );
+
+  const selectedValue = data?.find((item) => item.value === value) ?? null;
 
   return (
-    <Combobox items={data} {...props}>
+    <Combobox
+      disabled={disabled}
+      isItemEqualToValue={(a, b) => a?.value === b?.value}
+      items={data}
+      onValueChange={(val: Value | null) => onChange?.(val?.value ?? '')}
+      value={selectedValue}
+    >
       <ComboboxInput
         autoComplete="off"
         data-1p-ignore
@@ -45,11 +75,11 @@ export function CategorySelect(props: CategorySelectProps): React.ReactNode {
         </ComboboxEmpty>
 
         <ComboboxList>
-          {data?.map((category) => (
-            <ComboboxItem key={category.id} value={category.id}>
-              {category.name}
+          {(item: Value, index) => (
+            <ComboboxItem index={index} key={item.value} value={item}>
+              {item.label}
             </ComboboxItem>
-          ))}
+          )}
         </ComboboxList>
       </ComboboxContent>
     </Combobox>

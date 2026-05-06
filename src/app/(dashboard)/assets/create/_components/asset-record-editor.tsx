@@ -1,18 +1,10 @@
 /** biome-ignore-all lint/suspicious/noArrayIndexKey: there is no reorder and no id can be used for key */
+
 import { PlusIcon, XIcon } from 'lucide-react';
 
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemFooter,
-  ItemGroup,
-} from '@/components/ui/item';
+import { Item, ItemContent, ItemFooter, ItemGroup } from '@/components/ui/item';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from '@/components/ui/native-select';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { AssetStatus } from '@/lib/enums';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +29,7 @@ export function AssetRecordEditor({
 }: AssetRecordEditorProps) {
   const addRecord = () => {
     const newValue = Array.from(value);
-    newValue.push({ note: '', quantity: 0, status: AssetStatus.Normal });
+    newValue.push({ note: '', quantity: 1, status: AssetStatus.Normal });
     onChange(newValue);
   };
 
@@ -45,6 +37,10 @@ export function AssetRecordEditor({
     const newValue = Array.from(value);
     newValue.splice(index, 1);
     onChange(newValue);
+  };
+
+  const clear = () => {
+    onChange([]);
   };
 
   const onStatusChange = (index: number, status: string) => {
@@ -72,12 +68,19 @@ export function AssetRecordEditor({
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <Button onClick={addRecord}>
+    <div className="flex flex-col gap-4 text-foreground">
+      <div className="flex gap-2">
+        <Button disabled={disabled} onClick={addRecord}>
           <PlusIcon data-icon="inline-start" />
+
           <span>新增</span>
         </Button>
+
+        {value.length > 0 && (
+          <Button disabled={disabled} onClick={clear} variant="outline">
+            清除
+          </Button>
+        )}
       </div>
 
       <ItemGroup>
@@ -91,6 +94,7 @@ export function AssetRecordEditor({
                   </FieldLabel>
 
                   <NativeSelect
+                    disabled={disabled}
                     onChange={(e) => onStatusChange(index, e.target.value)}
                     value={record.status}
                   >
@@ -118,6 +122,7 @@ export function AssetRecordEditor({
                   </FieldLabel>
 
                   <Input
+                    disabled={disabled}
                     id={`asset-record-${index}-quantity`}
                     min="1"
                     onChange={(e) => onQuantityChange(index, e.target.value)}
@@ -134,7 +139,10 @@ export function AssetRecordEditor({
                     備註
                   </FieldLabel>
 
-                  <Textarea id={`asset-record-${index}-note`} />
+                  <Textarea
+                    className="size-y"
+                    id={`asset-record-${index}-note`}
+                  />
                 </Field>
               </FieldGroup>
             </ItemContent>
