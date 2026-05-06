@@ -4,14 +4,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTRPC } from '@/trpc/react';
+
+import { CategoryDeleteButton } from './category-delete-button';
 
 export function CategoryManager() {
   const trpc = useTRPC();
@@ -25,38 +25,26 @@ export function CategoryManager() {
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<null | string>(null);
   const [editName, setEditName] = useState('');
-  const [deletingId, setDeletingId] = useState<null | string>(null);
 
   const createMutation = useMutation(trpc.category.create.mutationOptions({  
     onError: () => { toast.error('建立失敗'); },  
     onSuccess: () => {  
       setNewName('');  
       void queryClient.invalidateQueries(trpc.category.list.queryFilter());  
-    },
-  }));
+    },  
+  }));  
 
   const updateMutation = useMutation(trpc.category.update.mutationOptions({  
     onError: () => { toast.error('修改失敗'); },  
     onSuccess: () => {  
       setEditingId(null);  
       void queryClient.invalidateQueries(trpc.category.list.queryFilter());  
-    },
-  }));
-
-  const deleteMutation = useMutation(trpc.category.delete.mutationOptions({  
-    onError: () => { toast.error('刪除失敗'); },  
-    onSettled: () => {  
-      setDeletingId(null);  
     },  
-    onSuccess: () => {  
-      void queryClient.invalidateQueries(trpc.category.list.queryFilter());  
-    },
   }));
 
   // early return
 
   const renderTableContent = () => {
-    // 檢查錯誤
     if (isError) {
       return (
         <TableRow>
@@ -76,7 +64,6 @@ export function CategoryManager() {
       );
     }
 
-    // 載入中
     if (isLoading) {
       return (
         <TableRow>
@@ -91,7 +78,6 @@ export function CategoryManager() {
       );
     }
 
-    // 無類別
     if (categories?.length === 0) {
       return (
         <TableRow>
@@ -106,7 +92,6 @@ export function CategoryManager() {
       );
     }
 
-    // 有類別
     return categories?.map((category) => (
       <TableRow key={category.id}>
         <TableCell>
@@ -156,44 +141,7 @@ export function CategoryManager() {
                   >
                     修改
                   </Button>
-                  {/* 避免誤觸刪除,進行彈窗確認 */}
-                  <AlertDialog>
-                    {/* 觸發彈窗 */}
-                    <AlertDialogTrigger>
-                      <Button
-                        disabled={deletingId === category.id}
-                        size="sm"
-                        variant="destructive"
-                      >
-                        {deletingId === category.id ? '刪除中' : '刪除'}
-                      </Button>
-                    </AlertDialogTrigger>
-
-                    {/* 彈窗內容 */}
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          確定刪除「
-                          {category.name}
-                          」類別？
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          此動作無法復原,將永久刪除該類別
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>取消</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => {
-                            setDeletingId(category.id);
-                            deleteMutation.mutate({ id: category.id });
-                          }}
-                        >
-                          刪除
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <CategoryDeleteButton category={category} />
                 </div>
               )}
         </TableCell>
