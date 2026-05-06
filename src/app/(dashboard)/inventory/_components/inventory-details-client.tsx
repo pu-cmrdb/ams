@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, FileText, Package2 } from 'lucide-react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +24,16 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
 
   const { data: plan, isError, isLoading } = useQuery(trpc.inventory.get.queryOptions({ id }));
 
+  const assetQueries = useQueries({
+    queries: (plan?.assetIds ?? []).map((assetId: string) => ({
+      ...trpc.asset.get.queryOptions({ id: assetId }),
+      enabled: !!plan && plan.assetIds.length > 0,
+    })),
+  });
+
+  const isAssetsLoading = assetQueries.some((q) => q.isLoading);
+  const assets = assetQueries.map((q) => q.data).filter(Boolean);
+
   const updateInventory = useMutation({
     ...trpc.inventory.update.mutationOptions(),
     onSuccess: () => {
@@ -33,7 +43,7 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
     },
   });
 
-  if (isLoading) {
+  if (isLoading || isAssetsLoading) {
     return (
       <div className="flex flex-col gap-6">
         <Skeleton className="h-32 w-full" />
@@ -80,12 +90,9 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
           <p className="whitespace-pre-wrap text-muted-foreground">{plan.description}</p>
         </div>
         {plan.createdById === session.user.id && plan.status === 'pending' && (
-          <Button
-            disabled={updateInventory.isPending}
-            onClick={() => { updateInventory.mutate({ completedAt: new Date(), id: plan.id, status: 'completed' }); }}
-          >
-            {updateInventory.isPending ? '結案中...' : '結案'}
-          </Button>
+          <p className="text-sm text-muted-foreground">
+            結案功能需改由後端受保護的專用操作處理，暫時停用此前端入口。
+          </p>
         )}
       </div>
 
@@ -160,8 +167,8 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
                     lg:grid-cols-3
                   "
                   >
-                    {plan.assetIds.map((assetId: string) => (
-                      <AssetItem assetId={assetId} key={assetId} />
+                    {assets.map((asset: any) => (
+                      <AssetItem asset={asset} key={asset.id} />
                     ))}
                   </div>
                 )
@@ -177,23 +184,14 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
   );
 }
 
-function AssetItem({ assetId }: { assetId: string }) {
-  const trpc = useTRPC();
-  const { data: asset, isError, isLoading } = useQuery(trpc.asset.get.queryOptions({ id: assetId }));
-
-  if (isLoading) {
-    return <Skeleton className="h-48 w-full" />;
-  }
-
-  if (isError || !asset) {
+function AssetItem({ asset }: { asset: any }) {
+  if (!asset) {
     return (
       <Card className="h-full border-destructive/50 bg-destructive/5">
         <CardHeader>
           <CardTitle className="text-lg text-destructive">載入失敗</CardTitle>
           <CardDescription>
-            無法取得財產資料 (ID:
-            {assetId}
-            )
+            無法取得財產資料
           </CardDescription>
         </CardHeader>
       </Card>
