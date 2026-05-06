@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { useTRPC } from '@/trpc/react';
 
 import { CategoryDeleteButton } from './category-delete-button';
+import { CreateCategoryForm } from './create-category-form';
 
 export function CategoryManager() {
   const trpc = useTRPC();
@@ -22,17 +23,8 @@ export function CategoryManager() {
     trpc.category.list.queryOptions({ limit: 100 }),
   );
 
-  const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<null | string>(null);
   const [editName, setEditName] = useState('');
-
-  const createMutation = useMutation(trpc.category.create.mutationOptions({  
-    onError: () => { toast.error('建立失敗'); },  
-    onSuccess: () => {  
-      setNewName('');  
-      void queryClient.invalidateQueries(trpc.category.list.queryFilter());  
-    },  
-  }));  
 
   const updateMutation = useMutation(trpc.category.update.mutationOptions({  
     onError: () => { toast.error('修改失敗'); },  
@@ -156,19 +148,7 @@ export function CategoryManager() {
       </CardHeader>
       <CardContent className="space-y-6">
 
-        <div className="flex gap-4">
-          <Input
-            onChange={(e) => { setNewName(e.target.value); }}
-            placeholder="輸入新類別名稱"
-            value={newName}
-          />
-          <Button
-            disabled={createMutation.isPending || !newName.trim()}
-            onClick={() => { createMutation.mutate({ name: newName.trim() }); }}
-          >
-            {createMutation.isPending ? '建立中' : '新增類別'}
-          </Button>
-        </div>
+        <CreateCategoryForm />
 
         <Table>
           <TableHeader>
