@@ -5,11 +5,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTRPC } from '@/trpc/react';
- 
 
 export function CreateCategoryForm() {
   const [newName, setNewName] = useState('');
-  
+
   const queryClient = useQueryClient();
   const trpc = useTRPC();
 
@@ -23,7 +22,7 @@ export function CreateCategoryForm() {
         void queryClient.invalidateQueries(trpc.category.list.queryFilter());
         toast.success('建立成功');
       },
-    })
+    }),
   );
 
   return (

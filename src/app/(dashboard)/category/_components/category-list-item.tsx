@@ -27,23 +27,22 @@ export function CategoryListItem({ category }: CategoryListItemProps) {
         void queryClient.invalidateQueries(trpc.category.list.queryFilter());
         toast.success('修改成功');
       },
-    })
+    }),
   );
 
   if (isEditing) {
     return (
       <div className="flex items-center gap-2">
-        <Input 
-          value={editName} 
-          onChange={(e) => setEditName(e.target.value)} 
-        />
-        <Button 
+        <Input onChange={(e) => setEditName(e.target.value)} value={editName} />
+        <Button
           disabled={updateMutation.isPending}
-          onClick={() => updateMutation.mutate({ id: category.id, name: editName })}
+          onClick={() =>
+            updateMutation.mutate({ id: category.id, name: editName })
+          }
         >
           {updateMutation.isPending ? '儲存中' : '儲存'}
         </Button>
-        <Button variant="ghost" onClick={() => setIsEditing(false)}>
+        <Button onClick={() => setIsEditing(false)} variant="ghost">
           取消
         </Button>
       </div>
@@ -51,11 +50,11 @@ export function CategoryListItem({ category }: CategoryListItemProps) {
   }
 
   return (
-    <div className="flex items-center justify-between p-2 border-b">
+    <div className="flex items-center justify-between border-b p-2">
       <span>{category.name}</span>
       <div className="flex gap-2">
-        <Button size="sm" onClick={() => setIsEditing(true)}>
-          修改      
+        <Button onClick={() => setIsEditing(true)} size="sm">
+          修改
         </Button>
         <CategoryDeleteButton category={category} />
       </div>

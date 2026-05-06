@@ -1,9 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import { useTRPC } from '@/trpc/react';
 
 interface CategoryDeleteButtonProps {
@@ -14,11 +13,11 @@ interface CategoryDeleteButtonProps {
 }
 
 export function CategoryDeleteButton({ category }: CategoryDeleteButtonProps) {
-    const queryClient = useQueryClient();
-    
-    const trpc = useTRPC();
+  const queryClient = useQueryClient();
 
-    const deleteMutation = useMutation(
+  const trpc = useTRPC();
+
+  const deleteMutation = useMutation(
     trpc.category.delete.mutationOptions({
       onError: () => {
         toast.error('刪除失敗');
@@ -27,7 +26,7 @@ export function CategoryDeleteButton({ category }: CategoryDeleteButtonProps) {
         void queryClient.invalidateQueries(trpc.category.list.queryFilter());
         toast.success('刪除成功');
       },
-    })
+    }),
   );
 
   return (
@@ -46,17 +45,13 @@ export function CategoryDeleteButton({ category }: CategoryDeleteButtonProps) {
 
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>
-              確定刪除「{category.name}」類別？
-          </AlertDialogTitle>
+          <AlertDialogTitle>確定刪除「{category.name}」類別？</AlertDialogTitle>
           <AlertDialogDescription>
             此動作無法復原，將永久刪除該類別。
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>
-            取消
-          </AlertDialogCancel>
+          <AlertDialogCancel>取消</AlertDialogCancel>
           <AlertDialogAction
             onClick={() => {
               deleteMutation.mutate({ id: category.id });
