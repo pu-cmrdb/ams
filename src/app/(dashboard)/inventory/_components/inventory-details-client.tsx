@@ -1,14 +1,13 @@
 'use client';
 
 import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, FileText, Package2 } from 'lucide-react';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AssetStatus } from '@/lib/enums';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSession } from '@/components/providers/session-provider';
 import { useTRPC } from '@/trpc/react';
@@ -20,7 +19,6 @@ interface InventoryDetailsClientProps {
 export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
   const trpc = useTRPC();
   const session = useSession();
-  const queryClient = useQueryClient();
 
   const { data: plan, isError, isLoading } = useQuery(trpc.inventory.get.queryOptions({ id }));
 
@@ -33,15 +31,6 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
 
   const isAssetsLoading = assetQueries.some((q) => q.isLoading);
   const assets = assetQueries.map((q) => q.data).filter(Boolean);
-
-  const updateInventory = useMutation({
-    ...trpc.inventory.update.mutationOptions(),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: trpc.inventory.get.queryOptions({ id }).queryKey,
-      });
-    },
-  });
 
   if (isLoading || isAssetsLoading) {
     return (
