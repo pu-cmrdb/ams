@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTRPC } from '@/trpc/react';
 import { Spinner } from '@/components/ui/spinner';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { ArrowLeftIcon, Edit2Icon } from 'lucide-react';
 import Link from 'next/link';
 
