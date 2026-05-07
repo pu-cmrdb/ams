@@ -195,7 +195,7 @@ function AssetListItem({ asset }: AssetItemProps) {
 
       <ItemContent>
         <ItemTitle>
-          <Link href={`/asset/${asset.id}`}>{asset.name}</Link>
+          <Link href={`/assets/${asset.id}`}>{asset.name}</Link>
 
           <Badge variant="secondary">
             {OwnershipLabelMap[asset.ownershipType]}
@@ -254,7 +254,7 @@ function AssetListItemDropdown({ asset }: AssetItemProps) {
       <DropdownMenuContent>
         <DropdownMenuItem
           ref={editRef}
-          render={<Link href={`/asset/${asset.id}/edit`} />}
+          render={<Link href={`/assets/${asset.id}/edit`} />}
         >
           <Edit2Icon data-icon="inline-start" />
 

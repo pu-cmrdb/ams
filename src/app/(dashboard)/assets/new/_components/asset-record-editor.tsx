@@ -67,17 +67,29 @@ export function AssetRecordEditor({
     onChange(newValue);
   };
 
+  const onNoteChange = (index: number, note: string) => {
+    const newValue = Array.from(value);
+
+    const item = newValue[index];
+    if (!item) {
+      return;
+    }
+
+    item.note = note;
+    onChange(newValue);
+  };
+
   return (
     <div className="flex flex-col gap-4 text-foreground">
       <div className="flex gap-2">
-        <Button disabled={disabled} onClick={addRecord}>
+        <Button disabled={disabled} onClick={addRecord} type="button">
           <PlusIcon data-icon="inline-start" />
 
           <span>新增</span>
         </Button>
 
         {value.length > 0 && (
-          <Button disabled={disabled} onClick={clear} variant="outline">
+          <Button disabled={disabled} onClick={clear} type="button" variant="outline">
             清除
           </Button>
         )}
@@ -141,14 +153,21 @@ export function AssetRecordEditor({
 
                   <Textarea
                     className="size-y"
+                    disabled={disabled}
                     id={`asset-record-${index}-note`}
+                    onChange={(e) => onNoteChange(index, e.target.value)}
+                    value={record.note}
                   />
                 </Field>
               </FieldGroup>
             </ItemContent>
 
             <ItemFooter>
-              <Button onClick={() => removeRecord(index)} variant="destructive">
+              <Button
+                onClick={() => removeRecord(index)}
+                type="button"
+                variant="destructive"
+              >
                 <XIcon />
 
                 <span>移除</span>
