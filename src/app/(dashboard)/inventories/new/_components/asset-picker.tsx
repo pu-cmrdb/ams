@@ -73,26 +73,32 @@ export function AssetPicker({ onChange, value }: AssetPickerProps) {
     onChange([]);
   };
 
-  const content = data?.map((category) => (
-    <CommandGroup
-      heading={
-        <CommandItem onSelect={onGroupSelect} value={category.id}>
-          <Checkbox
-            checked={category.assets.every((asset) => value.includes(asset.id))}
-          />
-          {category.name}
-        </CommandItem>
-      }
-      key={category.id}
-    >
-      {category.assets.map((asset) => (
-        <CommandItem key={asset.id} onSelect={onItemSelect} value={asset.id}>
-          <Checkbox checked={value.includes(asset.id)} />
-          {asset.name}
-        </CommandItem>
-      ))}
-    </CommandGroup>
-  ));
+  const content = data
+    ?.filter((category) => category.assets.length > 0)
+    .map((category) => (
+      <CommandGroup
+        heading={
+          <CommandItem onSelect={onGroupSelect} value={category.id}>
+            <Checkbox
+              checked={category.assets.every((asset) =>
+                value.includes(asset.id),
+              )}
+            />
+
+            {category.name}
+          </CommandItem>
+        }
+        key={category.id}
+      >
+        {category.assets.map((asset) => (
+          <CommandItem key={asset.id} onSelect={onItemSelect} value={asset.id}>
+            <Checkbox checked={value.includes(asset.id)} />
+
+            {asset.name}
+          </CommandItem>
+        ))}
+      </CommandGroup>
+    ));
 
   const assets = useMemo(
     () => data?.flatMap((category) => category.assets),
