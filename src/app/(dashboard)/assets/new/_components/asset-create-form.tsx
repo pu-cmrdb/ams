@@ -2,10 +2,10 @@
 
 import { ArrowLeftIcon, CalendarDaysIcon, CornerDownRightIcon } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { arktypeResolver } from '@hookform/resolvers/arktype';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { zhTW } from 'react-day-picker/locale';
 
@@ -83,6 +83,7 @@ const AssetCreateFormSchema = type({
 export function AssetCreateForm() {
   const router = useRouter();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
 
   const form = useForm({
     defaultValues: {
@@ -109,9 +110,14 @@ export function AssetCreateForm() {
       onError: (error) => {
         toast.error(`新增財產時發生錯誤：${error.message}`);
       },
-      onSuccess: () => {
+      onSuccess: async (value) => {
+        toast.success(`已成功建立財產「${value.name}」`);
+
+        await queryClient.invalidateQueries({
+          queryKey: trpc.asset.list.queryKey(),
+        });
+
         router.push('/assets');
-        router.refresh();
       },
     }),
   );

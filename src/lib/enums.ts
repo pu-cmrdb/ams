@@ -15,8 +15,6 @@ export type AssetsSortKey = typeof AssetsSortKey.$schema.infer;
 
 /** 狀態設定 */
 export const AssetStatus = defineEnum({
-  /** 借出 */
-  Borrow: 'borrowed',
   /** 遺失 */
   Lost: 'lost',
   /** 在庫 */
