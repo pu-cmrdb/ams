@@ -1,11 +1,13 @@
 'use client';
 
+import { ArrowLeftIcon, Edit2Icon } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { useTRPC } from '@/trpc/react';
+
+import Link from 'next/link';
+
 import { Spinner } from '@/components/ui/spinner';
 import { buttonVariants } from '@/components/ui/button';
-import { ArrowLeftIcon, Edit2Icon } from 'lucide-react';
-import Link from 'next/link';
+import { useTRPC } from '@/trpc/react';
 
 const OwnershipTypeMap: Record<string, string> = {
   cmrdb: '行雲者研發基地',
@@ -81,10 +83,7 @@ export function AssetDetail({ assetId }: AssetDetailProps) {
       </div>
 
       <div className="flex gap-2">
-        <Link
-          className={buttonVariants()}
-          href={`/assets/${assetId}/edit`}
-        >
+        <Link className={buttonVariants()} href={`/assets/${assetId}/edit`}>
           <Edit2Icon data-icon="inline-start" />
           修改
         </Link>

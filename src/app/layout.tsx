@@ -2,6 +2,7 @@ import { Noto_Sans_TC } from 'next/font/google';
 
 import { PlatformProvider } from '@/components/providers/platform-provider';
 import { TRPCReactProvider } from '@/trpc/react';
+import { Toaster } from '@/components/ui/sonner';
 
 import type { Metadata } from 'next';
 
@@ -30,6 +31,8 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         <PlatformProvider>
           <TRPCReactProvider>{children}</TRPCReactProvider>
         </PlatformProvider>
+
+        <Toaster />
       </body>
     </html>
   );

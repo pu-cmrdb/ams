@@ -55,8 +55,10 @@ export function AssetList() {
     trpc.asset.list.queryOptions({ limit: 20 }),
   );
 
+  let children: React.ReactElement;
+
   if (error) {
-    return (
+    children = (
       <Empty>
         <EmptyMedia variant="icon">
           <TriangleAlertIcon />
@@ -84,7 +86,7 @@ export function AssetList() {
   }
 
   if (isPending) {
-    return (
+    children = (
       <Empty>
         <EmptyHeader>
           <EmptyTitle className="flex items-center gap-2">
@@ -97,15 +99,26 @@ export function AssetList() {
     );
   }
 
-  if (!data?.length) {
-    return (
+  if (data?.length) {
+    children = (
+      <ItemGroup
+        className="grid-cols-[repeat(auto-fill,minmax(var(--container-2xs),1fr))] data-[layout=grid]:grid"
+        data-layout={layout}
+      >
+        {data.map((asset) => (
+          <AssetListItem asset={asset} key={asset.id} />
+        ))}
+      </ItemGroup>
+    );
+  } else {
+    children = (
       <div className="rounded-md border p-8">
         <Empty>
           <EmptyHeader>
             <EmptyTitle>沒有財產紀錄</EmptyTitle>
 
             <EmptyDescription>
-              目前還沒有財產紀錄，點擊上方創建來新增一個
+              目前還沒有財產紀錄，點擊上方建立來新增一個
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -116,7 +129,9 @@ export function AssetList() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between" role="toolbar">
-        <div className="flex items-center gap-4">共有 {data.length} 筆資料</div>
+        <div className="flex items-center gap-4">
+          {data ? `共有 ${data.length} 筆資料` : '載入中'}
+        </div>
 
         <div className="flex items-center gap-4">
           <ToggleGroup
@@ -155,14 +170,7 @@ export function AssetList() {
         </div>
       </div>
 
-      <ItemGroup
-        className="grid-cols-[repeat(auto-fill,minmax(var(--container-2xs),1fr))] data-[layout=grid]:grid"
-        data-layout={layout}
-      >
-        {data.map((asset) => (
-          <AssetListItem asset={asset} key={asset.id} />
-        ))}
-      </ItemGroup>
+      {children}
     </div>
   );
 }
@@ -195,7 +203,7 @@ function AssetListItem({ asset }: AssetItemProps) {
 
       <ItemContent>
         <ItemTitle>
-          <Link href={`/assets/${asset.id}`}>{asset.name}</Link>
+          <Link href={`/asset/${asset.id}`}>{asset.name}</Link>
 
           <Badge variant="secondary">
             {OwnershipLabelMap[asset.ownershipType]}

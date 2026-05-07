@@ -3,15 +3,9 @@ import { PageContainer, PageHeader, PageTitle } from '@/components/page';
 
 import { AssetDetail } from './_components/asset-detail';
 
-type AssetDetailPageProps = Readonly<{
-  params: Promise<{
-    id: string;
-  }>;
-}>;
-
 export default async function AssetDetailPage({
   params,
-}: AssetDetailPageProps) {
+}: PageProps<'/asset/[id]'>) {
   const { id } = await params;
 
   prefetch(trpc.asset.get.queryOptions({ id }));

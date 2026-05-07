@@ -12,8 +12,8 @@ import { zhTW } from 'react-day-picker/locale';
 import Link from 'next/link';
 
 import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field';
-import { BorrowRule, OwnershipType } from '@/lib/enums';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { BorrowRule, OwnershipType } from '@/lib/enums';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Calendar } from '@/components/ui/calendar';
@@ -23,8 +23,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { UserSelect } from '@/components/user-select';
 import { useTRPC } from '@/trpc/react';
 
-import { AssetRecordEditor } from './asset-record-editor';
 import { AssetFormSchema } from '../../_schemas/asset-form-schema';
+import { AssetRecordEditor } from './asset-record-editor';
 
 export function AssetCreateForm() {
   const router = useRouter();
