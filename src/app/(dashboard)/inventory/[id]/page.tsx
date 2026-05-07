@@ -1,15 +1,15 @@
-import { InventoryDetailsClient } from '../_components/inventory-details-client';
+import { PageContainer } from '@/components/page';
 
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
+import { InventoryDetailsClient } from './_components/inventory-details-client';
 
-export default async function InventoryPlanDetailsPage({ params }: PageProps) {
+export default async function InventoryPlanDetailsPage({
+  params,
+}: PageProps<'/inventory/[id]'>) {
   const { id } = await params;
 
   return (
-    <div className="p-6">
+    <PageContainer>
       <InventoryDetailsClient id={id} />
-    </div>
+    </PageContainer>
   );
 }

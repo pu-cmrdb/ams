@@ -20,7 +20,11 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
   const trpc = useTRPC();
   const session = useSession();
 
-  const { data: plan, isError, isLoading } = useQuery(trpc.inventory.get.queryOptions({ id }));
+  const {
+    data: plan,
+    isError,
+    isLoading,
+  } = useQuery(trpc.inventory.get.queryOptions({ id }));
 
   const assetQueries = useQueries({
     queries: (plan?.assetIds ?? []).map((assetId: string) => ({
@@ -55,14 +59,10 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="
-        flex flex-col justify-between gap-4
-        md:flex-row md:items-start
-      "
-      >
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
         <div>
           <div className="mb-2 flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">{plan.name}</h1>
+            <h1 className="font-bold text-3xl tracking-tight">{plan.name}</h1>
             <Badge
               className="px-3 py-1 text-sm"
               variant={
@@ -73,64 +73,61 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
                     : 'secondary'
               }
             >
-              {plan.status === 'completed' ? '已完成' : plan.status === 'cancelled' ? '已取消' : '進行中'}
+              {plan.status === 'completed'
+                ? '已完成'
+                : plan.status === 'cancelled'
+                  ? '已取消'
+                  : '進行中'}
             </Badge>
           </div>
-          <p className="whitespace-pre-wrap text-muted-foreground">{plan.description}</p>
+          <p className="whitespace-pre-wrap text-muted-foreground">
+            {plan.description}
+          </p>
         </div>
         {plan.createdById === session.user.id && plan.status === 'pending' && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             結案功能需改由後端受保護的專用操作處理，暫時停用此前端入口。
           </p>
         )}
       </div>
 
-      <div className="
-        grid gap-4
-        md:grid-cols-3
-      "
-      >
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
-          <CardHeader className="
-            flex flex-row items-center justify-between space-y-0 pb-2
-          "
-          >
-            <CardTitle className="text-sm font-medium">開始時間</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="font-medium text-sm">開始時間</CardTitle>
             <CalendarDays className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{format(new Date(plan.startAt), 'yyyy-MM-dd HH:mm')}</div>
+            <div className="font-bold text-2xl">
+              {format(new Date(plan.startAt), 'yyyy-MM-dd HH:mm')}
+            </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="
-            flex flex-row items-center justify-between space-y-0 pb-2
-          "
-          >
-            <CardTitle className="text-sm font-medium">截止時間</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="font-medium text-sm">截止時間</CardTitle>
             <CalendarDays className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{format(new Date(plan.dueAt), 'yyyy-MM-dd HH:mm')}</div>
+            <div className="font-bold text-2xl">
+              {format(new Date(plan.dueAt), 'yyyy-MM-dd HH:mm')}
+            </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="
-            flex flex-row items-center justify-between space-y-0 pb-2
-          "
-          >
-            <CardTitle className="text-sm font-medium">完成時間</CardTitle>
-            {plan.status === 'completed'
-              ? (
-                  <CheckCircle2 className="size-4 text-muted-foreground" />
-                )
-              : (
-                  <CircleDashed className="size-4 text-muted-foreground" />
-                )}
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="font-medium text-sm">完成時間</CardTitle>
+            {plan.status === 'completed' ? (
+              <CheckCircle2 className="size-4 text-muted-foreground" />
+            ) : (
+              <CircleDashed className="size-4 text-muted-foreground" />
+            )}
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {plan.completedAt ? format(new Date(plan.completedAt), 'yyyy-MM-dd HH:mm') : '尚未完成'}
+            <div className="font-bold text-2xl">
+              {plan.completedAt
+                ? format(new Date(plan.completedAt), 'yyyy-MM-dd HH:mm')
+                : '尚未完成'}
             </div>
           </CardContent>
         </Card>
@@ -148,24 +145,17 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {plan.assetIds.length > 0
-              ? (
-                  <div className="
-                    grid grid-cols-1 gap-4
-                    md:grid-cols-2
-                    lg:grid-cols-3
-                  "
-                  >
-                    {assets.map((asset: any) => (
-                      <AssetItem asset={asset} key={asset.id} />
-                    ))}
-                  </div>
-                )
-              : (
-                  <div className="py-10 text-center text-muted-foreground">
-                    尚無財產明細資料
-                  </div>
-                )}
+            {plan.assetIds.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {assets.map((asset: any) => (
+                  <AssetItem asset={asset} key={asset.id} />
+                ))}
+              </div>
+            ) : (
+              <div className="py-10 text-center text-muted-foreground">
+                尚無財產明細資料
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -178,26 +168,29 @@ function AssetItem({ asset }: { asset: any }) {
     return (
       <Card className="h-full border-destructive/50 bg-destructive/5">
         <CardHeader>
-          <CardTitle className="text-lg text-destructive">載入失敗</CardTitle>
-          <CardDescription>
-            無法取得財產資料
-          </CardDescription>
+          <CardTitle className="text-destructive text-lg">載入失敗</CardTitle>
+          <CardDescription>無法取得財產資料</CardDescription>
         </CardHeader>
       </Card>
     );
   }
 
   const hasAnomaly = asset.records.some(
-    (record: { note: null | string; status: string }) => record.status !== AssetStatus.Normal || !!record.note,
+    (record: { note: null | string; status: string }) =>
+      record.status !== AssetStatus.Normal || !!record.note,
   );
 
   return (
-    <Card className={hasAnomaly ? 'border-destructive/50 bg-destructive/5' : ''}>
+    <Card
+      className={hasAnomaly ? 'border-destructive/50 bg-destructive/5' : ''}
+    >
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg">{asset.name}</CardTitle>
           {hasAnomaly && (
-            <Badge className="ml-2 whitespace-nowrap" variant="destructive">異常 / 變動</Badge>
+            <Badge className="ml-2 whitespace-nowrap" variant="destructive">
+              異常 / 變動
+            </Badge>
           )}
         </div>
         <CardDescription>
@@ -208,34 +201,42 @@ function AssetItem({ asset }: { asset: any }) {
       <CardContent>
         <div className="space-y-2 text-sm">
           <div>
-            <span className="mr-2 border-r pr-2 text-muted-foreground">地點</span>
+            <span className="mr-2 border-r pr-2 text-muted-foreground">
+              地點
+            </span>
             {asset.location}
           </div>
           <div>
-            <span className="mr-2 border-r pr-2 text-muted-foreground">保管單位</span>
+            <span className="mr-2 border-r pr-2 text-muted-foreground">
+              保管單位
+            </span>
             {asset.custodian}
           </div>
 
           {asset.records.length > 0 && (
             <div className="mt-4 border-t pt-4">
               <p className="mb-2 flex items-center gap-1 font-semibold">
-                <FileText className="size-4" />
-                {' '}
-                記錄狀態
+                <FileText className="size-4" /> 記錄狀態
               </p>
               <div className="space-y-2">
                 {asset.records.map(
-                  (
-                    record: { note: null | string; quantity: null | number; status: string },
-                  ) => (
+                  (record: {
+                    note: null | string;
+                    quantity: null | number;
+                    status: string;
+                  }) => (
                     <div
-                      className="
-                        flex flex-col gap-1 rounded-md bg-secondary/50 p-2
-                      "
+                      className="flex flex-col gap-1 rounded-md bg-secondary/50 p-2"
                       key={record.status}
                     >
                       <div className="flex items-center justify-between">
-                        <Badge variant={record.status === AssetStatus.Normal ? 'outline' : 'secondary'}>
+                        <Badge
+                          variant={
+                            record.status === AssetStatus.Normal
+                              ? 'outline'
+                              : 'secondary'
+                          }
+                        >
                           {record.status}
                         </Badge>
                         <span>
@@ -244,11 +245,7 @@ function AssetItem({ asset }: { asset: any }) {
                         </span>
                       </div>
                       {record.note && (
-                        <p className="
-                          mt-1 line-clamp-3 text-xs wrap-break-word
-                          text-muted-foreground
-                        "
-                        >
+                        <p className="wrap-break-word mt-1 line-clamp-3 text-muted-foreground text-xs">
                           備註:
                           {record.note}
                         </p>
