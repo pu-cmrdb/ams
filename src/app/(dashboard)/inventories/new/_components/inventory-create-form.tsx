@@ -3,9 +3,11 @@
 import { ArrowLeftIcon, CalendarDaysIcon } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { addDays, format } from 'date-fns';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { arktypeResolver } from '@hookform/resolvers/arktype';
+import { toast } from 'sonner';
 import { useCallback } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { zhTW } from 'react-day-picker/locale';
 
 import Link from 'next/link';
@@ -40,12 +42,24 @@ const InventoryCreateFormSchema = type({
 });
 
 export function InventoryCreateForm() {
+  const router = useRouter();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
 
   const { isPending, mutate } = useMutation(
     trpc.inventory.create.mutationOptions({
-      onError: () => {},
-      onSuccess: () => {},
+      onError: (error) => {
+        toast.error(`建立盤點計劃時發生錯誤：${error.message}`);
+      },
+      onSuccess: async (value) => {
+        toast.success(`已成功建立盤點計劃「${value.name}」`);
+
+        await queryClient.invalidateQueries({
+          queryKey: trpc.inventory.list.queryKey(),
+        });
+
+        router.push('/inventories');
+      },
     }),
   );
 
