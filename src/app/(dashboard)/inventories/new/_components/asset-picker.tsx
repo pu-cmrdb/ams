@@ -113,38 +113,46 @@ export function AssetPicker({ onChange, value }: AssetPickerProps) {
             render={
               <Button>
                 <PlusIcon data-icon="inline-start" />
+
                 <span>新增財產</span>
               </Button>
             }
           />
+
           <PopoverContent align="start" className="w-auto p-0">
             <Command>
               <CommandInput />
+
               <CommandList>
                 <CommandEmpty>
                   <Empty>
                     <EmptyMedia variant="icon">
                       <SearchXIcon />
                     </EmptyMedia>
+
                     <EmptyHeader>
                       <EmptyTitle>找不到相符的財產</EmptyTitle>
+
                       <EmptyDescription>
                         請確認拼字是否正確，或使用其他關鍵字搜尋
                       </EmptyDescription>
                     </EmptyHeader>
                   </Empty>
                 </CommandEmpty>
+
                 {content}
               </CommandList>
             </Command>
           </PopoverContent>
         </Popover>
+
         {value.length > 0 && (
           <Button onClick={onClear} variant="outline">
             清除
           </Button>
         )}
       </div>
+
       <ItemGroup>
         {value.map((id) => {
           const item = assets?.find((asset) => asset.id === id);
@@ -156,6 +164,7 @@ export function AssetPicker({ onChange, value }: AssetPickerProps) {
                   <ItemTitle>
                     <Skeleton className="w-12" />
                   </ItemTitle>
+
                   <ItemDescription>
                     <Skeleton className="w-28" />
                   </ItemDescription>
@@ -177,8 +186,10 @@ export function AssetPicker({ onChange, value }: AssetPickerProps) {
               )}
               <ItemContent>
                 <ItemTitle>{item.name}</ItemTitle>
+
                 <ItemDescription>{item.description}</ItemDescription>
               </ItemContent>
+
               <ItemActions>
                 <Button
                   onClick={() => onItemSelect(id)}
