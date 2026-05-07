@@ -97,7 +97,7 @@ export function InventoryListClient() {
                                 <TableCell>{format(new Date(plan.startAt), 'yyyy-MM-dd HH:mm')}</TableCell>
                                 <TableCell>{format(new Date(plan.dueAt), 'yyyy-MM-dd HH:mm')}</TableCell>
                                 <TableCell className="
-                                  max-w-50 truncate text-muted-foreground
+                                  max-w-[200px] truncate text-muted-foreground
                                 "
                                 >
                                   {plan.description || '-'}

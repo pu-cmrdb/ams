@@ -30,7 +30,7 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
   });
 
   const isAssetsLoading = assetQueries.some((q) => q.isLoading);
-  const assets = assetQueries.map((q) => q.data).filter(Boolean);
+  const assets = assetQueries.map((q) => q.data);
 
   if (isLoading || isAssetsLoading) {
     return (

@@ -2,7 +2,7 @@ import { InventoryListClient } from './_components/inventory-list-client';
 
 export default function InventoryListPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="p-6 flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">盤點計畫</h1>
