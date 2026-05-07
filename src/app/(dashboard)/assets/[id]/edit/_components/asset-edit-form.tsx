@@ -122,20 +122,24 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
 
   const onSubmit: React.SubmitEventHandler = (event) =>
     form.handleSubmit((values) => {
+      const updateAssetInput = {
+        borrowRule: values.borrowRule,
+        categoryId: values.categoryId,
+        custodian: values.custodian,
+        description: values.description,
+        id: assetId,
+        location: values.location,
+        name: values.name,
+        ownershipType: values.ownershipType,
+        purchaseDate: values.purchaseDate,
+        schoolAssetNumber: values.schoolAssetNumber,
+        ...(values.borrowRule === BorrowRule.Restricted
+          ? { authorizedLenderIds: values.authorizedLenderIds }
+          : {}),
+      };
+
       updateAsset(
-        {
-          authorizedLenderIds: values.authorizedLenderIds,
-          borrowRule: values.borrowRule,
-          categoryId: values.categoryId,
-          custodian: values.custodian,
-          description: values.description,
-          id: assetId,
-          location: values.location,
-          name: values.name,
-          ownershipType: values.ownershipType,
-          purchaseDate: values.purchaseDate,
-          schoolAssetNumber: values.schoolAssetNumber,
-        },
+        updateAssetInput,
         {
           onSuccess: () => {
             updateRecord({
