@@ -122,6 +122,9 @@ export const categoryRouter = createTRPCRouter({
               : undefined,
           ].filter((v): v is NonNullable<typeof v> => v != null),
         },
+        with: {
+          assets: true,
+        },
       });
       return result;
     }),

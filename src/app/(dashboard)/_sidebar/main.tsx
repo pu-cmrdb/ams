@@ -65,11 +65,11 @@ const routes: NavGroup[] = [
       {
         children: [
           {
-            href: '/inventory/create',
+            href: '/inventories/new',
             name: '建立盤點計劃',
           },
         ],
-        href: '/inventory',
+        href: '/inventories',
         icon: ListTodoIcon,
         name: '盤點計劃',
       },
