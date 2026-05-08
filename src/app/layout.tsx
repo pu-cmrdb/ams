@@ -1,5 +1,6 @@
 import { Noto_Sans_TC } from 'next/font/google';
 
+import { PlatformProvider } from '@/components/providers/platform-provider';
 import { TRPCReactProvider } from '@/trpc/react';
 
 import type { Metadata } from 'next';
@@ -26,7 +27,9 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       lang="zh-Hant"
     >
       <body>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <PlatformProvider>
+          <TRPCReactProvider>{children}</TRPCReactProvider>
+        </PlatformProvider>
       </body>
     </html>
   );

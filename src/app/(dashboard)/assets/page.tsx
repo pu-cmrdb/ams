@@ -1,10 +1,24 @@
-import { AssetListClient } from './_components/asset-list-client';
+import { HydrateClient, prefetch, trpc } from '@/trpc/server';
+import { PageContainer, PageHeader, PageTitle } from '@/components/page';
+
+import { AssetList } from './_components/asset-list';
 
 export default function AssetsPage() {
+  prefetch(
+    trpc.asset.list.queryOptions({
+      limit: 20,
+    }),
+  );
+
   return (
-    <div className="flex flex-col gap-4 p-6">
-      <h1 className="font-bold text-2xl tracking-tight">財產總覽</h1>
-      <AssetListClient />
-    </div>
+    <HydrateClient>
+      <PageContainer>
+        <PageHeader>
+          <PageTitle>財產總覽</PageTitle>
+        </PageHeader>
+
+        <AssetList />
+      </PageContainer>
+    </HydrateClient>
   );
 }

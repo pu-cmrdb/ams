@@ -6,6 +6,8 @@ import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 import { cn } from "@/lib/utils"
 import { ChevronRightIcon, CheckIcon } from "lucide-react"
 
+import { usePlatform } from "@/components/providers/platform-provider"
+
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />
 }
@@ -237,6 +239,10 @@ function DropdownMenuShortcut({
   className,
   ...props
 }: React.ComponentProps<"span">) {
+  const { isDesktop } = usePlatform();
+
+  if (!isDesktop) return null;
+
   return (
     <span
       data-slot="dropdown-menu-shortcut"
