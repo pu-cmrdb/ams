@@ -15,8 +15,6 @@ export type AssetsSortKey = typeof AssetsSortKey.$schema.infer;
 
 /** 狀態設定 */
 export const AssetStatus = defineEnum({
-  /** 借出 */
-  Borrow: 'borrowed',
   /** 遺失 */
   Lost: 'lost',
   /** 在庫 */
@@ -89,3 +87,14 @@ export const BorrowRecordSortKey = defineEnum({
   UpdatedAt: 'updatedAt',
 } as const);
 export type BorrowRecordSortKey = typeof BorrowRecordSortKey.$schema.infer;
+
+/** 盤點計劃狀態 */
+export const InventoryPlanStatus = defineEnum({
+  /** 已取消 */
+  Cancelled: 'cancelled',
+  /** 已完成 */
+  Completed: 'completed',
+  /** 待處理 */
+  Pending: 'pending',
+} as const);
+export type InventoryPlanStatus = typeof InventoryPlanStatus.$schema.infer;

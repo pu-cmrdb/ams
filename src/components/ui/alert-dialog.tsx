@@ -5,6 +5,9 @@ import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { cva } from "class-variance-authority"
+
+import type { VariantProps } from "class-variance-authority"
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
@@ -93,17 +96,30 @@ function AlertDialogFooter({
   )
 }
 
+const alertDialogMediaVariants = cva(
+  "mb-2 inline-flex size-16 items-center justify-center rounded-full sm:group-data-[size=default]/alert-dialog-content:row-span-2 *:[svg:not([class*='size-'])]:size-8",
+  {
+    variants: {
+      variant: {
+        default: "bg-muted",
+        destructive: "bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
 function AlertDialogMedia({
   className,
+  variant = "default",
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & VariantProps<typeof alertDialogMediaVariants>) {
   return (
     <div
       data-slot="alert-dialog-media"
-      className={cn(
-        "mb-2 inline-flex size-16 items-center justify-center rounded-full bg-muted sm:group-data-[size=default]/alert-dialog-content:row-span-2 *:[svg:not([class*='size-'])]:size-8",
-        className
-      )}
+      className={cn(alertDialogMediaVariants({ variant, className }))}
       {...props}
     />
   )

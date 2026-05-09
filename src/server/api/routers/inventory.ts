@@ -18,14 +18,16 @@ const CreateInventoryInput = InventoryPlans.insert
     assigneeIds: 'string[]',
   });
 
-const UpdateInventoryInput = InventoryPlans.update.omit('createdById').and({
-  /** 財產 ID 陣列 */
-  'assetIds?': 'string[]',
-  /** 盤點人員 ID 陣列 */
-  'assigneeIds?': 'string[]',
-  /** 盤點計畫 ID */
-  id: 'string',
-});
+export const UpdateInventoryInput = InventoryPlans.update
+  .omit('createdById')
+  .and({
+    /** 財產 ID 陣列 */
+    'assetIds?': 'string[]',
+    /** 盤點人員 ID 陣列 */
+    'assigneeIds?': 'string[]',
+    /** 盤點計畫 ID */
+    id: 'string',
+  });
 
 export const inventoryRouter = createTRPCRouter({
   /**

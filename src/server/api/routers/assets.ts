@@ -15,28 +15,45 @@ import { type } from '@/lib/arktype';
 type AssetsTable = typeof schema.assets;
 
 const _CreateAssetsInputBase = Assets.insert
-  .omit('id', 'borrowRule', 'createdById', 'updatedById')
+  .omit('id', 'createdById', 'updatedById')
   .and({
     'records?': AssetRecords.insert.omit('assetId').array(),
   });
 
 const CreateAssetsInput = _CreateAssetsInputBase
-  .and(
-    type({
-      authorizedLenderIds: 'string[] > 0',
-      borrowRule: `'${BorrowRule.Restricted}'`,
-    }).or({
-      borrowRule: BorrowRule.$schema.exclude(`'${BorrowRule.Restricted}'`),
-    }),
-  )
-  .and(
-    type({
-      ownershipType: `'${OwnershipType.School}'`,
-      schoolAssetNumber: 'string.trim',
-    }).or({
-      ownershipType: OwnershipType.$schema.exclude(`'${OwnershipType.School}'`),
-    }),
-  );
+  .and({
+    'authorizedLenderIds?': 'string[]',
+    'schoolAssetNumber?': 'string',
+  })
+  .narrow((value, ctx) => {
+    let isValid = true;
+
+    if (
+      value.borrowRule === BorrowRule.Restricted
+      && !value.authorizedLenderIds?.length
+    ) {
+      ctx.reject({
+        code: 'minLength',
+        path: ['authorizedLenderIds'],
+        rule: 1,
+      });
+      isValid = false;
+    }
+
+    if (
+      value.ownershipType === OwnershipType.School
+      && !value.schoolAssetNumber?.length
+    ) {
+      ctx.reject({
+        code: 'minLength',
+        path: ['schoolAssetNumber'],
+        rule: 1,
+      });
+      isValid = false;
+    }
+
+    return isValid;
+  });
 
 const _UpdateAssetsInputBase = Assets.update
   .omit('createdById', 'updatedById')
