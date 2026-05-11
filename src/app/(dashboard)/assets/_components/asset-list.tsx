@@ -262,7 +262,7 @@ function AssetListItemDropdown({ asset }: AssetItemProps) {
       <DropdownMenuContent>
         <DropdownMenuItem
           ref={editRef}
-          render={<Link href={`/assets/${asset.id}/edit`} />}
+          render={<Link href={`/asset/${asset.id}/edit`} />}
         >
           <Edit2Icon data-icon="inline-start" />
 
