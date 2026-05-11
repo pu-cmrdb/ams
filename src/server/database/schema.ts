@@ -1,7 +1,7 @@
 import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
-import { AssetStatus, BorrowRule, OwnershipType, RecordStatus } from '@/lib/enums';
+import { AssetStatus, BorrowRule, InventoryPlanStatus, OwnershipType, RecordStatus } from '@/lib/enums';
 
 const cascadeActions = {
   onDelete: 'cascade',
@@ -155,7 +155,7 @@ export const inventoryPlans = sqliteTable('inventory_plans', {
   /** 盤點開始時間 */
   startAt: integer('start_at', { mode: 'timestamp' }).notNull(),
   /** 盤點狀態，預設為 pending */
-  status: text('status', { enum: ['pending', 'completed', 'cancelled'] })
+  status: text('status', { enum: InventoryPlanStatus.$values })
     .notNull()
     .default('pending'),
   updatedAt,

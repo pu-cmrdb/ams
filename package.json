@@ -8,7 +8,7 @@
     "check": "bun run lint && tsc --noEmit",
     "dev": "next dev --turbo --port 3001",
     "lint": "biome check --formatter-enabled=false && eslint",
-    "format": "biome check --write --unsafe && eslint --fix",
+    "format": "biome check --write --unsafe; eslint --fix",
     "preview": "next build && next start",
     "start": "next start",
     "typegen": "next typegen",

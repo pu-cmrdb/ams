@@ -1,7 +1,7 @@
-import { configure, type as arktype } from 'arktype';
+import { configure } from 'arktype';
 
 configure({
   exactOptionalPropertyTypes: false,
 });
 
-export const type: typeof arktype = arktype;
+export * from 'arktype';
