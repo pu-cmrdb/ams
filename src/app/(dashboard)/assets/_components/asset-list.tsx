@@ -83,9 +83,7 @@ export function AssetList() {
         </EmptyContent>
       </Empty>
     );
-  }
-
-  if (isPending) {
+  } else if (isPending) {
     children = (
       <Empty>
         <EmptyHeader>
@@ -97,9 +95,7 @@ export function AssetList() {
         </EmptyHeader>
       </Empty>
     );
-  }
-
-  if (data?.length) {
+  } else if (data?.length) {
     children = (
       <ItemGroup
         className="grid-cols-[repeat(auto-fill,minmax(var(--container-2xs),1fr))] data-[layout=grid]:grid"
