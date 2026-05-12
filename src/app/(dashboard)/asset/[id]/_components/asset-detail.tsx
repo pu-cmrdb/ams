@@ -44,38 +44,38 @@ export function AssetDetail({ assetId }: AssetDetailProps) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border p-6 space-y-4">
+      <div className="space-y-4 rounded-lg border p-6">
         <div>
-          <p className="text-sm text-muted-foreground">財產名稱</p>
-          <p className="text-lg font-semibold">{data.name}</p>
+          <p className="text-muted-foreground text-sm">財產名稱</p>
+          <p className="font-semibold text-lg">{data.name}</p>
         </div>
 
         <div>
-          <p className="text-sm text-muted-foreground">描述</p>
+          <p className="text-muted-foreground text-sm">描述</p>
           <p>{data.description}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-muted-foreground">保管單位</p>
+            <p className="text-muted-foreground text-sm">保管單位</p>
             <p>{data.custodian}</p>
           </div>
 
           <div>
-            <p className="text-sm text-muted-foreground">位置</p>
+            <p className="text-muted-foreground text-sm">位置</p>
             <p>{data.location}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-muted-foreground">歸屬單位</p>
+            <p className="text-muted-foreground text-sm">歸屬單位</p>
             <p>{OwnershipTypeMap[data.ownershipType] || data.ownershipType}</p>
           </div>
 
           {data.schoolAssetNumber && (
             <div>
-              <p className="text-sm text-muted-foreground">學校財產編號</p>
+              <p className="text-muted-foreground text-sm">學校財產編號</p>
               <p>{data.schoolAssetNumber}</p>
             </div>
           )}

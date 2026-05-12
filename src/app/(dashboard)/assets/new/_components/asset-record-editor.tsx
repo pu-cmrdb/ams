@@ -89,7 +89,12 @@ export function AssetRecordEditor({
         </Button>
 
         {value.length > 0 && (
-          <Button disabled={disabled} onClick={clear} type="button" variant="outline">
+          <Button
+            disabled={disabled}
+            onClick={clear}
+            type="button"
+            variant="outline"
+          >
             清除
           </Button>
         )}

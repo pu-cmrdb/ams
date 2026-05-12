@@ -70,7 +70,7 @@
       }
     }
   },
-  "plugins": ["./.biome/no-use-effect.grit"],
+  "plugins": [],
   "vcs": {
     "clientKind": "git",
     "enabled": true,

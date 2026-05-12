@@ -1,8 +1,8 @@
 'use client';
 
 import { ArrowLeftIcon, CalendarDaysIcon, CornerDownRightIcon } from 'lucide-react';
-import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Controller, useForm } from 'react-hook-form';
 import { arktypeResolver } from '@hookform/resolvers/arktype';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -13,10 +13,12 @@ import { zhTW } from 'react-day-picker/locale';
 import Link from 'next/link';
 
 import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field';
-import { BorrowRule, OwnershipType } from '@/lib/enums';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { BorrowRule, OwnershipType } from '@/lib/enums';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { AssetFormSchema } from '@/app/(dashboard)/assets/_schemas/asset-form-schema';
+import { AssetRecordEditor } from '@/app/(dashboard)/assets/new/_components/asset-record-editor';
 import { Calendar } from '@/components/ui/calendar';
 import { CategorySelect } from '@/components/category-select';
 import { Input } from '@/components/ui/input';
@@ -25,8 +27,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { UserSelect } from '@/components/user-select';
 import { useTRPC } from '@/trpc/react';
 
-import { AssetRecordEditor } from '@/app/(dashboard)/assets/new/_components/asset-record-editor';
-import { AssetFormSchema } from '@/app/(dashboard)/assets/_schemas/asset-form-schema';
 
 type AssetEditFormProps = Readonly<{
   assetId: string;
@@ -85,7 +85,7 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
       })),
       schoolAssetNumber: data.schoolAssetNumber ?? '',
     });
-  }, [data, form]);
+  }, [data, form.reset]);
 
   const borrowRule = form.watch('borrowRule');
   const ownershipType = form.watch('ownershipType');
@@ -122,33 +122,42 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
 
   const onSubmit: React.SubmitEventHandler = (event) =>
     form.handleSubmit((values) => {
-      const updateAssetInput = {
-        borrowRule: values.borrowRule,
-        categoryId: values.categoryId,
-        custodian: values.custodian,
-        description: values.description,
-        id: assetId,
-        location: values.location,
-        name: values.name,
-        ownershipType: values.ownershipType,
-        purchaseDate: values.purchaseDate,
-        schoolAssetNumber: values.schoolAssetNumber,
-        ...(values.borrowRule === BorrowRule.Restricted
-          ? { authorizedLenderIds: values.authorizedLenderIds }
-          : {}),
-      };
-
-      updateAsset(
-        updateAssetInput,
-        {
-          onSuccess: () => {
-            updateRecord({
+      const updateAssetInput =
+        values.borrowRule === BorrowRule.Restricted
+          ? {
+              authorizedLenderIds: values.authorizedLenderIds,
+              borrowRule: values.borrowRule,
+              categoryId: values.categoryId,
+              custodian: values.custodian,
+              description: values.description,
               id: assetId,
-              records: values.records,
-            });
-          },
+              location: values.location,
+              name: values.name,
+              ownershipType: values.ownershipType,
+              purchaseDate: values.purchaseDate,
+              schoolAssetNumber: values.schoolAssetNumber,
+            }
+          : {
+              borrowRule: values.borrowRule,
+              categoryId: values.categoryId,
+              custodian: values.custodian,
+              description: values.description,
+              id: assetId,
+              location: values.location,
+              name: values.name,
+              ownershipType: values.ownershipType,
+              purchaseDate: values.purchaseDate,
+              schoolAssetNumber: values.schoolAssetNumber,
+            };
+
+      updateAsset(updateAssetInput as Parameters<typeof updateAsset>[0], {
+        onSuccess: () => {
+          updateRecord({
+            id: assetId,
+            records: values.records,
+          });
         },
-      );
+      });
     })(event);
 
   if (isQueryPending) {
