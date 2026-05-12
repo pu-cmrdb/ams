@@ -4,7 +4,9 @@ import { InventoryDetailsClient } from './_components/inventory-details-client';
 
 export default async function InventoryPlanDetailsPage({
   params,
-}: PageProps<'/inventory/[id]'>) {
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
 
   return (
