@@ -147,8 +147,8 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
           <div className="space-y-4">
             {plan.assetIds.length > 0 ? (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {assets.map((asset: any) => (
-                  <AssetItem asset={asset} key={asset.id} />
+                {plan.assetIds.map((assetId: string, index: number) => (
+                  <AssetItem asset={assets[index]} key={assetId} />
                 ))}
               </div>
             ) : (
