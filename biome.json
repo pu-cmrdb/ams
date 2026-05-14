@@ -20,7 +20,10 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["src/**/*", "!src/components/ui/**/*"]
+    "includes": [
+      "src/**/*",
+      "!src/components/ui/**/*"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -70,7 +73,9 @@
       }
     }
   },
-  "plugins": [],
+  "plugins": [
+    "./.biome/no-use-effect.grit"
+  ],
   "vcs": {
     "clientKind": "git",
     "enabled": true,
