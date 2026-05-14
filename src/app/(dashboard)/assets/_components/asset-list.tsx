@@ -19,6 +19,7 @@ import { BorrowRule } from '@/lib/enums';
 import { Kbd } from '@/components/ui/kbd';
 import { OwnershipType } from '@/lib/enums';
 import { Spinner } from '@/components/ui/spinner';
+import { useMountEffect } from '@/hooks/use-mount-effect';
 import { usePlatform } from '@/components/providers/platform-provider';
 import { useTRPC } from '@/trpc/react';
 
@@ -27,6 +28,7 @@ import DeleteAssetDialog from '@/components/dialogs/delete-asset';
 import type { inferProcedureOutput } from '@trpc/server';
 
 import type { AppRouter } from '@/server/api/root';
+
 
 type Asset = inferProcedureOutput<AppRouter['asset']['list']>[number];
 
@@ -50,10 +52,15 @@ const BorrowRuleIconMap: Record<BorrowRule, React.ReactElement> = {
 export function AssetList() {
   const trpc = useTRPC();
   const [layout, setLayout] = useState<'list' | 'grid'>('list');
+  const [isMounted, setIsMounted] = useState(false);
 
   const { data, error, isPending, isRefetching, refetch } = useQuery(
     trpc.asset.list.queryOptions({ limit: 20 }),
   );
+
+  useMountEffect(() => {
+    setIsMounted(true);
+  });
 
   let children: React.ReactElement;
 
@@ -126,7 +133,7 @@ export function AssetList() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between" role="toolbar">
         <div className="flex items-center gap-4">
-          {data ? `共有 ${data.length} 筆資料` : '載入中'}
+          {isMounted ? `共有 ${data?.length ?? 0} 筆資料` : '載入中'}
         </div>
 
         <div className="flex items-center gap-4">

@@ -6,7 +6,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { arktypeResolver } from '@hookform/resolvers/arktype';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { zhTW } from 'react-day-picker/locale';
 
@@ -37,6 +37,39 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
+  const {
+    data,
+    error,
+    isPending: isQueryPending,
+  } = useQuery(trpc.asset.get.queryOptions({ id: assetId }));
+
+  const assetValues = useMemo(
+    () =>
+      data
+        ? {
+            authorizedLenderIds: data.authorizedLenders.map((v) => v.userId),
+            borrowRule: data.borrowRule,
+            categoryId: data.categoryId,
+            custodian: data.custodian,
+            description: data.description ?? '',
+            location: data.location,
+            name: data.name,
+            ownershipType: data.ownershipType,
+            purchaseDate:
+              data.purchaseDate instanceof Date
+                ? data.purchaseDate
+                : new Date(data.purchaseDate ?? new Date()),
+            records: data.records.map((record) => ({
+              note: record.note ?? '',
+              quantity: record.quantity,
+              status: record.status,
+            })),
+            schoolAssetNumber: data.schoolAssetNumber ?? '',
+          }
+        : undefined,
+    [data],
+  );
+
   const form = useForm({
     defaultValues: {
       authorizedLenderIds: [],
@@ -52,40 +85,8 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
       schoolAssetNumber: '',
     },
     resolver: arktypeResolver(AssetFormSchema),
+    values: assetValues,
   });
-
-  const {
-    data,
-    error,
-    isPending: isQueryPending,
-  } = useQuery(trpc.asset.get.queryOptions({ id: assetId }));
-
-  useEffect(() => {
-    if (!data) {
-      return;
-    }
-
-    form.reset({
-      authorizedLenderIds: data.authorizedLenders.map((v) => v.userId),
-      borrowRule: data.borrowRule,
-      categoryId: data.categoryId,
-      custodian: data.custodian,
-      description: data.description ?? '',
-      location: data.location,
-      name: data.name,
-      ownershipType: data.ownershipType,
-      purchaseDate:
-        data.purchaseDate instanceof Date
-          ? data.purchaseDate
-          : new Date(data.purchaseDate ?? new Date()),
-      records: data.records.map((record) => ({
-        note: record.note ?? '',
-        quantity: record.quantity,
-        status: record.status,
-      })),
-      schoolAssetNumber: data.schoolAssetNumber ?? '',
-    });
-  }, [data, form.reset]);
 
   const borrowRule = form.watch('borrowRule');
   const ownershipType = form.watch('ownershipType');
