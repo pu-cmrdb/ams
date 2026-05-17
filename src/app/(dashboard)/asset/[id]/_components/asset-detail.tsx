@@ -23,9 +23,10 @@ type AssetDetailProps = Readonly<{
 export function AssetDetail({ assetId }: AssetDetailProps) {
   const trpc = useTRPC();
 
-  const { data, isPending, error } = useQuery(
-    trpc.asset.get.queryOptions({ id: assetId }),
-  );
+  const { data, isPending, error } = useQuery({
+    ...trpc.asset.get.queryOptions({ id: assetId }),
+    refetchOnWindowFocus: false,
+  });
 
   if (isPending) {
     return (

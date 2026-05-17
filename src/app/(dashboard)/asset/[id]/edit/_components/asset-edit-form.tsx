@@ -41,32 +41,38 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
     data,
     error,
     isPending: isQueryPending,
-  } = useQuery(trpc.asset.get.queryOptions({ id: assetId }));
+  } = useQuery({
+    ...trpc.asset.get.queryOptions({ id: assetId }),
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
+  });
 
   const assetValues = useMemo(
-    () =>
-      data
-        ? {
-            authorizedLenderIds: data.authorizedLenders.map((v) => v.userId),
-            borrowRule: data.borrowRule,
-            categoryId: data.categoryId,
-            custodian: data.custodian,
-            description: data.description ?? '',
-            location: data.location,
-            name: data.name,
-            ownershipType: data.ownershipType,
-            purchaseDate:
-              data.purchaseDate instanceof Date
-                ? data.purchaseDate
-                : new Date(data.purchaseDate ?? new Date()),
-            records: data.records.map((record) => ({
-              note: record.note ?? '',
-              quantity: record.quantity,
-              status: record.status,
-            })),
-            schoolAssetNumber: data.schoolAssetNumber ?? '',
-          }
-        : undefined,
+    () => {
+      if (!data) {
+        return undefined;
+      }
+      return {
+        authorizedLenderIds: data.authorizedLenders.map((v) => v.userId),
+        borrowRule: data.borrowRule,
+        categoryId: data.categoryId,
+        custodian: data.custodian,
+        description: data.description ?? '',
+        location: data.location,
+        name: data.name,
+        ownershipType: data.ownershipType,
+        purchaseDate:
+          data.purchaseDate instanceof Date
+            ? data.purchaseDate
+            : new Date(data.purchaseDate ?? new Date()),
+        records: data.records.map((record) => ({
+          note: record.note ?? '',
+          quantity: record.quantity,
+          status: record.status,
+        })),
+        schoolAssetNumber: data.schoolAssetNumber ?? '',
+      };
+    },
     [data],
   );
 
@@ -83,6 +89,10 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
       purchaseDate: new Date(),
       records: [],
       schoolAssetNumber: '',
+    },
+    resetOptions: {
+      keepDirtyValues: true,
+      keepErrors: true,
     },
     resolver: arktypeResolver(AssetFormSchema),
     values: assetValues,
@@ -119,7 +129,7 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
     }),
   );
 
-  const isSubmitting = isUpdatePending || isRecordPending;
+  const isSubmitting = isUpdatePending || isRecordPending || form.formState.isSubmitting;
 
   const onSubmit: React.SubmitEventHandler = (event) =>
     form.handleSubmit((values) => {
