@@ -169,6 +169,7 @@ export function AssetRecordEditor({
 
             <ItemFooter>
               <Button
+                disabled={disabled}
                 onClick={() => removeRecord(index)}
                 type="button"
                 variant="destructive"
