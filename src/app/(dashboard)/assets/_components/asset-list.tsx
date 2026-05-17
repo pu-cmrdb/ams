@@ -27,7 +27,6 @@ import type { inferProcedureOutput } from '@trpc/server';
 
 import type { AppRouter } from '@/server/api/root';
 
-
 type Asset = inferProcedureOutput<AppRouter['asset']['list']>[number];
 
 const OwnershipLabelMap: Record<OwnershipType, string> = {
@@ -55,7 +54,6 @@ export function AssetList() {
   const { data, error, isRefetching, refetch } = useSuspenseQuery(
     trpc.asset.list.queryOptions({ limit: 20 }),
   );
-
 
   let children: React.ReactElement;
 
