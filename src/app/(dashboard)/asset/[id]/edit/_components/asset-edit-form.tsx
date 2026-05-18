@@ -29,12 +29,11 @@ import { useTRPC } from '@/trpc/react';
 
 import type { RouterInputs } from '@/trpc/react';
 
-
 type AssetEditFormProps = Readonly<{
   assetId: string;
 }>;
 
-type UpdateAssetInput = RouterInputs['asset']['update'];
+// Removed unused type alias UpdateAssetInput
 
 export function AssetEditForm({ assetId }: AssetEditFormProps) {
   const router = useRouter();
@@ -51,34 +50,31 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
     staleTime: 1000 * 60 * 5,
   });
 
-  const assetValues = useMemo(
-    () => {
-      if (!data) {
-        return undefined;
-      }
-      return {
-        authorizedLenderIds: data.authorizedLenders.map((v) => v.userId),
-        borrowRule: data.borrowRule,
-        categoryId: data.categoryId,
-        custodian: data.custodian,
-        description: data.description ?? '',
-        location: data.location,
-        name: data.name,
-        ownershipType: data.ownershipType,
-        purchaseDate:
-          data.purchaseDate instanceof Date
-            ? data.purchaseDate
-            : new Date(data.purchaseDate ?? new Date()),
-        records: data.records.map((record) => ({
-          note: record.note ?? '',
-          quantity: record.quantity,
-          status: record.status,
-        })),
-        schoolAssetNumber: data.schoolAssetNumber ?? '',
-      };
-    },
-    [data],
-  );
+  const assetValues = useMemo(() => {
+    if (!data) {
+      return undefined;
+    }
+    return {
+      authorizedLenderIds: data.authorizedLenders.map((v) => v.userId),
+      borrowRule: data.borrowRule,
+      categoryId: data.categoryId,
+      custodian: data.custodian,
+      description: data.description ?? '',
+      location: data.location,
+      name: data.name,
+      ownershipType: data.ownershipType,
+      purchaseDate:
+        data.purchaseDate instanceof Date
+          ? data.purchaseDate
+          : new Date(data.purchaseDate ?? new Date()),
+      records: data.records.map((record) => ({
+        note: record.note ?? '',
+        quantity: record.quantity,
+        status: record.status,
+      })),
+      schoolAssetNumber: data.schoolAssetNumber ?? '',
+    };
+  }, [data]);
 
   const form = useForm({
     defaultValues: {
@@ -133,12 +129,15 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
     }),
   );
 
-  const isSubmitting = isUpdatePending || isRecordPending || form.formState.isSubmitting;
+  const isSubmitting =
+    isUpdatePending || isRecordPending || form.formState.isSubmitting;
 
   const onSubmit: React.SubmitEventHandler = (event) =>
     form.handleSubmit((values) => {
       const baseInput = {
-        borrowRule: values.borrowRule,
+        // align borrowRule precisely to tRPC input type
+        borrowRule:
+          values.borrowRule as RouterInputs['asset']['update']['borrowRule'],
         categoryId: values.categoryId,
         custodian: values.custodian,
         description: values.description,
@@ -149,29 +148,15 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
         purchaseDate: values.purchaseDate,
       };
 
-      let updateAssetInput: UpdateAssetInput;
-
-      if (values.borrowRule === BorrowRule.Restricted) {
-        if (values.ownershipType === OwnershipType.School) {
-          updateAssetInput = {
-            ...baseInput,
-            authorizedLenderIds: values.authorizedLenderIds,
-            schoolAssetNumber: values.schoolAssetNumber,
-          };
-        } else {
-          updateAssetInput = {
-            ...baseInput,
-            authorizedLenderIds: values.authorizedLenderIds,
-          };
-        }
-      } else if (values.ownershipType === OwnershipType.School) {
-        updateAssetInput = {
-          ...baseInput,
+      const updateAssetInput = {
+        ...baseInput,
+        ...(values.borrowRule === BorrowRule.Restricted && {
+          authorizedLenderIds: values.authorizedLenderIds,
+        }),
+        ...(values.ownershipType === OwnershipType.School && {
           schoolAssetNumber: values.schoolAssetNumber,
-        };
-      } else {
-        updateAssetInput = baseInput;
-      }
+        }),
+      } as RouterInputs['asset']['update'];
 
       updateAsset(updateAssetInput, {
         onSuccess: () => {
