@@ -57,7 +57,18 @@ export function AssetList() {
 
   let children: React.ReactElement;
 
-  if (error) {
+  if (data?.length) {
+    children = (
+      <ItemGroup
+        className="grid-cols-[repeat(auto-fill,minmax(var(--container-2xs),1fr))] data-[layout=grid]:grid"
+        data-layout={layout}
+      >
+        {data.map((asset) => (
+          <AssetListItem asset={asset} key={asset.id} />
+        ))}
+      </ItemGroup>
+    );
+  } else if (error) {
     children = (
       <Empty>
         <EmptyMedia variant="icon">
@@ -82,17 +93,6 @@ export function AssetList() {
           </Button>
         </EmptyContent>
       </Empty>
-    );
-  }else if (data?.length) {
-    children = (
-      <ItemGroup
-        className="grid-cols-[repeat(auto-fill,minmax(var(--container-2xs),1fr))] data-[layout=grid]:grid"
-        data-layout={layout}
-      >
-        {data.map((asset) => (
-          <AssetListItem asset={asset} key={asset.id} />
-        ))}
-      </ItemGroup>
     );
   } else {
     children = (

@@ -55,7 +55,7 @@ export function AssetDetail({ assetId }: AssetDetailProps) {
 
         <div>
           <p className="text-muted-foreground text-sm">描述</p>
-          <p>{data.description}</p>
+          <p>{data.description || '—'}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">

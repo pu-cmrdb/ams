@@ -27,10 +27,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { UserSelect } from '@/components/user-select';
 import { useTRPC } from '@/trpc/react';
 
+import type { RouterInputs } from '@/trpc/react';
+
 
 type AssetEditFormProps = Readonly<{
   assetId: string;
 }>;
+
+type UpdateAssetInput = RouterInputs['asset']['update'];
 
 export function AssetEditForm({ assetId }: AssetEditFormProps) {
   const router = useRouter();
@@ -133,35 +137,43 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
 
   const onSubmit: React.SubmitEventHandler = (event) =>
     form.handleSubmit((values) => {
-      const updateAssetInput =
-        values.borrowRule === BorrowRule.Restricted
-          ? {
-              authorizedLenderIds: values.authorizedLenderIds,
-              borrowRule: values.borrowRule,
-              categoryId: values.categoryId,
-              custodian: values.custodian,
-              description: values.description,
-              id: assetId,
-              location: values.location,
-              name: values.name,
-              ownershipType: values.ownershipType,
-              purchaseDate: values.purchaseDate,
-              schoolAssetNumber: values.schoolAssetNumber,
-            }
-          : {
-              borrowRule: values.borrowRule,
-              categoryId: values.categoryId,
-              custodian: values.custodian,
-              description: values.description,
-              id: assetId,
-              location: values.location,
-              name: values.name,
-              ownershipType: values.ownershipType,
-              purchaseDate: values.purchaseDate,
-              schoolAssetNumber: values.schoolAssetNumber,
-            };
+      const baseInput = {
+        borrowRule: values.borrowRule,
+        categoryId: values.categoryId,
+        custodian: values.custodian,
+        description: values.description,
+        id: assetId,
+        location: values.location,
+        name: values.name,
+        ownershipType: values.ownershipType,
+        purchaseDate: values.purchaseDate,
+      };
 
-      updateAsset(updateAssetInput as Parameters<typeof updateAsset>[0], {
+      let updateAssetInput: UpdateAssetInput;
+
+      if (values.borrowRule === BorrowRule.Restricted) {
+        if (values.ownershipType === OwnershipType.School) {
+          updateAssetInput = {
+            ...baseInput,
+            authorizedLenderIds: values.authorizedLenderIds,
+            schoolAssetNumber: values.schoolAssetNumber,
+          };
+        } else {
+          updateAssetInput = {
+            ...baseInput,
+            authorizedLenderIds: values.authorizedLenderIds,
+          };
+        }
+      } else if (values.ownershipType === OwnershipType.School) {
+        updateAssetInput = {
+          ...baseInput,
+          schoolAssetNumber: values.schoolAssetNumber,
+        };
+      } else {
+        updateAssetInput = baseInput;
+      }
+
+      updateAsset(updateAssetInput, {
         onSuccess: () => {
           updateRecord({
             id: assetId,
