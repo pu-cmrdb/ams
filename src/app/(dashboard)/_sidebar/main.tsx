@@ -52,12 +52,6 @@ const routes: NavGroup[] = [
         name: '財產',
       },
       {
-        children: [
-          {
-            href: '/category/create',
-            name: '建立財產類別',
-          },
-        ],
         href: '/category',
         icon: TagsIcon,
         name: '財產類別',
