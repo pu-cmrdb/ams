@@ -39,7 +39,7 @@ const routes: NavGroup[] = [
       {
         children: [
           {
-            href: '/assets/create',
+            href: '/assets/new',
             name: '建立財產',
           },
           {
@@ -121,6 +121,7 @@ function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
           </Link>
         }
       />
+
       {isActive && item.children && item.children.length > 0 && (
         <SidebarMenuSub>
           {item.children.map((sub) => (
