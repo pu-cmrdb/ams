@@ -1,12 +1,13 @@
 'use client';
 
 import { ArrowLeftIcon, CalendarDaysIcon, CornerDownRightIcon } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { arktypeResolver } from '@hookform/resolvers/arktype';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { zhTW } from 'react-day-picker/locale';
 
 import Link from 'next/link';
@@ -16,20 +17,63 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { BorrowRule, OwnershipType } from '@/lib/enums';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { AssetFormSchema } from '@/app/(dashboard)/assets/_schemas/asset-form-schema';
+import { AssetRecordEditor } from '@/app/(dashboard)/assets/new/_components/asset-record-editor';
 import { Calendar } from '@/components/ui/calendar';
 import { CategorySelect } from '@/components/category-select';
 import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { UserSelect } from '@/components/user-select';
 import { useTRPC } from '@/trpc/react';
 
-import { AssetFormSchema } from '../../_schemas/asset-form-schema';
-import { AssetRecordEditor } from './asset-record-editor';
+import type { RouterInputs } from '@/trpc/react';
 
-export function AssetCreateForm() {
+type AssetEditFormProps = Readonly<{
+  assetId: string;
+}>;
+
+export function AssetEditForm({ assetId }: AssetEditFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+
+  const {
+    data,
+    error,
+    isPending: isQueryPending,
+  } = useQuery({
+    ...trpc.asset.get.queryOptions({ id: assetId }),
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const assetValues = useMemo(() => {
+    if (!data) {
+      return undefined;
+    }
+    return {
+      authorizedLenderIds: data.authorizedLenders.map((v) => v.userId),
+      borrowRule: data.borrowRule,
+      categoryId: data.categoryId,
+      custodian: data.custodian,
+      description: data.description ?? '',
+      location: data.location,
+      name: data.name,
+      ownershipType: data.ownershipType,
+      purchaseDate:
+        data.purchaseDate instanceof Date
+          ? data.purchaseDate
+          : new Date(data.purchaseDate ?? new Date()),
+      records: data.records.map((record) => ({
+        note: record.note ?? '',
+        quantity: record.quantity,
+        status: record.status,
+      })),
+      schoolAssetNumber: data.schoolAssetNumber ?? '',
+    };
+  }, [data]);
 
   const form = useForm({
     defaultValues: {
@@ -45,33 +89,106 @@ export function AssetCreateForm() {
       records: [],
       schoolAssetNumber: '',
     },
+    resetOptions: {
+      keepDirtyValues: true,
+      keepErrors: true,
+    },
     resolver: arktypeResolver(AssetFormSchema),
+    values: assetValues,
   });
 
   const borrowRule = form.watch('borrowRule');
   const ownershipType = form.watch('ownershipType');
 
-  const { mutate, isPending } = useMutation(
-    trpc.asset.create.mutationOptions({
-      onError: (error) => {
-        toast.error(`新增財產時發生錯誤：${error.message}`);
+  const { mutate: updateAsset, isPending: isUpdatePending } = useMutation(
+    trpc.asset.update.mutationOptions({
+      onError: (mutationError) => {
+        toast.error(`更新財產時發生錯誤：${mutationError.message}`);
       },
-      onSuccess: async (value) => {
-        toast.success(`已成功建立財產「${value.name}」`);
+    }),
+  );
+
+  const { mutate: updateRecord, isPending: isRecordPending } = useMutation(
+    trpc.asset.updateRecord.mutationOptions({
+      onError: (mutationError) => {
+        toast.error(`更新財產紀錄時發生錯誤：${mutationError.message}`);
+      },
+      onSuccess: async () => {
+        toast.success('已成功更新財產');
 
         await queryClient.invalidateQueries({
           queryKey: trpc.asset.list.queryKey(),
         });
+        await queryClient.invalidateQueries({
+          queryKey: trpc.asset.get.queryKey({ id: assetId }),
+        });
+
+        const from = searchParams.get('from');
+        const planId = searchParams.get('planId');
+
+        if (from === 'inventory' && planId) {
+          router.push(`/inventory/${planId}`);
+          return;
+        }
 
         router.push('/assets');
       },
     }),
   );
 
+  const isSubmitting =
+    isUpdatePending || isRecordPending || form.formState.isSubmitting;
+
   const onSubmit: React.SubmitEventHandler = (event) =>
     form.handleSubmit((values) => {
-      mutate(values);
+      const baseInput = {
+        // align borrowRule precisely to tRPC input type
+        borrowRule:
+          values.borrowRule as RouterInputs['asset']['update']['borrowRule'],
+        categoryId: values.categoryId,
+        custodian: values.custodian,
+        description: values.description,
+        id: assetId,
+        location: values.location,
+        name: values.name,
+        ownershipType: values.ownershipType,
+        purchaseDate: values.purchaseDate,
+      };
+
+      const updateAssetInput = {
+        ...baseInput,
+        ...(values.borrowRule === BorrowRule.Restricted && {
+          authorizedLenderIds: values.authorizedLenderIds,
+        }),
+        ...(values.ownershipType === OwnershipType.School && {
+          schoolAssetNumber: values.schoolAssetNumber,
+        }),
+      } as RouterInputs['asset']['update'];
+
+      updateAsset(updateAssetInput, {
+        onSuccess: () => {
+          updateRecord({
+            id: assetId,
+            records: values.records,
+          });
+        },
+      });
     })(event);
+
+  if (isQueryPending) {
+    return (
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Spinner />
+        <span>載入中</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-destructive">載入財產資料失敗：{error.message}</div>
+    );
+  }
 
   return (
     <form className="space-y-8" onSubmit={onSubmit}>
@@ -361,8 +478,8 @@ export function AssetCreateForm() {
       </div>
 
       <Field orientation="horizontal">
-        <Button disabled={isPending} type="submit">
-          建立
+        <Button disabled={isSubmitting} type="submit">
+          更新
         </Button>
 
         <Link className={buttonVariants({ variant: 'outline' })} href="/assets">

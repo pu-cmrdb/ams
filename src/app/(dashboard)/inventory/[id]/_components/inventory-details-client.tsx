@@ -4,6 +4,7 @@ import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, FileText, Pack
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSession } from '@/components/providers/session-provider';
 import { useTRPC } from '@/trpc/react';
+import InventoryItemCheck from './inventory-item-check';
 
 import type { RouterOutputs } from '@/trpc/react';
 
@@ -32,6 +34,7 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
   const trpc = useTRPC();
   const session = useSession();
   const queryClient = useQueryClient();
+  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
 
   const completeMutation = useMutation(
     trpc.inventory.update.mutationOptions({
@@ -207,13 +210,27 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
             {!isAssetsError && assets.length > 0 && (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {assets.map((asset) => (
-                  <AssetItem asset={asset} key={asset.id} />
+                  <AssetItem
+                    asset={asset}
+                    key={asset.id}
+                    planId={plan.id}
+                    assignedToIds={plan.assigneeIds}
+                    createdById={plan.createdById}
+                    planStatus={plan.status}
+                    isChecked={Boolean(checkedItems[asset.id])}
+                    onToggleChecked={() => {
+                      setCheckedItems((state) => ({
+                        ...state,
+                        [asset.id]: !state[asset.id],
+                      }));
+                    }}
+                  />
                 ))}
               </div>
             )}
             {!isAssetsError && assets.length === 0 && (
               <div className="py-10 text-center text-muted-foreground">
-                尚無財產明細資料
+                目前尚無待盤點的財產項目
               </div>
             )}
           </div>
@@ -223,10 +240,30 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
   );
 }
 
-function AssetItem({ asset }: { asset: Asset }) {
+function AssetItem({
+  asset,
+  planId,
+  assignedToIds,
+  createdById,
+  planStatus,
+  isChecked,
+  onToggleChecked,
+}: {
+  asset: Asset;
+  planId: string;
+  assignedToIds: string[];
+  createdById: string;
+  planStatus: string;
+  isChecked: boolean;
+  onToggleChecked: () => void;
+}) {
   const hasAnomaly = asset.records.some(
     (record) => record.status !== AssetStatus.Normal || !!record.note,
   );
+
+  const session = useSession();
+  const canEdit =
+    planStatus === 'pending' && (createdById === session.user.id || assignedToIds.includes(session.user.id));
 
   return (
     <Card
@@ -235,11 +272,34 @@ function AssetItem({ asset }: { asset: Asset }) {
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg">{asset.name}</CardTitle>
-          {hasAnomaly && (
-            <Badge className="ml-2 whitespace-nowrap" variant="destructive">
-              異常 / 變動
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {planStatus === 'pending' && (
+              <>
+                <Badge variant={isChecked ? 'default' : 'outline'}>
+                  {isChecked ? '已盤點' : '未盤點'}
+                </Badge>
+
+                <Button
+                  onClick={onToggleChecked}
+                  size="sm"
+                  variant={isChecked ? 'secondary' : 'outline'}
+                >
+                  {isChecked ? '取消標記' : '標記已盤點'}
+                </Button>
+              </>
+            )}
+
+            {hasAnomaly && (
+              <Badge className="ml-2 whitespace-nowrap" variant="destructive">
+                異常 / 變動
+              </Badge>
+            )}
+            <InventoryItemCheck
+              assetId={asset.id}
+              canEdit={canEdit}
+              planId={planId}
+            />
+          </div>
         </div>
         <CardDescription>
           ID:
