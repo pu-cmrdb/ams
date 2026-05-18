@@ -12,6 +12,12 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTRPC } from '@/trpc/react';
 
+const statusMeta = {
+  cancelled: { label: '已取消', variant: 'destructive' as const },
+  completed: { label: '已完成', variant: 'default' as const },
+  pending: { label: '進行中', variant: 'secondary' as const },
+};
+
 export function InventoryListClient() {
   const trpc = useTRPC();
   const router = useRouter();
@@ -39,17 +45,19 @@ export function InventoryListClient() {
         <CardDescription>檢視與管理系統中所有的盤點計畫。</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {isLoading && (
           <div className="space-y-4">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-24 w-full" />
           </div>
-        ) : isError || !plans ? (
+        )}
+        {!isLoading && (isError || !plans) && (
           <div className="py-10 text-center text-muted-foreground">
             無法取得盤點計畫列表資料
           </div>
-        ) : (
+        )}
+        {!isLoading && plans && (
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -77,20 +85,8 @@ export function InventoryListClient() {
                     <TableRow key={plan.id}>
                       <TableCell className="font-medium">{plan.name}</TableCell>
                       <TableCell>
-                        <Badge
-                          variant={
-                            plan.status === 'completed'
-                              ? 'default'
-                              : plan.status === 'cancelled'
-                                ? 'destructive'
-                                : 'secondary'
-                          }
-                        >
-                          {plan.status === 'completed'
-                            ? '已完成'
-                            : plan.status === 'cancelled'
-                              ? '已取消'
-                              : '進行中'}
+                        <Badge variant={statusMeta[plan.status].variant}>
+                          {statusMeta[plan.status].label}
                         </Badge>
                       </TableCell>
                       <TableCell>

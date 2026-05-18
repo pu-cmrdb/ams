@@ -18,8 +18,11 @@ import { useTRPC } from '@/trpc/react';
 import type { RouterOutputs } from '@/trpc/react';
 
 type Asset = RouterOutputs['asset']['list'][number];
-
-
+const statusMeta = {
+  cancelled: { label: '已取消', variant: 'destructive' as const },
+  completed: { label: '已完成', variant: 'default' as const },
+  pending: { label: '進行中', variant: 'secondary' as const },
+};
 
 interface InventoryDetailsClientProps {
   id: string;
@@ -50,6 +53,7 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
 
   const {
     data: assetList,
+    isError: isAssetsError,
     isLoading: isAssetsLoading,
   } = useQuery({
     ...trpc.asset.list.queryOptions({
@@ -90,19 +94,9 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
             <h1 className="font-bold text-3xl tracking-tight">{plan.name}</h1>
             <Badge
               className="px-3 py-1 text-sm"
-              variant={
-                plan.status === 'completed'
-                  ? 'default'
-                  : plan.status === 'cancelled'
-                    ? 'destructive'
-                    : 'secondary'
-              }
+              variant={statusMeta[plan.status].variant}
             >
-              {plan.status === 'completed'
-                ? '已完成'
-                : plan.status === 'cancelled'
-                  ? '已取消'
-                  : '進行中'}
+              {statusMeta[plan.status].label}
             </Badge>
           </div>
           <p className="whitespace-pre-wrap text-muted-foreground">
@@ -133,8 +127,8 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
                 <AlertDialogAction
                   onClick={() => {
                     completeMutation.mutate({
-                      id: plan.id,
                       completedAt: new Date(),
+                      id: plan.id,
                       status: 'completed',
                     });
                   }}
@@ -201,13 +195,23 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {assets.length > 0 ? (
+            {isAssetsError
+              ? (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="size-4" />
+                    <AlertTitle>錯誤</AlertTitle>
+                    <AlertDescription>財產明細查詢失敗</AlertDescription>
+                  </Alert>
+                )
+              : null}
+            {!isAssetsError && assets.length > 0 && (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {assets.map((asset) => (
                   <AssetItem asset={asset} key={asset.id} />
                 ))}
               </div>
-            ) : (
+            )}
+            {!isAssetsError && assets.length === 0 && (
               <div className="py-10 text-center text-muted-foreground">
                 尚無財產明細資料
               </div>
@@ -285,7 +289,7 @@ function AssetItem({ asset }: { asset: Asset }) {
                         </span>
                       </div>
                       {record.note && (
-                        <p className="break-words mt-1 line-clamp-3 text-muted-foreground text-xs">
+                        <p className="mt-1 line-clamp-3 break-words text-muted-foreground text-xs">
                           備註:
                           {record.note}
                         </p>
