@@ -7,7 +7,7 @@ import { arktypeResolver } from '@hookform/resolvers/arktype';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { zhTW } from 'react-day-picker/locale';
 
 import Link from 'next/link';
@@ -35,6 +35,7 @@ type AssetEditFormProps = Readonly<{
 
 export function AssetEditForm({ assetId }: AssetEditFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -121,6 +122,14 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
         await queryClient.invalidateQueries({
           queryKey: trpc.asset.get.queryKey({ id: assetId }),
         });
+
+        const from = searchParams.get('from');
+        const planId = searchParams.get('planId');
+
+        if (from === 'inventory' && planId) {
+          router.push(`/inventory/${planId}`);
+          return;
+        }
 
         router.push('/assets');
       },
