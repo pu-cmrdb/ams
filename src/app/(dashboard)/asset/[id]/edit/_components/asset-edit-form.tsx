@@ -33,8 +33,6 @@ type AssetEditFormProps = Readonly<{
   assetId: string;
 }>;
 
-// Removed unused type alias UpdateAssetInput
-
 export function AssetEditForm({ assetId }: AssetEditFormProps) {
   const router = useRouter();
   const trpc = useTRPC();
