@@ -10,7 +10,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { buttonVariants } from '@/components/ui/button';
 import { useTRPC } from '@/trpc/react';
 
-
 const OwnershipTypeMap: Record<OwnershipType, string> = {
   [OwnershipType.Cmrdb]: '行雲財產',
   [OwnershipType.School]: '學校財產',
