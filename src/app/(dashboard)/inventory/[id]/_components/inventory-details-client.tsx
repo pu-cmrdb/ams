@@ -1,16 +1,25 @@
 'use client';
 
 import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, FileText, Package2 } from 'lucide-react';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AssetStatus } from '@/lib/enums';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSession } from '@/components/providers/session-provider';
 import { useTRPC } from '@/trpc/react';
+
+import type { RouterOutputs } from '@/trpc/react';
+
+type Asset = RouterOutputs['asset']['list'][number];
+
+
 
 interface InventoryDetailsClientProps {
   id: string;
@@ -19,6 +28,19 @@ interface InventoryDetailsClientProps {
 export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
   const trpc = useTRPC();
   const session = useSession();
+  const queryClient = useQueryClient();
+
+  const completeMutation = useMutation(
+    trpc.inventory.update.mutationOptions({
+      onError: () => {
+        toast.error('結案失敗');
+      },
+      onSuccess: () => {
+        void queryClient.invalidateQueries(trpc.inventory.get.queryFilter());
+        toast.success('已成功結案');
+      },
+    }),
+  );
 
   const {
     data: plan,
@@ -26,15 +48,18 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
     isLoading,
   } = useQuery(trpc.inventory.get.queryOptions({ id }));
 
-  const assetQueries = useQueries({
-    queries: (plan?.assetIds ?? []).map((assetId: string) => ({
-      ...trpc.asset.get.queryOptions({ id: assetId }),
-      enabled: !!plan && plan.assetIds.length > 0,
-    })),
+  const {
+    data: assetList,
+    isLoading: isAssetsLoading,
+  } = useQuery({
+    ...trpc.asset.list.queryOptions({
+      ids: plan?.assetIds ?? [],
+      limit: plan?.assetIds.length ?? 20,
+    }),
+    enabled: !!plan && plan.assetIds.length > 0,
   });
 
-  const isAssetsLoading = assetQueries.some((q) => q.isLoading);
-  const assets = assetQueries.map((q) => q.data);
+  const assets = assetList ?? [];
 
   if (isLoading || isAssetsLoading) {
     return (
@@ -85,9 +110,40 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
           </p>
         </div>
         {plan.createdById === session.user.id && plan.status === 'pending' && (
-          <p className="text-muted-foreground text-sm">
-            結案功能需改由後端受保護的專用操作處理，暫時停用此前端入口。
-          </p>
+          <AlertDialog>
+            <AlertDialogTrigger
+              render={
+                <Button
+                  disabled={completeMutation.isPending}
+                  size="sm"
+                >
+                  {completeMutation.isPending ? '結案中...' : '結案'}
+                </Button>
+              }
+            />
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>確定結案「{plan.name}」？</AlertDialogTitle>
+                <AlertDialogDescription>
+                  結案後計畫狀態將變更為「已完成」，此動作無法復原。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>取消</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    completeMutation.mutate({
+                      id: plan.id,
+                      completedAt: new Date(),
+                      status: 'completed',
+                    });
+                  }}
+                >
+                  確認結案
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </div>
 
@@ -145,10 +201,10 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {plan.assetIds.length > 0 ? (
+            {assets.length > 0 ? (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {plan.assetIds.map((assetId: string, index: number) => (
-                  <AssetItem asset={assets[index]} key={assetId} />
+                {assets.map((asset) => (
+                  <AssetItem asset={asset} key={asset.id} />
                 ))}
               </div>
             ) : (
@@ -163,21 +219,9 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
   );
 }
 
-function AssetItem({ asset }: { asset: any }) {
-  if (!asset) {
-    return (
-      <Card className="h-full border-destructive/50 bg-destructive/5">
-        <CardHeader>
-          <CardTitle className="text-destructive text-lg">載入失敗</CardTitle>
-          <CardDescription>無法取得財產資料</CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
-
+function AssetItem({ asset }: { asset: Asset }) {
   const hasAnomaly = asset.records.some(
-    (record: { note: null | string; status: string }) =>
-      record.status !== AssetStatus.Normal || !!record.note,
+    (record) => record.status !== AssetStatus.Normal || !!record.note,
   );
 
   return (
@@ -220,11 +264,7 @@ function AssetItem({ asset }: { asset: any }) {
               </p>
               <div className="space-y-2">
                 {asset.records.map(
-                  (record: {
-                    note: null | string;
-                    quantity: null | number;
-                    status: string;
-                  }) => (
+                  (record) => (
                     <div
                       className="flex flex-col gap-1 rounded-md bg-secondary/50 p-2"
                       key={record.status}
@@ -245,7 +285,7 @@ function AssetItem({ asset }: { asset: any }) {
                         </span>
                       </div>
                       {record.note && (
-                        <p className="wrap-break-word mt-1 line-clamp-3 text-muted-foreground text-xs">
+                        <p className="break-words mt-1 line-clamp-3 text-muted-foreground text-xs">
                           備註:
                           {record.note}
                         </p>
