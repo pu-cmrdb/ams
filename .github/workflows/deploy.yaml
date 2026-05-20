@@ -4,6 +4,9 @@ on:
     branches:
       - main
   workflow_dispatch:
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}
 jobs:
@@ -21,13 +24,13 @@ jobs:
         uses: docker/setup-qemu-action@v4
       - # see https://github.com/docker/setup-buildx-action
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4 
+        uses: docker/setup-buildx-action@v4
       - # see https://github.com/docker/login-action
         name: Login to GitHub Container Registry
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - # see https://github.com/docker/metadata-action
         name: Docker metadata
@@ -36,7 +39,7 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable={{is_default}}
             type=sha
       - # see https://github.com/docker/build-push-action
         name: Build and Push
@@ -47,3 +50,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
