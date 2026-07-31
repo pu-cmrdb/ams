@@ -12,6 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTRPC } from '@/trpc/react';
 
+function safeFormatDate(value: unknown, fmt: string, fallback = '-'): string {
+  if (!value) return fallback;
+  const date = new Date(value as string | number);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return format(date, fmt);
+}
+
 const statusMeta = {
   cancelled: { label: '已取消', variant: 'destructive' as const },
   completed: { label: '已完成', variant: 'default' as const },
@@ -85,15 +92,15 @@ export function InventoryListClient() {
                     <TableRow key={plan.id}>
                       <TableCell className="font-medium">{plan.name}</TableCell>
                       <TableCell>
-                        <Badge variant={statusMeta[plan.status].variant}>
-                          {statusMeta[plan.status].label}
+                        <Badge variant={statusMeta[plan.status]?.variant ?? 'default'}>
+                          {statusMeta[plan.status]?.label ?? plan.status}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {format(new Date(plan.startAt), 'yyyy-MM-dd HH:mm')}
+                        {safeFormatDate(plan.startAt, 'yyyy-MM-dd HH:mm')}
                       </TableCell>
                       <TableCell>
-                        {format(new Date(plan.dueAt), 'yyyy-MM-dd HH:mm')}
+                        {safeFormatDate(plan.dueAt, 'yyyy-MM-dd HH:mm')}
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate text-muted-foreground">
                         {plan.description || '-'}

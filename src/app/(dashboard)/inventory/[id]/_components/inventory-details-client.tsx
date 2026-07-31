@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, FileText, Package2 } from 'lucide-react';
+import { memo, useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -16,6 +17,16 @@ import { useSession } from '@/components/providers/session-provider';
 import { useTRPC } from '@/trpc/react';
 
 import type { RouterOutputs } from '@/trpc/react';
+
+
+
+function safeFormatDate(value: unknown, fmt: string, fallback = '-'): string {
+  if (!value) return fallback;
+  const date = new Date(value as string | number);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return format(date, fmt);
+}
+
 
 type Asset = RouterOutputs['asset']['list'][number];
 const statusMeta = {
@@ -50,6 +61,15 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
     isError,
     isLoading,
   } = useQuery(trpc.inventory.get.queryOptions({ id }));
+
+  const handleComplete = useCallback(() => {
+    if (!plan) return;
+    completeMutation.mutate({
+      completedAt: new Date(),
+      id: plan.id,
+      status: 'completed',
+    });
+  }, [completeMutation, plan]);
 
   const {
     data: assetList,
@@ -106,15 +126,11 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
         {plan.createdById === session.user.id && plan.status === 'pending' && (
           <AlertDialog>
             <AlertDialogTrigger
-              render={
-                <Button
-                  disabled={completeMutation.isPending}
-                  size="sm"
-                >
-                  {completeMutation.isPending ? '結案中...' : '結案'}
-                </Button>
-              }
-            />
+              render={<Button size="sm" />}
+              disabled={completeMutation.isPending}
+            >
+              {completeMutation.isPending ? '結案中...' : '結案'}
+            </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>確定結案「{plan.name}」？</AlertDialogTitle>
@@ -125,13 +141,7 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
               <AlertDialogFooter>
                 <AlertDialogCancel>取消</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => {
-                    completeMutation.mutate({
-                      completedAt: new Date(),
-                      id: plan.id,
-                      status: 'completed',
-                    });
-                  }}
+                  onClick={handleComplete}
                 >
                   確認結案
                 </AlertDialogAction>
@@ -149,7 +159,7 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
           </CardHeader>
           <CardContent>
             <div className="font-bold text-2xl">
-              {format(new Date(plan.startAt), 'yyyy-MM-dd HH:mm')}
+              {safeFormatDate(plan.startAt, 'yyyy-MM-dd HH:mm')}
             </div>
           </CardContent>
         </Card>
@@ -160,7 +170,7 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
           </CardHeader>
           <CardContent>
             <div className="font-bold text-2xl">
-              {format(new Date(plan.dueAt), 'yyyy-MM-dd HH:mm')}
+              {safeFormatDate(plan.dueAt, 'yyyy-MM-dd HH:mm')}
             </div>
           </CardContent>
         </Card>
@@ -176,7 +186,7 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
           <CardContent>
             <div className="font-bold text-2xl">
               {plan.completedAt
-                ? format(new Date(plan.completedAt), 'yyyy-MM-dd HH:mm')
+                ? safeFormatDate(plan.completedAt, 'yyyy-MM-dd HH:mm', '尚未完成')
                 : '尚未完成'}
             </div>
           </CardContent>
@@ -223,9 +233,12 @@ export function InventoryDetailsClient({ id }: InventoryDetailsClientProps) {
   );
 }
 
-function AssetItem({ asset }: { asset: Asset }) {
-  const hasAnomaly = asset.records.some(
-    (record) => record.status !== AssetStatus.Normal || !!record.note,
+const AssetItem = memo(function AssetItem({ asset }: { asset: Asset }) {
+  const hasAnomaly = useMemo(
+    () => asset.records.some(
+      (record) => record.status !== AssetStatus.Normal || !!record.note,
+    ),
+    [asset.records],
   );
 
   return (
@@ -271,7 +284,7 @@ function AssetItem({ asset }: { asset: Asset }) {
                   (record) => (
                     <div
                       className="flex flex-col gap-1 rounded-md bg-secondary/50 p-2"
-                      key={record.status}
+                      key={`${record.assetId}-${record.status}`}
                     >
                       <div className="flex items-center justify-between">
                         <Badge
@@ -304,4 +317,4 @@ function AssetItem({ asset }: { asset: Asset }) {
       </CardContent>
     </Card>
   );
-}
+});
