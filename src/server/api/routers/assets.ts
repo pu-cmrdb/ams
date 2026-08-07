@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 
+import { eq, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
 import { AssetsSortKey, BorrowRule, OwnershipType, SortDirection } from '@/lib/enums';
@@ -10,6 +10,7 @@ import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { containsLike } from '@/lib/utils';
 import { schema } from '@/server/database';
 import { type } from '@/lib/arktype';
+
 
 type AssetsTable = typeof schema.assets;
 
@@ -92,6 +93,8 @@ const UpdateAssetRecordInput = type({
 const ListAssetsInput = type({
   /** 財產群組 */
   'categoryId?': 'string.trim',
+  /** 指定 ID 清單 */
+  'ids?': 'string[] > 0',
   /** 關鍵字 */
   'keyword?': 'string.trim',
   /** 每頁筆數，預設 20 */
@@ -251,6 +254,12 @@ export const assetsRouter = createTRPCRouter({
                 containsLike(table.location, keyword),
             },
           ],
+        });
+      }
+      if (input.ids) {
+        const ids = input.ids;
+        conditions.push({
+          RAW: (table: AssetsTable) => inArray(table.id, ids),
         });
       }
       if (input.categoryId) {
