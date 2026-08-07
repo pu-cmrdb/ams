@@ -3,7 +3,7 @@
 import { Edit2Icon, LayoutGridIcon, LayoutListIcon, LockOpenIcon, MoreVerticalIcon, PlusIcon, RotateCcwIcon, ShapesIcon, Trash2Icon, TriangleAlertIcon, XIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { useQuery } from '@tanstack/react-query';
+import { useSuspenseQuery } from '@tanstack/react-query';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -18,7 +18,6 @@ import { Badge } from '@/components/ui/badge';
 import { BorrowRule } from '@/lib/enums';
 import { Kbd } from '@/components/ui/kbd';
 import { OwnershipType } from '@/lib/enums';
-import { Spinner } from '@/components/ui/spinner';
 import { usePlatform } from '@/components/providers/platform-provider';
 import { useTRPC } from '@/trpc/react';
 
@@ -50,13 +49,27 @@ const BorrowRuleIconMap: Record<BorrowRule, React.ReactElement> = {
 export function AssetList() {
   const trpc = useTRPC();
   const [layout, setLayout] = useState<'list' | 'grid'>('list');
+  const [_isMounted, _setIsMounted] = useState(false);
 
-  const { data, error, isPending, isRefetching, refetch } = useQuery(
+  const { data, error, isRefetching, refetch } = useSuspenseQuery(
     trpc.asset.list.queryOptions({ limit: 20 }),
   );
 
-  if (error) {
-    return (
+  let children: React.ReactElement;
+
+  if (data?.length) {
+    children = (
+      <ItemGroup
+        className="grid-cols-[repeat(auto-fill,minmax(var(--container-2xs),1fr))] data-[layout=grid]:grid"
+        data-layout={layout}
+      >
+        {data.map((asset) => (
+          <AssetListItem asset={asset} key={asset.id} />
+        ))}
+      </ItemGroup>
+    );
+  } else if (error) {
+    children = (
       <Empty>
         <EmptyMedia variant="icon">
           <TriangleAlertIcon />
@@ -81,31 +94,15 @@ export function AssetList() {
         </EmptyContent>
       </Empty>
     );
-  }
-
-  if (isPending) {
-    return (
-      <Empty>
-        <EmptyHeader>
-          <EmptyTitle className="flex items-center gap-2">
-            <Spinner />
-
-            <span>載入中</span>
-          </EmptyTitle>
-        </EmptyHeader>
-      </Empty>
-    );
-  }
-
-  if (!data?.length) {
-    return (
+  } else {
+    children = (
       <div className="rounded-md border p-8">
         <Empty>
           <EmptyHeader>
             <EmptyTitle>沒有財產紀錄</EmptyTitle>
 
             <EmptyDescription>
-              目前還沒有財產紀錄，點擊上方創建來新增一個
+              目前還沒有財產紀錄，點擊上方建立來新增一個
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -116,7 +113,9 @@ export function AssetList() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between" role="toolbar">
-        <div className="flex items-center gap-4">共有 {data.length} 筆資料</div>
+        <div className="flex items-center gap-4">
+          共有 {data.length} 筆資料
+        </div>
 
         <div className="flex items-center gap-4">
           <ToggleGroup
@@ -155,14 +154,7 @@ export function AssetList() {
         </div>
       </div>
 
-      <ItemGroup
-        className="grid-cols-[repeat(auto-fill,minmax(var(--container-2xs),1fr))] data-[layout=grid]:grid"
-        data-layout={layout}
-      >
-        {data.map((asset) => (
-          <AssetListItem asset={asset} key={asset.id} />
-        ))}
-      </ItemGroup>
+      {children}
     </div>
   );
 }
