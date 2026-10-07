@@ -5,60 +5,68 @@ import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { env } from '@/env';
-import { type } from '@/lib/arktype';
+import { z } from '@/lib/zod';
 
 /**
  * IAM 使用者列表的回傳資料
  */
-const APIUser = type({
-  banned: 'boolean',
-  banReason: 'string | null',
-  createdAt: 'string.date.parse',
-  displayUsername: 'string | null',
-  id: 'string',
-  role: 'string',
-  username: 'string',
+const APIUser = z.object({
+  banned: z.boolean(),
+  banReason: z.string().nullable(),
+  createdAt: z.iso.datetime().transform((v) => new Date(v)),
+  displayUsername: z.string().nullable(),
+  id: z.string(),
+  role: z.string(),
+  username: z.string(),
 });
-type APIUser = typeof APIUser.infer;
+type APIUser = z.infer<typeof APIUser>;
 
 /**
  * IAM 使用者列表的回傳結構，包含資料和分頁資訊
  */
-const APIUserListResponse = type({
-  data: APIUser.array(),
-  meta: {
-    currentCursor: 'number',
-    currentPage: 'number',
-    hasNextPage: 'boolean',
-    hasPreviousPage: 'boolean',
-    nextCursor: 'number | null',
-    perPage: 'number',
-    totalItems: 'number',
-    totalPages: 'number',
-  },
+const APIUserListResponse = z.object({
+  data: z.array(APIUser),
+  meta: z.object({
+    currentCursor: z.number(),
+    currentPage: z.number(),
+    hasNextPage: z.boolean(),
+    hasPreviousPage: z.boolean(),
+    nextCursor: z.number().nullable(),
+    perPage: z.number(),
+    totalItems: z.number(),
+    totalPages: z.number(),
+  }),
 });
 
 /**
  * IAM tRPC 成功封包
  */
-const APIUserListSuccessEnvelope = type({
-  result: { data: { json: APIUserListResponse } },
-})
-  .array()
-  .atLeastLength(1);
+const APIUserListSuccessEnvelope = z
+  .array(
+    z.object({
+      result: z.object({ data: z.object({ json: APIUserListResponse }) }),
+    }),
+  )
+  .min(1);
 
 /**
  * IAM tRPC 錯誤封包
  */
-const APIUserListErrorEnvelope = type({
-  error: {
-    code: 'number',
-    data: { code: 'string', httpStatus: 'number', path: 'string' },
-    message: 'string',
-  },
-})
-  .array()
-  .atLeastLength(1);
+const APIUserListErrorEnvelope = z
+  .array(
+    z.object({
+      error: z.object({
+        code: z.number(),
+        data: z.object({
+          code: z.string(),
+          httpStatus: z.number(),
+          path: z.string(),
+        }),
+        message: z.string(),
+      }),
+    }),
+  )
+  .min(1);
 
 /**
  * 向 IAM 分頁取得使用者時，每頁請求的筆數上限
@@ -81,11 +89,11 @@ let cacheExpiresAt = 0;
  */
 let fetchInFlight: null | Promise<APIUser[]> = null;
 
-const ListUsersInput = type({
+const ListUsersInput = z.object({
   /** 從完整列表起算的偏移量，預設為 `0` */
-  cursor: 'number.integer >= 0 = 0',
+  cursor: z.number().int().min(0).default(0),
   /** 每頁筆數，範圍 1–100，預設為 `10` */
-  limit: '1 <= number.integer <= 100 = 10',
+  limit: z.number().int().min(1).max(100).default(10),
 });
 
 /**
@@ -162,17 +170,17 @@ async function fetchAllUsers(): Promise<APIUser[]> {
         }
 
         if ('error' in json[0]) {
-          const parsed = APIUserListErrorEnvelope(json);
-          if (parsed instanceof type.errors) {
+          const parsed = APIUserListErrorEnvelope.safeParse(json);
+          if (!parsed.success) {
             return Result.err(
               new TRPCError({
-                cause: parsed,
+                cause: parsed.error,
                 code: 'BAD_GATEWAY',
                 message: 'IAM 使用者列表格式錯誤',
               }),
             );
           }
-          const result = parsed[0];
+          const result = parsed.data[0];
           assert(result !== undefined, 'should never be undefined');
           return Result.err(
             new TRPCError({
@@ -183,17 +191,17 @@ async function fetchAllUsers(): Promise<APIUser[]> {
           );
         }
 
-        const parsed = APIUserListSuccessEnvelope(json);
-        if (parsed instanceof type.errors) {
+        const parsed = APIUserListSuccessEnvelope.safeParse(json);
+        if (!parsed.success) {
           return Result.err(
             new TRPCError({
-              cause: parsed,
+              cause: parsed.error,
               code: 'BAD_GATEWAY',
               message: 'IAM 使用者列表格式錯誤',
             }),
           );
         }
-        const result = parsed[0];
+        const result = parsed.data[0];
         assert(result !== undefined, 'should never be undefined');
         return Result.ok(result.result.data.json);
       })

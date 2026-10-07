@@ -7,26 +7,26 @@ import { nanoid } from 'nanoid';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { InventoryPlans } from '@/server/database/type';
 import { schema } from '@/server/database';
-import { type } from '@/lib/arktype';
+import { z } from '@/lib/zod';
 
 const CreateInventoryInput = InventoryPlans.insert
-  .omit('id', 'createdById', 'status')
-  .and({
+  .omit({ createdById: true, id: true, status: true })
+  .extend({
     /** 財產 ID 陣列 */
-    assetIds: 'string[]',
+    assetIds: z.array(z.string()),
     /** 盤點人員 ID 陣列 */
-    assigneeIds: 'string[]',
+    assigneeIds: z.array(z.string()),
   });
 
 export const UpdateInventoryInput = InventoryPlans.update
-  .omit('createdById')
-  .and({
+  .omit({ createdById: true })
+  .extend({
     /** 財產 ID 陣列 */
-    'assetIds?': 'string[]',
+    assetIds: z.array(z.string()).optional(),
     /** 盤點人員 ID 陣列 */
-    'assigneeIds?': 'string[]',
+    assigneeIds: z.array(z.string()).optional(),
     /** 盤點計畫 ID */
-    id: 'string',
+    id: z.string(),
   });
 
 export const inventoryRouter = createTRPCRouter({
@@ -77,9 +77,9 @@ export const inventoryRouter = createTRPCRouter({
    */
   get: protectedProcedure
     .input(
-      type({
+      z.object({
         /** 盤點計畫 ID */
-        id: 'string > 0',
+        id: z.string().min(1),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -106,15 +106,25 @@ export const inventoryRouter = createTRPCRouter({
    */
   list: protectedProcedure
     .input(
-      type({
+      z.object({
         /** 每頁筆數，預設 20 */
-        limit: 'number.integer >= 1 = 20',
+        limit: z.number().int().min(1).default(20),
         /** 跳過筆數，預設 0 */
-        offset: 'number.integer >= 0 = 0',
+        offset: z.number().int().min(0).default(0),
         /** 排序欄位，預設 createdAt */
-        sort: '"name" | "status" | "startAt" | "dueAt" | "completedAt" | "createdAt" | "updatedAt" = "createdAt"',
+        sort: z
+          .enum([
+            'name',
+            'status',
+            'startAt',
+            'dueAt',
+            'completedAt',
+            'createdAt',
+            'updatedAt',
+          ])
+          .default('createdAt'),
         /** 排序方向，預設 desc */
-        sortDirection: '"asc" | "desc" = "desc"',
+        sortDirection: z.enum(['asc', 'desc']).default('desc'),
       }),
     )
     .query(async ({ ctx, input }) => {

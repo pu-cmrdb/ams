@@ -4,7 +4,7 @@ import { ArrowLeftIcon, CalendarDaysIcon } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { addDays, format } from 'date-fns';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { arktypeResolver } from '@hookform/resolvers/arktype';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -30,26 +30,20 @@ import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { UserSelect } from '@/components/user-select';
-import { type } from '@/lib/arktype';
+import { z } from '@/lib/zod';
 import { useTRPC } from '@/trpc/react';
 
 import { AssetPicker } from './asset-picker';
 
 import type { SubmitEventHandler } from 'react';
 
-const InventoryCreateFormSchema = type({
-  assetIds: type.string.array().atLeastLength(1).configure({
-    message: '必須至少選擇一項要盤點的財產',
-  }),
-  assigneeIds: type.string.array().atLeastLength(1).configure({
-    message: '必須至少要有一位盤點人員',
-  }),
-  description: 'string',
-  dueAt: type.Date,
-  name: type.string.atLeastLength(1).configure({
-    message: '盤點計劃名稱不得為空',
-  }),
-  startAt: type.Date,
+const InventoryCreateFormSchema = z.object({
+  assetIds: z.array(z.string()).min(1, '必須至少選擇一項要盤點的財產'),
+  assigneeIds: z.array(z.string()).min(1, '必須至少要有一位盤點人員'),
+  description: z.string(),
+  dueAt: z.date(),
+  name: z.string().min(1, '盤點計劃名稱不得為空'),
+  startAt: z.date(),
 });
 
 export function InventoryCreateForm() {
@@ -83,7 +77,7 @@ export function InventoryCreateForm() {
       name: '',
       startAt: new Date(),
     },
-    resolver: arktypeResolver(InventoryCreateFormSchema),
+    resolver: zodResolver(InventoryCreateFormSchema),
   });
 
   const onSubmit = useCallback<SubmitEventHandler>(

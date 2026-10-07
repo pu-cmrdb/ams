@@ -8,13 +8,13 @@
  */
 
 import { TRPCError, initTRPC } from '@trpc/server';
-import { ArkErrors } from 'arktype';
 
 import superjson from 'superjson';
 
 import { auth } from '@/server/auth';
 import { db } from '@/server/database';
 import { env } from '@/env';
+import { z } from '@/lib/zod';
 
 /**
  * 1. CONTEXT
@@ -44,7 +44,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
  * 2. INITIALIZATION
  *
  * This is where the tRPC API is initialized, connecting the context and transformer. We also parse
- * ArkErrors so that you get typesafety on the frontend if your procedure fails due to validation
+ * Zod errors so that you get typesafety on the frontend if your procedure fails due to validation
  * errors on the backend.
  */
 const t = initTRPC.context<typeof createTRPCContext>().create({
@@ -54,7 +54,9 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
       data: {
         ...shape.data,
         validationError:
-          error.cause instanceof ArkErrors ? error.cause.flatByPath : null,
+          error.cause instanceof z.ZodError
+            ? z.treeifyError(error.cause)
+            : null,
       },
     };
   },

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
-import { arktypeResolver } from '@hookform/resolvers/arktype';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useMemo } from 'react';
@@ -109,7 +109,7 @@ export function AssetEditForm({ assetId }: AssetEditFormProps) {
       keepDirtyValues: true,
       keepErrors: true,
     },
-    resolver: arktypeResolver(AssetFormSchema),
+    resolver: zodResolver(AssetFormSchema),
     values: assetValues,
   });
 

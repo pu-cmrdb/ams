@@ -1,4 +1,5 @@
 import { defineEnum } from '@/lib/utils';
+import type { z } from '@/lib/zod';
 
 /** 財產排序設定 */
 export const AssetsSortKey = defineEnum({
@@ -11,7 +12,7 @@ export const AssetsSortKey = defineEnum({
   /** 根據更新時間 */
   UpdatedAt: 'updatedAt',
 } as const);
-export type AssetsSortKey = typeof AssetsSortKey.$schema.infer;
+export type AssetsSortKey = z.infer<typeof AssetsSortKey.$schema>;
 
 /** 狀態設定 */
 export const AssetStatus = defineEnum({
@@ -24,7 +25,7 @@ export const AssetStatus = defineEnum({
   /** 報廢 */
   Scrapped: 'scrapped',
 } as const);
-export type AssetStatus = typeof AssetStatus.$schema.infer;
+export type AssetStatus = z.infer<typeof AssetStatus.$schema>;
 
 /** 出借權限 */
 export const BorrowRule = defineEnum({
@@ -35,7 +36,7 @@ export const BorrowRule = defineEnum({
   /** 限授權人開單 */
   Restricted: 'restricted',
 } as const);
-export type BorrowRule = typeof BorrowRule.$schema.infer;
+export type BorrowRule = z.infer<typeof BorrowRule.$schema>;
 
 /** 財產類別排序設定 */
 export const CategorySortKey = defineEnum({
@@ -46,7 +47,7 @@ export const CategorySortKey = defineEnum({
   /** 根據更新時間 */
   UpdatedAt: 'updatedAt',
 } as const);
-export type CategorySortKey = typeof CategorySortKey.$schema.infer;
+export type CategorySortKey = z.infer<typeof CategorySortKey.$schema>;
 
 /** 歸屬單位 */
 export const OwnershipType = defineEnum({
@@ -55,7 +56,7 @@ export const OwnershipType = defineEnum({
   /** 學校 */
   School: 'school',
 } as const);
-export type OwnershipType = typeof OwnershipType.$schema.infer;
+export type OwnershipType = z.infer<typeof OwnershipType.$schema>;
 
 /** 單據狀態 */
 export const RecordStatus = defineEnum({
@@ -64,7 +65,7 @@ export const RecordStatus = defineEnum({
   /** 已歸還 */
   Returned: 'returned',
 } as const);
-export type RecordStatus = typeof RecordStatus.$schema.infer;
+export type RecordStatus = z.infer<typeof RecordStatus.$schema>;
 
 /** 排序方向 */
 export const SortDirection = defineEnum({
@@ -73,7 +74,7 @@ export const SortDirection = defineEnum({
   /** 降序 => 大 → 小 / Z → A / 新 → 舊 */
   Descending: 'desc',
 } as const);
-export type SortDirection = typeof SortDirection.$schema.infer;
+export type SortDirection = z.infer<typeof SortDirection.$schema>;
 
 /** 借閱記錄排序設定 */
 export const BorrowRecordSortKey = defineEnum({
@@ -86,7 +87,7 @@ export const BorrowRecordSortKey = defineEnum({
   /** 根據更新時間 */
   UpdatedAt: 'updatedAt',
 } as const);
-export type BorrowRecordSortKey = typeof BorrowRecordSortKey.$schema.infer;
+export type BorrowRecordSortKey = z.infer<typeof BorrowRecordSortKey.$schema>;
 
 /** 盤點計劃狀態 */
 export const InventoryPlanStatus = defineEnum({
@@ -97,4 +98,4 @@ export const InventoryPlanStatus = defineEnum({
   /** 待處理 */
   Pending: 'pending',
 } as const);
-export type InventoryPlanStatus = typeof InventoryPlanStatus.$schema.infer;
+export type InventoryPlanStatus = z.infer<typeof InventoryPlanStatus.$schema>;

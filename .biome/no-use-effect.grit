@@ -4,6 +4,7 @@ or {
   `useEffect($callback, $deps)`,
   `React.useEffect($callback, $deps)`
 } as $expr where {
+  $filename <: includes "src/",
   register_diagnostic(
     span = $expr,
     message = join(list = [

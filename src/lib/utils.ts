@@ -1,14 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { type } from '@/lib/arktype';
+import { z } from '@/lib/zod';
 
 import type { AnyColumn, SQL } from 'drizzle-orm';
 
 type EnumLike<T extends EnumLikeInput> = {
   /**
-   * ArkType schema，可用來做 runtime validation，
-   * 並透過 `typeof EnumName.$schema.infer` 取得對應 union type。
+   * Zod schema，可用來做 runtime validation，
+   * 並透過 `z.infer<typeof EnumName.$schema>` 取得對應 union type。
    */
-  readonly $schema: ReturnType<typeof type.valueOf<T>>;
+  readonly $schema: z.ZodType<Values<T>, Values<T>>;
 
   /**
    * 至少包含一個元素的 tuple。
@@ -19,7 +19,7 @@ type EnumLike<T extends EnumLikeInput> = {
   readonly $values: NonEmptyTuple<Values<T>>;
 } & Readonly<T>;
 
-type EnumLikeInput = Record<string, number | string | symbol>;
+type EnumLikeInput = Record<string, string>;
 type NonEmptyTuple<T> = readonly [T, ...T[]];
 type Values<T extends EnumLikeInput> = T[keyof T];
 
@@ -28,7 +28,7 @@ export { cn } from 'cn';
 /**
  * 定義一個具備：
  * - 列舉值存取（如 `Status.ACTIVE`）
- * - ArkType schema（`$schema`）
+ * - Zod schema（`$schema`）
  * - SQLite Enum 定義
  *
  * 的 enum-like 常數物件。
@@ -44,7 +44,7 @@ export { cn } from 'cn';
  *   INACTIVE: 'inactive',
  * } as const);
  *
- * type Status = typeof STATUS.$schema.infer; // 'active' | 'inactive'
+ * type Status = z.infer<typeof STATUS.$schema>; // 'active' | 'inactive'
  *
  * STATUS.ACTIVE; // 'active'
  *
@@ -57,7 +57,9 @@ export function defineEnum<const T extends EnumLikeInput>(
   definition: T,
 ): EnumLike<T> {
   const $values = valuesToTuple(definition);
-  const $schema = type.valueOf(definition);
+  const $schema = z.enum(
+    $values as unknown as [string, ...string[]],
+  ) as unknown as z.ZodType<Values<T>, Values<T>>;
 
   return Object.freeze({
     ...definition,

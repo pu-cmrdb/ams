@@ -1,10 +1,10 @@
 import { createEnv } from '@t3-oss/env-nextjs';
 
-import { type } from '@/lib/arktype';
+import { z } from '@/lib/zod';
 
 export const env = createEnv({
   client: {
-    NEXT_PUBLIC_BETTER_AUTH_IAM_URL: type('string.url > 0'),
+    NEXT_PUBLIC_BETTER_AUTH_IAM_URL: z.string().url().min(1),
   },
   emptyStringAsUndefined: true,
   runtimeEnv: {
@@ -27,17 +27,17 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
   },
   server: {
-    APP_URL: type('string.url > 0'),
-    BETTER_AUTH_IAM_API_KEY: type('string > 0'),
-    BETTER_AUTH_IAM_CLIENT_ID: type('string > 0'),
-    BETTER_AUTH_IAM_CLIENT_SECRET: type('string > 0'),
-    BETTER_AUTH_IAM_URL: type('string.url > 0'),
-    BETTER_AUTH_SECRET: type('string > 0'),
-    BETTER_AUTH_URL: type('string.url > 0'),
-    DATABASE_URL: type('string.url > 0'),
-    NODE_ENV: type('"development" | "test" | "production" | undefined').pipe(
-      (v) => v ?? 'development',
-    ),
+    APP_URL: z.url().min(1),
+    BETTER_AUTH_IAM_API_KEY: z.string().min(1),
+    BETTER_AUTH_IAM_CLIENT_ID: z.string().min(1),
+    BETTER_AUTH_IAM_CLIENT_SECRET: z.string().min(1),
+    BETTER_AUTH_IAM_URL: z.url().min(1),
+    BETTER_AUTH_SECRET: z.string().min(1),
+    BETTER_AUTH_URL: z.url().min(1),
+    DATABASE_URL: z.url().min(1),
+    NODE_ENV: z
+      .enum(['development', 'test', 'production'])
+      .default('development'),
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });

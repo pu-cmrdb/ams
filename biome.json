@@ -70,7 +70,10 @@
       }
     }
   },
-  "plugins": ["./.biome/no-use-effect.grit"],
+  "plugins": [
+    "./.biome/no-use-effect.grit",
+    "./.biome/no-direct-zod-import.grit"
+  ],
   "vcs": {
     "clientKind": "git",
     "enabled": true,

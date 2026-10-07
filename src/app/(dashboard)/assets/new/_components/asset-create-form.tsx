@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { arktypeResolver } from '@hookform/resolvers/arktype';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -62,7 +62,7 @@ export function AssetCreateForm() {
       records: [],
       schoolAssetNumber: '',
     },
-    resolver: arktypeResolver(AssetFormSchema),
+    resolver: zodResolver(AssetFormSchema),
   });
 
   const borrowRule = form.watch('borrowRule');

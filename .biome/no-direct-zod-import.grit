@@ -1,0 +1,17 @@
+language js
+
+or {
+  `import $bindings from 'zod'`,
+  `import $bindings from "zod"`,
+  `import type $bindings from 'zod'`,
+  `import type $bindings from "zod"`,
+  `import 'zod'`,
+  `import "zod"`
+} as $import where {
+  $filename <: includes "src/",
+  $filename <: not r"^src/lib/zod\.ts$",
+  register_diagnostic(
+    span = $import,
+    message = "Direct imports from 'zod' are disallowed. Use '@/lib/zod' instead so the shared compile hook is applied."
+  )
+}

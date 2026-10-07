@@ -9,31 +9,31 @@ import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { Categories } from '@/server/database/type';
 import { containsLike } from '@/lib/utils';
 import { schema } from '@/server/database';
-import { type } from '@/lib/arktype';
+import { z } from '@/lib/zod';
 
 type CategoriesTable = typeof schema.categories;
 
-const CreateCategoryInput = Categories.insert.omit('id');
-const SelectCategoryInput = type({
+const CreateCategoryInput = Categories.insert.omit({ id: true });
+const SelectCategoryInput = z.object({
   /** 關鍵字 */
-  'keyword?': 'string',
+  keyword: z.string().optional(),
   /** 每頁筆數，預設 20 */
-  limit: 'number.integer >= 1 = 20',
+  limit: z.number().int().min(1).default(20),
   /** 跳過筆數，預設 0 */
-  offset: 'number.integer >= 0 = 0',
+  offset: z.number().int().min(0).default(0),
   /** 排序 */
-  'sort?': CategorySortKey.$schema,
+  sort: CategorySortKey.$schema.optional(),
   /** 排序方向 */
-  'sortDirection?': SortDirection.$schema,
+  sortDirection: SortDirection.$schema.optional(),
 });
-const UpdateCategoryInput = Categories.update.and({
+const UpdateCategoryInput = Categories.update.extend({
   /** 要有財產類別 ID 才可更新 */
-  id: 'string > 0',
+  id: z.string().min(1),
   /** 要有財產類別名稱才可更新 ( 也只有這個欄位能更新 ) */
-  name: 'string > 0',
+  name: z.string().min(1),
 });
-const CategoryByIdInput = type({
-  id: 'string > 0',
+const CategoryByIdInput = z.object({
+  id: z.string().min(1),
 });
 const CategoryDeleteInput = CategoryByIdInput;
 

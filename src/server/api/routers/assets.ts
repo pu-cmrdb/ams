@@ -14,109 +14,105 @@ import { AssetRecords, Assets } from '@/server/database/type';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { containsLike } from '@/lib/utils';
 import { schema } from '@/server/database';
-import { type } from '@/lib/arktype';
+import { z } from '@/lib/zod';
 
 type AssetsTable = typeof schema.assets;
 
 const _CreateAssetsInputBase = Assets.insert
-  .omit('id', 'createdById', 'updatedById')
-  .and({
-    'records?': AssetRecords.insert.omit('assetId').array(),
+  .omit({ createdById: true, id: true, updatedById: true })
+  .extend({
+    records: AssetRecords.insert.omit({ assetId: true }).array().optional(),
   });
 
 const CreateAssetsInput = _CreateAssetsInputBase
-  .and({
-    'authorizedLenderIds?': 'string[]',
-    'schoolAssetNumber?': 'string',
+  .extend({
+    authorizedLenderIds: z.array(z.string()).optional(),
+    schoolAssetNumber: z.string().optional(),
   })
-  .narrow((value, ctx) => {
-    let isValid = true;
-
+  .superRefine((value, ctx) => {
     if (
       value.borrowRule === BorrowRule.Restricted
       && !value.authorizedLenderIds?.length
     ) {
-      ctx.reject({
-        code: 'minLength',
+      ctx.addIssue({
+        code: 'custom',
+        message: 'At least one authorized lender is required',
         path: ['authorizedLenderIds'],
-        rule: 1,
       });
-      isValid = false;
     }
-
     if (
       value.ownershipType === OwnershipType.School
       && !value.schoolAssetNumber?.length
     ) {
-      ctx.reject({
-        code: 'minLength',
+      ctx.addIssue({
+        code: 'custom',
+        message: 'School asset number is required',
         path: ['schoolAssetNumber'],
-        rule: 1,
       });
-      isValid = false;
     }
-
-    return isValid;
   });
 
 const _UpdateAssetsInputBase = Assets.update
-  .omit('createdById', 'updatedById')
-  .and(Assets.update.pick('id').required())
-  .and({
-    'authorizedLenderIds?': 'string[] > 0',
+  .omit({ createdById: true, updatedById: true })
+  .extend({
+    authorizedLenderIds: z.array(z.string()).min(1).optional(),
+    id: z.string(),
   });
 
-const UpdateAssetsInput = _UpdateAssetsInputBase
-  .and(
-    type({
-      authorizedLenderIds: 'string[] > 0',
-      borrowRule: `'${BorrowRule.Restricted}'`,
-    }).or({
-      'borrowRule?': BorrowRule.$schema.exclude(`'${BorrowRule.Restricted}'`),
-    }),
-  )
-  .and(
-    type({
-      ownershipType: `'${OwnershipType.School}'`,
-      schoolAssetNumber: 'string.trim',
-    }).or({
-      'ownershipType?': OwnershipType.$schema.exclude(
-        `'${OwnershipType.School}'`,
-      ),
-    }),
-  );
+const UpdateAssetsInput = _UpdateAssetsInputBase.superRefine((value, ctx) => {
+  if (
+    value.borrowRule === BorrowRule.Restricted
+    && !value.authorizedLenderIds?.length
+  ) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'At least one authorized lender is required',
+      path: ['authorizedLenderIds'],
+    });
+  }
+  if (
+    value.ownershipType === OwnershipType.School
+    && !value.schoolAssetNumber?.trim()
+  ) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'School asset number is required',
+      path: ['schoolAssetNumber'],
+    });
+  }
+});
 
-const UpdateAssetRecordInput = type({
-  id: 'string.trim',
+const UpdateAssetRecordInput = z.object({
+  id: z.string().trim(),
   records: AssetRecords.insert
-    .omit('assetId')
-    .and(AssetRecords.insert.pick('status').required())
+    .omit({ assetId: true })
+    .extend({ status: AssetRecords.insert.shape.status })
     .array(),
 });
 
-const ListAssetsInput = type({
+const ListAssetsInput = z.object({
   /** 財產群組 */
-  'categoryId?': 'string.trim',
+  categoryId: z.string().trim().optional(),
   /** 關鍵字 */
-  'keyword?': 'string.trim',
+  keyword: z.string().trim().optional(),
   /** 每頁筆數，預設 20 */
-  limit: 'number.integer >= 1 = 20',
+  limit: z.number().int().min(1).default(20),
   /** 跳過筆數，預設 0 */
-  offset: 'number.integer >= 0 = 0',
+  offset: z.number().int().min(0).default(0),
   /**  歸屬單位 */
-  'ownershipType?': OwnershipType.$schema,
+  ownershipType: OwnershipType.$schema.optional(),
   /** 排序 */
-  'sort?': AssetsSortKey.$schema,
+  sort: AssetsSortKey.$schema.optional(),
   /** 排序方向 */
-  'sortDirection?': SortDirection.$schema,
+  sortDirection: SortDirection.$schema.optional(),
 });
 
-const DeleteAssetInput = type({
-  id: 'string.trim',
+const DeleteAssetInput = z.object({
+  id: z.string().trim(),
 });
 
-const GetAssetInput = type({
-  id: 'string.trim',
+const GetAssetInput = z.object({
+  id: z.string().trim(),
 });
 
 export const assetsRouter = createTRPCRouter({
@@ -152,7 +148,10 @@ export const assetsRouter = createTRPCRouter({
         }
 
         if (input.records?.length) {
-          type AssetRecord = Omit<typeof AssetRecords.insert.infer, 'assetId'>;
+          type AssetRecord = Omit<
+            z.infer<typeof AssetRecords.insert>,
+            'assetId'
+          >;
 
           const values = input.records
             .reduce<AssetRecord[]>((acc, record) => {
@@ -358,7 +357,7 @@ export const assetsRouter = createTRPCRouter({
     .input(UpdateAssetRecordInput)
     .mutation(({ ctx, input }) => {
       ctx.db.transaction((tx) => {
-        type AssetRecord = Omit<typeof AssetRecords.insert.infer, 'assetId'>;
+        type AssetRecord = Omit<z.infer<typeof AssetRecords.insert>, 'assetId'>;
 
         const values = input.records
           .reduce<AssetRecord[]>((acc, record) => {

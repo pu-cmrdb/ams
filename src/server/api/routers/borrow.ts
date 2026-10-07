@@ -14,20 +14,20 @@ import {
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { BorrowRecords } from '@/server/database/type';
 import { schema } from '@/server/database';
-import { type } from '@/lib/arktype';
+import { z } from '@/lib/zod';
 
-const CreateBorrowRecordsInput = BorrowRecords.insert.omit(
-  'id',
-  'actualReturnDate',
-  'recordStatus',
-  'creatorId',
-);
+const CreateBorrowRecordsInput = BorrowRecords.insert.omit({
+  actualReturnDate: true,
+  creatorId: true,
+  id: true,
+  recordStatus: true,
+});
 
-const SelectBorrowRecordsInput = BorrowRecords.select.partial().and({
+const SelectBorrowRecordsInput = BorrowRecords.select.partial().extend({
   /** 每頁筆數 */
-  limit: '0 < number.integer <= 100 = 20',
+  limit: z.number().int().min(1).max(100).default(20),
   /** 跳過筆數 */
-  offset: 'number.integer >= 0 = 0',
+  offset: z.number().int().min(0).default(0),
   /** 排序 */
   sort: BorrowRecordSortKey.$schema.default(BorrowRecordSortKey.CreatedAt),
   /** 排序方向 */
@@ -35,13 +35,13 @@ const SelectBorrowRecordsInput = BorrowRecords.select.partial().and({
 });
 
 const UpdateBorrowRecordsInput = BorrowRecords.update
-  .omit('assetId', 'borrowerId')
-  .and({
-    id: 'string > 0',
+  .omit({ assetId: true, borrowerId: true })
+  .extend({
+    id: z.string().min(1),
   });
 
-const GetBorrowRecordInput = type({
-  id: 'string > 0',
+const GetBorrowRecordInput = z.object({
+  id: z.string().min(1),
 });
 
 export const borrowRouter = createTRPCRouter({
