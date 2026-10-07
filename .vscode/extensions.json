@@ -1,6 +1,5 @@
 {
   "recommendations": [
-    "dbaeumer.vscode-eslint",
     "yoavbls.pretty-ts-errors",
     "oven.bun-vscode",
     "arktypeio.arkdark",

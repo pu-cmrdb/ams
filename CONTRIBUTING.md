@@ -30,7 +30,7 @@ docs: 更新 README
 ## 提交前
 
 ```bash
-bun run check   # ESLint + TypeScript 型別檢查
+bun run check   # Biome + TypeScript 型別檢查
 ```
 
 確保沒有新的錯誤才開 PR。lint warning 可以暫時保留，但不要讓 error 進 main。

@@ -1,8 +1,8 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
   "assist": {
     "actions": {
-      "recommended": true,
+      "preset": "recommended",
       "source": {
         "organizeImports": "off",
         "useSortedAttributes": "on",
@@ -20,10 +20,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": [
-      "src/**/*",
-      "!src/components/ui/**/*"
-    ]
+    "includes": ["src/**/*", "!src/components/ui/**/*"]
   },
   "formatter": {
     "enabled": true,
@@ -48,7 +45,7 @@
       "nursery": {
         "useSortedClasses": "on"
       },
-      "recommended": true,
+      "preset": "recommended",
       "style": {
         "noNegationElse": "on",
         "noNestedTernary": "on",
@@ -73,9 +70,7 @@
       }
     }
   },
-  "plugins": [
-    "./.biome/no-use-effect.grit"
-  ],
+  "plugins": ["./.biome/no-use-effect.grit"],
   "vcs": {
     "clientKind": "git",
     "enabled": true,

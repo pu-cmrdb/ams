@@ -4,7 +4,12 @@ import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
-import { AssetsSortKey, BorrowRule, OwnershipType, SortDirection } from '@/lib/enums';
+import {
+  AssetsSortKey,
+  BorrowRule,
+  OwnershipType,
+  SortDirection,
+} from '@/lib/enums';
 import { AssetRecords, Assets } from '@/server/database/type';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { containsLike } from '@/lib/utils';

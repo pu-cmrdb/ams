@@ -28,15 +28,15 @@ bun install
 cp .env.example .env
 ```
 
-| 變數 | 說明 |
-| --- | --- |
-| `APP_DEV_URL` | 本機開發網址（例：`http://localhost:3001`） |
-| `APP_PROD_URL` | 正式環境網址 |
-| `BETTER_AUTH_SECRET` | 加密金鑰（隨機字串，至少 32 字元） |
-| `BETTER_AUTH_IAM_URL` | 行雲 IAM 服務網址（例：`http://localhost:3000`） |
-| `BETTER_AUTH_IAM_CLIENT_ID` | IAM OAuth2 Client ID |
-| `BETTER_AUTH_IAM_CLIENT_SECRET` | IAM OAuth2 Client Secret |
-| `DATABASE_URL` | 資料庫位址，預設為 `file:./data/db.sqlite` |
+| 變數                            | 說明                                             |
+| ------------------------------- | ------------------------------------------------ |
+| `APP_DEV_URL`                   | 本機開發網址（例：`http://localhost:3001`）      |
+| `APP_PROD_URL`                  | 正式環境網址                                     |
+| `BETTER_AUTH_SECRET`            | 加密金鑰（隨機字串，至少 32 字元）               |
+| `BETTER_AUTH_IAM_URL`           | 行雲 IAM 服務網址（例：`http://localhost:3000`） |
+| `BETTER_AUTH_IAM_CLIENT_ID`     | IAM OAuth2 Client ID                             |
+| `BETTER_AUTH_IAM_CLIENT_SECRET` | IAM OAuth2 Client Secret                         |
+| `DATABASE_URL`                  | 資料庫位址，預設為 `file:./data/db.sqlite`       |
 
 ### 3. 初始化資料庫
 
@@ -49,7 +49,7 @@ bun run drizzle:migrate
 
 ```bash
 bun run dev              # 啟動開發伺服器（Turbopack，port 3001）
-bun run check            # ESLint + TypeScript 型別檢查
+bun run check            # Biome + TypeScript 型別檢查
 bun run drizzle:studio   # 開啟 Drizzle Studio
 ```
 

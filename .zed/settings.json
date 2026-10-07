@@ -15,10 +15,7 @@
         "source.action.useSortedKeys.biome": true,
         "source.action.useSortedProperties.biome": true,
       },
-      "formatter": [
-        { "language_server": { "name": "biome" } },
-        { "code_action": "source.fixAll.eslint" },
-      ],
+      "formatter": [{ "language_server": { "name": "biome" } }],
     },
     "JSON": {
       "code_actions_on_format": {
@@ -39,10 +36,7 @@
         "source.action.useSortedKeys.biome": true,
         "source.action.useSortedProperties.biome": true,
       },
-      "formatter": [
-        { "language_server": { "name": "biome" } },
-        { "code_action": "source.fixAll.eslint" },
-      ],
+      "formatter": [{ "language_server": { "name": "biome" } }],
     },
     "TypeScript": {
       "code_actions_on_format": {
@@ -53,10 +47,7 @@
         "source.fixAll.biome": true,
         "source.organizeImports.biome": true,
       },
-      "formatter": [
-        { "language_server": { "name": "biome" } },
-        { "code_action": "source.fixAll.eslint" },
-      ],
+      "formatter": [{ "language_server": { "name": "biome" } }],
     },
   },
 }

@@ -1,6 +1,10 @@
 'use client';
 
-import { ArrowLeftIcon, CalendarDaysIcon, CornerDownRightIcon } from 'lucide-react';
+import {
+  ArrowLeftIcon,
+  CalendarDaysIcon,
+  CornerDownRightIcon,
+} from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { arktypeResolver } from '@hookform/resolvers/arktype';
@@ -12,11 +16,24 @@ import { zhTW } from 'react-day-picker/locale';
 
 import Link from 'next/link';
 
-import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Field,
+  FieldError,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from '@/components/ui/field';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { BorrowRule, OwnershipType } from '@/lib/enums';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from '@/components/ui/native-select';
 import { AssetFormSchema } from '@/app/(dashboard)/assets/_schemas/asset-form-schema';
 import { AssetRecordEditor } from '@/app/(dashboard)/assets/new/_components/asset-record-editor';
 import { Calendar } from '@/components/ui/calendar';

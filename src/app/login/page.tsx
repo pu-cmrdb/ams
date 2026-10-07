@@ -4,7 +4,13 @@ import { PlaneTakeoffIcon } from 'lucide-react';
 import { useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { authClient } from '@/server/auth/client';
 import { useMountEffect } from '@/hooks/use-mount-effect';
 

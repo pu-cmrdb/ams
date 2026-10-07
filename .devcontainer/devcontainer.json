@@ -6,7 +6,6 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "dbaeumer.vscode-eslint",
         "yoavbls.pretty-ts-errors",
         "oven.bun-vscode",
         "docker.docker",

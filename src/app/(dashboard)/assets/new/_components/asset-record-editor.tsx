@@ -4,7 +4,10 @@ import { PlusIcon, XIcon } from 'lucide-react';
 
 import { Item, ItemContent, ItemFooter, ItemGroup } from '@/components/ui/item';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from '@/components/ui/native-select';
 import { AssetStatus } from '@/lib/enums';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

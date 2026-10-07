@@ -1,6 +1,18 @@
 'use client';
 
-import { Edit2Icon, LayoutGridIcon, LayoutListIcon, LockOpenIcon, MoreVerticalIcon, PlusIcon, RotateCcwIcon, ShapesIcon, Trash2Icon, TriangleAlertIcon, XIcon } from 'lucide-react';
+import {
+  Edit2Icon,
+  LayoutGridIcon,
+  LayoutListIcon,
+  LockOpenIcon,
+  MoreVerticalIcon,
+  PlusIcon,
+  RotateCcwIcon,
+  ShapesIcon,
+  Trash2Icon,
+  TriangleAlertIcon,
+  XIcon,
+} from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useSuspenseQuery } from '@tanstack/react-query';
@@ -8,10 +20,36 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemHeader, ItemMedia, ItemTitle } from '@/components/ui/item';
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemHeader,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Badge } from '@/components/ui/badge';
@@ -113,9 +151,7 @@ export function AssetList() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between" role="toolbar">
-        <div className="flex items-center gap-4">
-          共有 {data.length} 筆資料
-        </div>
+        <div className="flex items-center gap-4">共有 {data.length} 筆資料</div>
 
         <div className="flex items-center gap-4">
           <ToggleGroup

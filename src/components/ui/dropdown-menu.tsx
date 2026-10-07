@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 
-import { cn } from "@/lib/utils"
+export { cn } from 'cn'
 import { ChevronRightIcon, CheckIcon } from "lucide-react"
 
 import { usePlatform } from "@/components/providers/platform-provider"

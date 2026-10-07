@@ -1,12 +1,35 @@
 'use client';
 
-import { ChevronRightIcon, CircleCheckIcon, CircleDotIcon, CircleSlashIcon, RotateCcwIcon, SquareDashedTextIcon, TriangleAlertIcon } from 'lucide-react';
+import {
+  ChevronRightIcon,
+  CircleCheckIcon,
+  CircleDotIcon,
+  CircleSlashIcon,
+  RotateCcwIcon,
+  SquareDashedTextIcon,
+  TriangleAlertIcon,
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import Link from 'next/link';
 
-import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from '@/components/ui/item';
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Button } from '@/components/ui/button';
 import { InventoryPlanStatus } from '@/lib/enums';
 import { useTRPC } from '@/trpc/react';

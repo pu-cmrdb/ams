@@ -1,7 +1,18 @@
-import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import {
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+} from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
-import { AssetStatus, BorrowRule, InventoryPlanStatus, OwnershipType, RecordStatus } from '@/lib/enums';
+import {
+  AssetStatus,
+  BorrowRule,
+  InventoryPlanStatus,
+  OwnershipType,
+  RecordStatus,
+} from '@/lib/enums';
 
 const cascadeActions = {
   onDelete: 'cascade',

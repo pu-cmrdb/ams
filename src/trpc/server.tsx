@@ -10,7 +10,11 @@ import { createTRPCContext } from '@/server/api/trpc';
 
 import { createQueryClient } from './query-client';
 
-import type { ResolverDef, TRPCInfiniteQueryOptions, TRPCQueryOptions } from '@trpc/tanstack-react-query';
+import type {
+  ResolverDef,
+  TRPCInfiniteQueryOptions,
+  TRPCQueryOptions,
+} from '@trpc/tanstack-react-query';
 
 import type { AppRouter } from '@/server/api/root';
 

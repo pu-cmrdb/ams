@@ -1,6 +1,10 @@
 'use client';
 
-import { createTRPCClient, httpBatchStreamLink, loggerLink } from '@trpc/client';
+import {
+  createTRPCClient,
+  httpBatchStreamLink,
+  loggerLink,
+} from '@trpc/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createTRPCContext } from '@trpc/tanstack-react-query';
 import { useState } from 'react';

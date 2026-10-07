@@ -1,4 +1,8 @@
-import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-orm/arktype';
+import {
+  createInsertSchema,
+  createSelectSchema,
+  createUpdateSchema,
+} from 'drizzle-orm/arktype';
 
 import * as schema from './schema';
 
