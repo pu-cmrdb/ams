@@ -2,7 +2,7 @@
 
 import * as ResizablePrimitive from "react-resizable-panels"
 
-export { cn } from 'cn'
+import { cn } from 'cn'
 
 function ResizablePanelGroup({
   className,

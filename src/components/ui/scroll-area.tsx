@@ -3,7 +3,7 @@
 import * as React from "react"
 import { ScrollArea as ScrollAreaPrimitive } from "@base-ui/react/scroll-area"
 
-export { cn } from 'cn'
+import { cn } from 'cn'
 
 function ScrollArea({
   className,

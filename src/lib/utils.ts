@@ -23,7 +23,7 @@ type EnumLikeInput = Record<string, string>;
 type NonEmptyTuple<T> = readonly [T, ...T[]];
 type Values<T extends EnumLikeInput> = T[keyof T];
 
-export { cn } from 'cn';
+import { cn } from 'cn';
 
 /**
  * 定義一個具備：

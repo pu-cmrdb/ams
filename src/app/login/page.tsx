@@ -20,9 +20,9 @@ export default function LoginPage() {
 
   const initiateOAuth = useCallback(
     () =>
-      void authClient.signIn.oauth2({
+      void authClient.signIn.social({
         callbackURL: callbackUrl,
-        providerId: 'identity',
+        provider: 'identity',
       }),
     [callbackUrl],
   );

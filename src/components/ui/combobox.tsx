@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Combobox as ComboboxPrimitive } from "@base-ui/react"
 
-export { cn } from 'cn'
+import { cn } from 'cn'
 import { Button } from "@/components/ui/button"
 import {
   InputGroup,

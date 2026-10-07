@@ -2,7 +2,7 @@
 
 import * as React from "react"
 
-export { cn } from 'cn'
+import { cn } from 'cn'
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (

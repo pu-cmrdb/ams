@@ -1,4 +1,4 @@
-export { cn } from 'cn'
+import { cn } from 'cn'
 
 function AspectRatio({
   ratio,
