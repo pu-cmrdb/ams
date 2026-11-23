@@ -16,6 +16,9 @@ export const auth = betterAuth({
           pkce: true,
           providerId: 'identity',
           scopes: ['openid', 'profile', 'email', 'offline_access'],
+          // identity 登記的 token endpoint 驗證方式是 client_secret_basic；
+          // Better Auth 1.7 的 identity 會拒絕不相符的 client_secret_post
+          tokenEndpointAuth: { method: 'client_secret_basic' },
         },
       ],
     }),
