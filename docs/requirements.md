@@ -96,14 +96,14 @@ bun run dev                   # http://localhost:3001，登入會導向 localhos
 ### 4.3 安全
 
 - [ ] 未登入呼叫任何 `protectedProcedure` 得到 `UNAUTHORIZED`。
-- [ ] 權限依第 5.2 節的預設；未授權回 `FORBIDDEN`，資料不變。
+- [ ] 權限依第 5.2 節；未授權回 `FORBIDDEN`，資料不變。
 - [ ] Better Auth 與 identity 使用一致且無已知漏洞的版本。
 
 ### 4.4 功能模組
 
 各模組（出借、盤點、標籤列印、圖片）的驗收條件寫在各自的 issue 中；完成時對照 issue 的勾選清單逐項驗證。本週的範圍與優先依第 5 節。
 
-## 5. 本週驗收底稿（行雲司 2026-11-23）
+## 5. 本週驗收底稿（行雲司 2026-11-23；David 16:54 定案）
 
 > 本節是本週的範圍與驗收基準。和 issue 內文衝突時，以本節為準。
 
@@ -111,33 +111,38 @@ bun run dev                   # http://localhost:3001，登入會導向 localhos
 
 - 不另外新增 Gate 1 workflow，也不修改社團既有 workflow（`pr-check.yml`、`claude-code-review.yml`、`claude.yml`、`deploy.yaml`）。唯一例外：`deploy.yaml` 的 `enable={{is_default}}` 改成 `{{is_default_branch}}`，這是修好 main 紅燈所必需。
 - **查明前不合併任何 ams PR。** `deploy.yaml` 每次 push main 都會 build 並 push `ghcr.io/pu-cmrdb/ams:latest`；若正式站有 watchtower 之類的工具自動拉 latest，合併就等於正式部署。
-- 優先順序：P0 → P6，依行雲司清單（見 5.6）。
+- 舊 PR #50、#54 由替代 PR 接手，不對別人的遠端分支 rebase 或 force push。舊 PR 註明被哪一支取代，等 David 同意後再關。
+- 優先順序：P0 → P6，依行雲司清單（見 5.7）。
 
-### 5.2 角色權限預設（確認前先照此實作）
+### 5.2 角色權限（定案）
 
-| 操作 | 管理員 | 一般社員 |
+角色沿用 identity 既有的 `role`（admin plugin 的 `admin`／`user`），不自創「財產管理員」等其他名稱。ams 取得登入者 role 的方式：沿用現有 IAM API key 的使用者查詢，或 OIDC claim，擇一實作。
+
+| 操作 | `admin` | `user`（一般社員） |
 | --- | --- | --- |
 | 新增、修改、刪除財產（含異動紀錄） | ✅ | ❌ `FORBIDDEN` |
-| 新增、修改、刪除類別 | ✅ | ❌ |
-| 新增、修改、刪除盤點計畫 | ✅ | ❌ |
-| 查看 identity 使用者名單（`user.list`） | ✅ | ❌ |
+| 新增、修改、刪除類別 | ✅ | ❌ `FORBIDDEN` |
+| 新增、修改、刪除盤點計畫 | ✅ | ❌ `FORBIDDEN` |
+| 查看使用者名單（`user.list`） | ✅ | ❌ `FORBIDDEN` |
 | 查看財產、類別 | ✅ | ✅ |
-| 查看出借紀錄 | ✅ | ✅ |
-| 查看並執行被分配的盤點 | ✅ | ✅（只有被分配的計畫） |
-| 借出 | 依 `borrow_rule`、授權人名單（`asset_authorized_lenders`） | 同左 |
+| 借出 | 依 `borrow_rule` 與授權人名單 | 同左 |
 | 修改、歸還出借單 | 只有開單人（`creator_id`） | 同左 |
-| 盤點結案 | 只有計畫發起人 | 同左 |
+| 執行被分配的盤點（勾選、填異常） | 被分配者 | 被分配者 |
+| 盤點結案 | 只有計畫發起人 | — |
 
 驗收：上表每一格都有 `bun test` 測試（授權成功、未授權 `FORBIDDEN`）。
 
-### 5.3 出借
+### 5.3 出借（補齊現有 `borrow` router，不另起一套）
 
-- 補齊現有的 `borrow` router，不另起一套。
-- 借出時財產狀態改為 `borrowed`，歸還時改回 `normal`。
-  - 目前狀態存在 `asset_records`（每種狀態一列，記錄數量），`assets` 表本身沒有 status 欄位。實作方式：在 `AssetStatus` 加上 `borrowed`，借出時把數量從 `normal` 移到 `borrowed`，歸還時移回（同一個 transaction）。
-  - 庫存檢查改用 `normal` 的數量，避免和進行中的出借單重複扣除。
+資料模型：一張出借單（`borrow_records`）對應**一筆財產**（`assetId`）和借出數量（`quantity`）。財產狀態存在 `asset_records`（每種狀態一列，記錄數量），`assets` 表本身沒有 status 欄位。
+
+- 在 `AssetStatus` 加上 `borrowed`。
+- 借出：把該單的 `quantity` 從該財產的 `normal` 移到 `borrowed`。單件財產（數量 1）就等於整件改為 borrowed。
+- 歸還：把該單的 `quantity` 從 `borrowed` 移回 `normal`，出借單 `recordStatus` 改為 `returned`。
+- 只動該單內的財產和數量，不動單據以外的財產；借出和歸還都在同一個 transaction 內完成。
+- 庫存檢查改用 `normal` 的數量，避免和進行中的出借單重複扣除。
 - 驗收：
-  - [ ] 借出後該財產的 `borrowed` 數量增加、`normal` 數量減少；歸還後恢復。
+  - [ ] 借出後該財產的 `borrowed` 數量增加、`normal` 數量減少；歸還後恢復；其他財產不變。
   - [ ] 出借單 `recordStatus` 從 `active` 變成 `returned`。
   - [ ] 非開單人歸還得到 `FORBIDDEN`；已歸還的單不能再歸還。
   - [ ] 以上都有測試。
@@ -145,21 +150,29 @@ bun run dev                   # http://localhost:3001，登入會導向 localhos
 ### 5.4 標籤機（NIIMBOT B21S，驅動做在 ams 內）
 
 - 不做獨立的列印伺服器。
-- 列印路徑：瀏覽器（Web Bluetooth）→ ams 內建驅動 → B21S。
+- 列印路徑：電腦瀏覽器（Chrome／Edge，Web Bluetooth）→ ams 內建驅動 → 已配對的 B21S。
+- **本週只支援電腦版 Chrome／Edge。** 手機（含 Android）先不做；不支援的瀏覽器提示「請改用電腦版 Chrome 或 Edge」。
 - QR code 一律指向 `/scan?id=<assetId>`，再依登入身分導向對應頁面。
-- 貼紙內容：財產名稱、財產編號（學校產編）、QR code；Logo 可選。
-- 驗收（本週以「已配對的桌面瀏覽器能印出」為準）：
-  - [ ] ams 內建驅動能印出 B21S 標籤，內容和版面符合上述規格。（#47）
-  - [ ] 由瀏覽器觸發列印並成功；印表機未連線時顯示明確錯誤訊息。（#48）
+- 貼紙內容：財產名稱、財產編號（學校產編）、QR code；Logo 可選。標籤紙規格待 David 確認（暫定 50×30 mm）。
+- 驗收：
+  - [ ] ams 內建驅動能用已配對的電腦 Chrome／Edge 印出 B21S 標籤，內容符合上述規格。
+  - [ ] 由瀏覽器觸發列印並成功；印表機未連線時顯示明確錯誤訊息。
+  - [ ] 不支援的瀏覽器顯示改用電腦版 Chrome／Edge 的提示。
   - [ ] 掃描 QR 會進入 `/scan?id=<assetId>`，並依登入身分導向正確頁面。
-- 不做：批次列印、缺紙或卡紙等硬體狀態回報。
+- 不做：批次列印、缺紙或卡紙等硬體狀態回報、手機列印。
 
-### 5.5 本週不做
+### 5.5 安全升級
 
-- 逾期 Email 通知、多層審核、批次列印、盤點圖表、全站統計。
+- Next.js 升到 16.4.6（併入 M1）。
+- Better Auth 升到 1.7.16（與 identity 一起規劃，合併前先在本機實測登入）。
+
+### 5.6 本週不做
+
+- 逾期通知信、批次列印、盤點圖表、多層審核、全站統計。
 - 各 issue 中標為「第一版暫緩」的項目。
+- 手機（含 Android）標籤列印。
 - identity 的預設管理員密碼與種子腳本修改。
 
-### 5.6 P0–P6 優先順序
+### 5.7 P0–P6 優先順序
 
 依行雲司清單。清單內容收到後補在這裡。
