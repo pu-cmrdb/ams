@@ -39,7 +39,7 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable={{is_default}}
+            type=raw,value=latest,enable={{is_default_branch}}
             type=sha
       - # see https://github.com/docker/build-push-action
         name: Build and Push
