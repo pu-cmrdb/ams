@@ -12,6 +12,7 @@ import { TRPCError, initTRPC } from '@trpc/server';
 import superjson from 'superjson';
 
 import { auth } from '@/server/auth';
+import { hasRole, resolveIamRole } from '@/server/auth/role';
 import { db } from '@/server/database';
 import { env } from '@/env';
 import { z } from '@/lib/zod';
@@ -33,8 +34,17 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     headers: opts.headers,
   });
 
+  let rolePromise: null | Promise<null | string> = null;
+
   return {
     db,
+    /**
+     * 取得登入者在 identity 的角色（同一個請求只查詢一次）
+     */
+    getRole: () => {
+      rolePromise ??= resolveIamRole(session?.user.email);
+      return rolePromise;
+    },
     session,
     ...opts,
   };
@@ -141,3 +151,20 @@ export const protectedProcedure = t.procedure
       },
     });
   });
+
+/**
+ * Admin procedure
+ *
+ * 只允許 identity 角色包含 `admin` 的使用者呼叫。未登入回 `UNAUTHORIZED`，非管理員回 `FORBIDDEN`。
+ * 無法取得 IAM 使用者列表時拋出 `BAD_GATEWAY`，不會放行。
+ */
+export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const role = await ctx.getRole();
+  if (!hasRole(role, 'admin')) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: '只有管理員可以執行此操作',
+    });
+  }
+  return next();
+});

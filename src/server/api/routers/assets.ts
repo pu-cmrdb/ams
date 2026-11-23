@@ -11,7 +11,11 @@ import {
   SortDirection,
 } from '@/lib/enums';
 import { AssetRecords, Assets } from '@/server/database/type';
-import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
+import {
+  adminProcedure,
+  createTRPCRouter,
+  protectedProcedure,
+} from '@/server/api/trpc';
 import { containsLike } from '@/lib/utils';
 import { schema } from '@/server/database';
 import { z } from '@/lib/zod';
@@ -119,7 +123,7 @@ export const assetsRouter = createTRPCRouter({
   /**
    * 建立新財產
    */
-  create: protectedProcedure
+  create: adminProcedure
     .input(CreateAssetsInput)
     .mutation(({ ctx, input }) =>
       ctx.db.transaction((tx) => {
@@ -189,7 +193,7 @@ export const assetsRouter = createTRPCRouter({
   /**
    * 刪除財產
    */
-  delete: protectedProcedure
+  delete: adminProcedure
     .input(DeleteAssetInput)
     .mutation(({ ctx, input }) =>
       ctx.db.transaction((tx) => {
@@ -288,7 +292,7 @@ export const assetsRouter = createTRPCRouter({
   /**
    * 更新財產資料
    */
-  update: protectedProcedure
+  update: adminProcedure
     .input(UpdateAssetsInput)
     .mutation(({ ctx, input }) =>
       ctx.db.transaction((tx) => {
@@ -353,7 +357,7 @@ export const assetsRouter = createTRPCRouter({
         return result;
       }),
     ),
-  updateRecord: protectedProcedure
+  updateRecord: adminProcedure
     .input(UpdateAssetRecordInput)
     .mutation(({ ctx, input }) => {
       ctx.db.transaction((tx) => {
