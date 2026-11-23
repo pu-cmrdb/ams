@@ -8,9 +8,21 @@ import type { TestDb } from './db';
 
 type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 
-export function createTestCaller(db: TestDb, userId = MOCK_USER_ID) {
+/**
+ * 建立測試用的 tRPC caller
+ *
+ * @param role - 登入者在 identity 的角色，預設為 `admin`；傳 `null` 代表在 IAM 找不到該使用者，
+ *               傳 `Error` 代表無法取得 IAM 使用者列表
+ */
+export function createTestCaller(
+  db: TestDb,
+  userId = MOCK_USER_ID,
+  role: Error | null | string = 'admin',
+) {
   const ctx = {
     db: db as unknown as Context['db'],
+    getRole: () =>
+      role instanceof Error ? Promise.reject(role) : Promise.resolve(role),
     headers: new Headers(),
     session: {
       session: {

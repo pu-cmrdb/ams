@@ -5,7 +5,11 @@ import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
 
 import { CategorySortKey, SortDirection } from '@/lib/enums';
-import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
+import {
+  adminProcedure,
+  createTRPCRouter,
+  protectedProcedure,
+} from '@/server/api/trpc';
 import { Categories } from '@/server/database/type';
 import { containsLike } from '@/lib/utils';
 import { schema } from '@/server/database';
@@ -41,7 +45,7 @@ export const categoryRouter = createTRPCRouter({
   /**
    * 新增財產類別
    */
-  create: protectedProcedure
+  create: adminProcedure
     .input(CreateCategoryInput)
     .mutation(async ({ ctx, input }) => {
       const existing = await ctx.db.query.categories.findFirst({
@@ -70,7 +74,7 @@ export const categoryRouter = createTRPCRouter({
   /**
    * 刪除財產類別
    */
-  delete: protectedProcedure
+  delete: adminProcedure
     .input(CategoryDeleteInput)
     .mutation(async ({ ctx, input }) => {
       const assets = await ctx.db
@@ -131,7 +135,7 @@ export const categoryRouter = createTRPCRouter({
   /**
    * 更新財產類別名稱
    */
-  update: protectedProcedure
+  update: adminProcedure
     .input(UpdateCategoryInput)
     .mutation(async ({ ctx, input }) => {
       const { id } = input;

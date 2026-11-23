@@ -4,7 +4,11 @@ import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
-import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
+import {
+  adminProcedure,
+  createTRPCRouter,
+  protectedProcedure,
+} from '@/server/api/trpc';
 import { InventoryPlans } from '@/server/database/type';
 import { schema } from '@/server/database';
 import { z } from '@/lib/zod';
@@ -33,7 +37,7 @@ export const inventoryRouter = createTRPCRouter({
   /**
    * 建立新盤點計畫。
    */
-  create: protectedProcedure
+  create: adminProcedure
     .input(CreateInventoryInput)
     .mutation(({ ctx, input }) => {
       const id = nanoid();
@@ -146,7 +150,7 @@ export const inventoryRouter = createTRPCRouter({
   /**
    * 更新盤點計畫（部分欄位）。
    */
-  update: protectedProcedure
+  update: adminProcedure
     .input(UpdateInventoryInput)
     .mutation(({ ctx, input }) => {
       const { assetIds, assigneeIds, id, ...planData } = input;
