@@ -26,7 +26,7 @@ SKIP_ENV_VALIDATION=true bun run typegen
 bun run lint
 bun run typecheck
 bun test
-bun run build   # 需要環境變數，可用 .env.example 填假值或加 SKIP_ENV_VALIDATION=true
+SKIP_ENV_VALIDATION=true bun run build   # 另需假環境變數，見 .github/workflows/pr-check.yml 的 Build job
 ```
 
 改了 `package.json` 一定要一起提交更新後的 `bun.lock`，否則 CI 的 `--frozen-lockfile` 會失敗。

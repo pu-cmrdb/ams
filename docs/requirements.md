@@ -63,7 +63,7 @@ bun run drizzle:migrate
 bun run dev                   # http://localhost:3001，登入會導向 localhost:3000
 ```
 
-只跑測試、lint、typecheck 不需要 identity；build 可用 `SKIP_ENV_VALIDATION=true` 搭配假值（見 `.github/workflows/pr-check.yml`）。
+只跑測試、lint、typecheck 不需要 identity；`bun run build` 需要設定 `SKIP_ENV_VALIDATION=true` 並搭配假環境變數（見 `.github/workflows/pr-check.yml` 的 Build job）。
 
 ## 3. 範圍
 
@@ -120,15 +120,15 @@ bun run dev                   # http://localhost:3001，登入會導向 localhos
 
 | 操作 | `admin` | `user`（一般社員） |
 | --- | --- | --- |
-| 新增、修改、刪除財產（含異動紀錄） | ✅ | ❌ `FORBIDDEN` |
+| 新增、修改、刪除財產（含異動紀錄、`borrow_rule`、授權出借人名單） | ✅ | ❌ `FORBIDDEN` |
 | 新增、修改、刪除類別 | ✅ | ❌ `FORBIDDEN` |
 | 新增、修改、刪除盤點計畫 | ✅ | ❌ `FORBIDDEN` |
 | 查看使用者名單（`user.list`） | ✅ | ❌ `FORBIDDEN` |
 | 查看財產、類別 | ✅ | ✅ |
-| 借出 | 依 `borrow_rule` 與授權人名單 | 同左 |
+| 借出 | 依 `borrow_rule` 與授權人名單；可選任何借用人 | 依 `borrow_rule` 與授權人名單；**借用人固定為自己**（不需要 `user.list`） |
 | 修改、歸還出借單 | 只有開單人（`creator_id`） | 同左 |
 | 執行被分配的盤點（勾選、填異常） | 被分配者 | 被分配者 |
-| 盤點結案 | 只有計畫發起人 | — |
+| 盤點結案 | 只有計畫發起人 | 非發起人 ❌ `FORBIDDEN` |
 
 驗收：上表每一格都有 `bun test` 測試（授權成功、未授權 `FORBIDDEN`）。
 
@@ -141,10 +141,14 @@ bun run dev                   # http://localhost:3001，登入會導向 localhos
 - 歸還：把該單的 `quantity` 從 `borrowed` 移回 `normal`，出借單 `recordStatus` 改為 `returned`。
 - 只動該單內的財產和數量，不動單據以外的財產；借出和歸還都在同一個 transaction 內完成。
 - 庫存檢查改用 `normal` 的數量，避免和進行中的出借單重複扣除。
+- 借用人：一般社員只能幫自己借（`borrowerId` 固定為自己，後端也驗證）；admin 才能選其他借用人。不為社員另開使用者名單查詢。
+- 修改出借單（`update`）：只限開單人、只限 `active` 的單，只能改非數量欄位（備註、預計歸還日）；`assetId`、`quantity`、`recordStatus` 不能用 `update` 修改（狀態只透過借出和歸還改變）。
 - 驗收：
   - [ ] 借出後該財產的 `borrowed` 數量增加、`normal` 數量減少；歸還後恢復；其他財產不變。
   - [ ] 出借單 `recordStatus` 從 `active` 變成 `returned`。
-  - [ ] 非開單人歸還得到 `FORBIDDEN`；已歸還的單不能再歸還。
+  - [ ] 非開單人歸還得到 `FORBIDDEN`；已歸還的單不能再歸還，也不能修改。
+  - [ ] 一般社員把 `borrowerId` 設成別人時得到 `FORBIDDEN`。
+  - [ ] `update` 傳入 `quantity`、`assetId` 或 `recordStatus` 時被拒絕。
   - [ ] 以上都有測試。
 
 ### 5.4 標籤機（NIIMBOT B21S，驅動做在 ams 內）
@@ -157,8 +161,9 @@ bun run dev                   # http://localhost:3001，登入會導向 localhos
 - **標籤紙尺寸可調，不寫死**（David 2026-11-23 17:00 定案）：
   - 預設 50×30 mm（寬×高），集中定義在一個設定模組，程式其他地方不出現寫死的尺寸。
   - 列印對話框可以調整寬、高（mm），並記在該瀏覽器（例如 localStorage）；讀不到時回到預設值。
-  - 版面（QR 大小、文字行數與字級）依尺寸計算：203 DPI ≈ 8 px/mm，寬度上限是 B21S 印字頭的 384 px（約 48 mm）。
-  - 超出 B21S 支援範圍的尺寸要擋下並提示，不送出列印。
+  - 區分兩種上限：**標籤紙尺寸**的輸入範圍依 B21S 支援的紙寬（上限 50 mm，預設 50×30 mm 必須合法）；**列印畫布**寬度是 `min(紙寬 mm × 8, 384)` px（203 DPI ≈ 8 px/mm，印字頭 384 px ≈ 48 mm，紙寬超過的部分是左右邊距）。
+  - 版面（QR 大小、文字行數與字級）依畫布尺寸計算。
+  - 超出紙張輸入範圍的尺寸要擋下並提示，不送出列印。
 - `pu-cmrdb/printer` 倉庫不再使用，但**不封存、不刪除**（是否封存或刪除由 David 另外決定）。
 - 驗收：
   - [ ] ams 內建驅動能用已配對的電腦 Chrome／Edge 印出 B21S 標籤，內容符合上述規格。
