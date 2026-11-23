@@ -218,9 +218,15 @@ async function fetchAllUsers(): Promise<APIUser[]> {
  */
 export async function getIamUsers(): Promise<APIUser[]> {
   if (!cachedUsers || Date.now() > cacheExpiresAt) {
-    fetchInFlight ??= fetchAllUsers().finally(() => {
-      fetchInFlight = null;
-    });
+    fetchInFlight ??= fetchAllUsers()
+      .catch((error: unknown) => {
+        // better-result 的 unwrap() 會把 TRPCError 包成 Panic，這裡還原成原本的錯誤
+        const cause = error instanceof Error ? error.cause : undefined;
+        throw cause instanceof TRPCError ? cause : error;
+      })
+      .finally(() => {
+        fetchInFlight = null;
+      });
     cachedUsers = await fetchInFlight;
     cacheExpiresAt = Date.now() + CACHE_EXPIRY;
   }

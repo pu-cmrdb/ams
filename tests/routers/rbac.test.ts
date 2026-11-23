@@ -1,5 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test';
 
+import { TRPCError } from '@trpc/server';
+
 import { AssetStatus } from '@/lib/enums';
 import { hasRole, resolveIamRole } from '@/server/auth/role';
 import { resetIamUsersCache } from '@/server/iam/users';
@@ -114,9 +116,23 @@ describe('admin RBAC', () => {
         expect((await user.asset.get({ id: assetId })).id).toBe(assetId);
         expect(await user.category.list({})).toHaveLength(1);
         expect((await user.inventory.get({ id: planId }))?.id).toBe(planId);
+        expect(await user.inventory.list({})).toHaveLength(1);
       });
     });
   }
+
+  it('無法取得 IAM 角色時拋出錯誤，不放行（資料不變）', async () => {
+    const unreachable = createTestCaller(
+      db,
+      'any-id',
+      new TRPCError({ code: 'BAD_GATEWAY', message: '無法連線至 IAM 服務' }),
+    );
+
+    await expect(
+      unreachable.asset.update({ id: assetId, name: '被改掉' }),
+    ).rejects.toMatchObject({ code: 'BAD_GATEWAY' });
+    expect((await admin.asset.get({ id: assetId })).name).toBe(BASE_ASSET.name);
+  });
 
   it('多角色字串中含 admin 也視為管理員', async () => {
     const multi = createTestCaller(db, 'multi-id', 'user, admin');
@@ -195,5 +211,29 @@ describe('resolveIamRole', () => {
   it('找不到或沒有 email 時回傳 null', async () => {
     expect(await resolveIamRole('nobody@example.test')).toBeNull();
     expect(await resolveIamRole(undefined)).toBeNull();
+  });
+
+  it('全空白的 email 不會配對到 email 為空字串的 IAM 使用者', async () => {
+    users.push({ ...users[0]!, email: '', id: 'iam-empty', role: 'admin' });
+    resetIamUsersCache();
+
+    expect(await resolveIamRole('   ')).toBeNull();
+
+    users.pop();
+    resetIamUsersCache();
+  });
+
+  it('IAM 無法連線時拋出 BAD_GATEWAY', async () => {
+    resetIamUsersCache();
+    const workingFetch = globalThis.fetch;
+    globalThis.fetch = (() =>
+      Promise.reject(new Error('connect ECONNREFUSED'))) as unknown as typeof fetch;
+
+    await expect(resolveIamRole('admin@example.test')).rejects.toMatchObject({
+      code: 'BAD_GATEWAY',
+    });
+
+    globalThis.fetch = workingFetch;
+    resetIamUsersCache();
   });
 });

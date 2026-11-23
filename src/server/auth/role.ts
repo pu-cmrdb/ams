@@ -35,11 +35,11 @@ export function hasRole(
 export async function resolveIamRole(
   email: string | null | undefined,
 ): Promise<null | string> {
-  if (!email) {
+  const normalizedEmail = email?.trim().toLowerCase();
+  if (!normalizedEmail) {
     return null;
   }
 
-  const normalizedEmail = email.trim().toLowerCase();
   const users = await getIamUsers();
   const user = users.find(
     (v) => v.email?.trim().toLowerCase() === normalizedEmail,
